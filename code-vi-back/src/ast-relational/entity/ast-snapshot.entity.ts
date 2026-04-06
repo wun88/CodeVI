@@ -8,8 +8,11 @@ export class AstSnapshot extends CommonEntity {
   @Column()
   teamProjectId: number;
 
-  // @Column()
-  // buildNumber: number;
+  @Column()
+  buildNumber: number;
+
+  @Column()
+  buildUrl: string;
 
   @ManyToOne(() => TeamProject, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'teamProjectId' })

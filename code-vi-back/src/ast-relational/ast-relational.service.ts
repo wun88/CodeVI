@@ -106,7 +106,7 @@ export class AstRelationalService {
   /**
    * AST 노드를 재귀적으로 탐색하며 중첩 구조에 맞춰 부모 ID를 전달합니다.
    */
-  private async processNode(
+  public async processNode(
     manager: any,
     node: AstNodeInputDto,
     snapshotId: number,
@@ -119,7 +119,7 @@ export class AstRelationalService {
     const nodeName = this.extractNodeName(node);
 
     if (nodeType.includes('CLASS') || nodeType.includes('FUNC') || nodeType.includes('METHOD')) {
-      this.logger.debug(`👀 Target Found: [${nodeType}] ${nodeName} | classId:${currentClassId}, fnId:${currentFunctionId}`);
+      this.logger.debug(` Target Found: [${nodeType}] ${nodeName} | classId:${currentClassId}, fnId:${currentFunctionId}`);
     }
 
     switch (nodeType) {

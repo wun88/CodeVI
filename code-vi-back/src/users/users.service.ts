@@ -1,14 +1,19 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
+
 import { User } from './entities/user.entity';
 import { CreateUserRequestDto } from './dto/create-user-request.dto';
-import { BadRequestException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { ConflictException } from '@nestjs/common';
 import { UpdateUserRequestDto } from './dto/update-user-request.dto';
 import { CreateGoogleUserRequestDto } from './dto/create-google-user-request.dto';
-import { v4 as uuidv4 } from 'uuid';
+import { createBuildReportDto } from './dto/create-build-report.dto'
+import { UserStatus } from './entities/user-status.enum';
+import { UserRole } from './entities/user-role.enum';
+import { TeamProject } from 'src/team-project/entities/team-project.entity';
+import { AstSnapshot } from 'src/ast-relational/entity/ast-snapshot.entity';
+import { AstRelationalService } from 'src/ast-relational/ast-relational.service';
 
 @Injectable()
 export class UsersService {
@@ -17,7 +22,11 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {}
+    @InjectRepository(TeamProject)
+    private teamProjectRepository: Repository<TeamProject>,
+    private readonly astRelationalService: AstRelationalService,
+    private readonly dataSource: DataSource,
+  ) { }
 
   // CREATE
   async createUser(createUserRequestDto: CreateUserRequestDto): Promise<void> {
@@ -204,5 +213,89 @@ export class UsersService {
   async hashPassword(password: string): Promise<string> {
     const salt = await bcrypt.genSalt();
     return await bcrypt.hash(password, salt);
+  }
+
+  // BUILD REPORT HANDLING
+  async createBuildReport(dto: createBuildReportDto): Promise<any> {
+    const { jenkinsJobName, jenkinsMetadata, collaborators, astNodes } = dto;
+
+    const project = await this.teamProjectRepository.findOne({
+      where: { JenkinsJobName: jenkinsJobName },
+      relations: ['users'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project not found: ${jenkinsJobName}`);
+    }
+
+    // Duplicate Check
+    const existingSnapshot = await this.dataSource.getRepository(AstSnapshot).findOne({
+      where: {
+        teamProjectId: project.id,
+        buildNumber: jenkinsMetadata.buildNumber,
+      },
+    });
+
+    if (existingSnapshot) {
+      this.logger.warn(`Snapshot for build ${jenkinsMetadata.buildNumber} already exists. Skipping.`);
+      return { status: 'skipped', message: 'Duplicate build number', snapshotId: existingSnapshot.id };
+    }
+
+    let savedSnapshotId: number = 0;
+    await this.dataSource.transaction(async (manager) => {
+      // 1. Sync Collaborators
+      const syncedUsers = await this.syncCollaborators(manager, collaborators);
+
+      // Link synced users to the project if not already linked
+      const existingUserIds = project.users.map(u => u.id);
+      const newUsersToLink = syncedUsers.filter(u => !existingUserIds.includes(u.id));
+
+      if (newUsersToLink.length > 0) {
+        project.users.push(...newUsersToLink);
+        await manager.save(project);
+      }
+
+      // 2. Create Snapshot (Hierarchical)
+      const snapshot = manager.create(AstSnapshot, {
+        teamProjectId: project.id,
+        buildNumber: jenkinsMetadata.buildNumber,
+        buildUrl: jenkinsMetadata.buildUrl,
+        wholeJson: astNodes,
+      });
+      const savedSnapshot = await manager.save(snapshot);
+      savedSnapshotId = savedSnapshot.id;
+
+      // 3. Process AST Nodes (Relational)
+      for (const node of astNodes) {
+        await this.astRelationalService.processNode(manager, node, savedSnapshot.id, null);
+      }
+    });
+
+    return { status: 'success', snapshotId: savedSnapshotId };
+  }
+
+  private async syncCollaborators(manager: any, collaborators: any[]): Promise<User[]> {
+    const syncedUsers: User[] = [];
+
+    for (const coll of collaborators) {
+      let user = await manager.findOne(User, { where: { githubUid: coll.githubUid } });
+
+      if (!user) {
+        // Create pre-registered user
+        user = manager.create(User, {
+          githubUid: coll.githubUid,
+          username: coll.login,
+          status: UserStatus.PENDING,
+          role: UserRole.STUDENT, // Default role
+          // email and password can be null (modified in entity)
+        });
+        user = await manager.save(user);
+        this.logger.log(`Created pending user for GitHub UID: ${coll.githubUid} (${coll.login})`);
+      }
+
+      syncedUsers.push(user);
+    }
+
+    return syncedUsers;
   }
 }

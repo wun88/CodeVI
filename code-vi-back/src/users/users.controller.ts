@@ -4,6 +4,7 @@ import { User } from './entities/user.entity';
 import type { Response, Request } from 'express';
 import { ApiResponseDto } from 'src/common/api-response-dto/api-response.dto';
 import { UpdateUserRequestDto } from './dto/update-user-request.dto';
+import { createBuildReportDto } from './dto/create-build-report.dto';
 import { RolesGuard } from 'src/auth/custom-guards-decorators/roles.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/auth/custom-guards-decorators/roles.decorator';
@@ -101,5 +102,12 @@ export class UsersController {
         response.clearCookie('token');
 
         return response.json({ message: '로그아웃 성공' });
+    }
+
+    @Post('build-report')
+    // @Public() // If there's a Public decorator to bypass AuthGuard
+    async createBuildReport(@Body() dto: createBuildReportDto) {
+        this.logger.log(`Received build report for project: ${dto.jenkinsJobName}, build: ${dto.jenkinsMetadata.buildNumber}`);
+        return await this.usersService.createBuildReport(dto);
     }
 }
