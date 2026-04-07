@@ -15,7 +15,7 @@ export class User extends CommonEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   password: string;
 
-  @Column({ type: 'enum', enum: UserRole, nullable: false })
+  @Column({ type: 'enum', enum: UserRole, nullable: true })
   role: UserRole;
 
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })

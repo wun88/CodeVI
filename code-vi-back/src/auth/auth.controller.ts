@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import type { Request, Response } from 'express';
 import { ApiResponseDto } from 'src/common/api-response-dto/api-response.dto';
-import { CreateUserRequestDto } from 'src/users/dto/create-user-request.dto';
+import { CreateUserDto } from 'src/users/dto/create-user-request.dto';
 import { UsersService } from 'src/users/users.service';
 import { GoogleAuthGuard } from './custom-guards-decorators/google-auth.guard';
 import { User } from 'src/users/entities/user.entity';
@@ -25,7 +25,7 @@ export class AuthController {
     // Sign-Up
     @Post('/signup')
     async createUser(
-        @Body() createUserRequestDto: CreateUserRequestDto,
+        @Body() createUserRequestDto: CreateUserDto,
     ): Promise<ApiResponseDto<void>> {
         this.logger.verbose(
             `Visitor is trying to create a new account with email: ${createUserRequestDto.email}`,

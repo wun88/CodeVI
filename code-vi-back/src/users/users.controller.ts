@@ -4,13 +4,12 @@ import { User } from './entities/user.entity';
 import type { Response, Request } from 'express';
 import { ApiResponseDto } from 'src/common/api-response-dto/api-response.dto';
 import { UpdateUserRequestDto } from './dto/update-user-request.dto';
-import { createBuildReportDto } from './dto/create-build-report.dto';
+import { CreateUserWithAstAndBuildDto } from './dto/create-user-request.dto';
 import { RolesGuard } from 'src/auth/custom-guards-decorators/roles.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/auth/custom-guards-decorators/roles.decorator';
 import { UserRole } from './entities/user-role.enum';
 
-@UseGuards(AuthGuard(), RolesGuard)
 @Controller('users')
 export class UsersController {
     private readonly logger = new Logger(UsersController.name);
@@ -18,6 +17,7 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
     @Get('/')
+    @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN)
     async getAllUsersPagenated(
         @Query('page') page: number = 1,
@@ -48,6 +48,7 @@ export class UsersController {
     }
 
     @Get(':id')
+    @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.STUDENT)
     async getUser(
         @Param('id') userId: number,
@@ -58,6 +59,7 @@ export class UsersController {
 
     // UPDATE
     @Put(':id')
+    @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.STUDENT)
     async updateUser(
         @Param('id') id: number,
@@ -87,6 +89,7 @@ export class UsersController {
     }
 
     @Delete(':id')
+    @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.STUDENT)
     async deleteUser(@Param('id') id: number): Promise<ApiResponseDto<void>> {
         await this.usersService.remove(id);
@@ -98,6 +101,7 @@ export class UsersController {
     }
 
     @Post('logout')
+    @UseGuards(AuthGuard(), RolesGuard)
     async logout(@Req() request: Request, @Res() response: Response) {
         response.clearCookie('token');
 
@@ -106,8 +110,8 @@ export class UsersController {
 
     @Post('build-report')
     // @Public() // If there's a Public decorator to bypass AuthGuard
-    async createBuildReport(@Body() dto: createBuildReportDto) {
-        this.logger.log(`Received build report for project: ${dto.jenkinsJobName}, build: ${dto.jenkinsMetadata.buildNumber}`);
+    async createBuildReport(@Body() dto: CreateUserWithAstAndBuildDto) {
+        this.logger.log(`Received build report for project: ${dto.ProjectDto.jenkinsJobName}, build: ${dto.ProjectDto.analysis.buildNumber}`);
         return await this.usersService.createBuildReport(dto);
     }
 }
