@@ -1,30 +1,78 @@
-import { IsString, IsEmail, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsEnum, IsOptional, IsNumber, ValidateNested } from 'class-validator';
 import { UserRole } from '../entities/user-role.enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserStatus } from '../entities/user-status.enum';
+import { CreateTeamProjectAnalysisDto } from 'src/team-project/dto/create-team-project.dto';
+import { Type } from 'class-transformer';
 
-export class CreateUserRequestDto {
+export class CreateUserDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  githubUid?: number;
+
+  @ApiProperty()
   @IsString()
-  @IsNotEmpty()
   username: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  password: string;
+  email?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  passwordConfirm: string;
+  password?: string;
 
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  passwordConfirm?: string;
 
+  @ApiPropertyOptional({ enum: UserRole })
+  @IsOptional()
   @IsEnum(UserRole)
-  role: UserRole;
+  role?: UserRole;
 
-  // DTO 내에서 추가 검증 로직 작성
-  validatePasswords() {
-    if (this.password !== this.passwordConfirm) {
-      throw new Error('Passwords do not match');
-    }
-  }
+  @ApiPropertyOptional({ enum: UserStatus })
+  @IsOptional()
+  @IsEnum(UserStatus)
+  status?: UserStatus;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string;
+}
+
+export class CreateUserWithAstAndBuildDto {
+  @ApiProperty({ description: 'Can be a single username string or an array of username strings' })
+  @IsNotEmpty()
+  username: string | string[];
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  passwordConfirm?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @ApiProperty()
+  @ValidateNested()
+  @Type(() => CreateTeamProjectAnalysisDto)
+  ProjectDto: CreateTeamProjectAnalysisDto;
 }
