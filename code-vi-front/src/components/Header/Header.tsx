@@ -1,22 +1,37 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaUserCircle } from 'react-icons/fa';
 import logo from '../../assets/main-page/logo.png';
 import './Header.css';
 
 function Header({ onLoginClick, variant = "default" }) {
+  const navigate = useNavigate();
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const timeoutRef = useRef(null);
 
   useEffect(() => {
+    // Initial check
+    setIsLoggedIn(!!localStorage.getItem('accessToken'));
+
+    // Listen to storage changes in case login happens in another tab or we trigger a custom event
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem('accessToken'));
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleMouseEnter = () => {
@@ -57,6 +72,10 @@ function Header({ onLoginClick, variant = "default" }) {
     }
   };
 
+  const handleProfileClick = () => {
+    navigate('/dashboard'); // Go to dashboard, or can be a profile page
+  };
+
   return (
     <header className={`header header-${variant}`}>
 
@@ -86,6 +105,14 @@ function Header({ onLoginClick, variant = "default" }) {
                 Code Insight
               </Link>
             </li>
+
+            {isLoggedIn && (
+              <li className="nav-item">
+                <Link to="/dashboard" className="nav-link" onClick={closeMobileMenu}>
+                  Dashboard
+                </Link>
+              </li>
+            )}
 
             <li
               className={`nav-item has-dropdown ${isMoreOpen ? 'dropdown-open' : ''}`}
@@ -119,18 +146,42 @@ function Header({ onLoginClick, variant = "default" }) {
 
             </li>
 
-            <li className="nav-item mobile-login">
-              <button type="button" className="login-btn" onClick={handleLoginClick}>
-                LOGIN
-              </button>
-            </li>
+            {!isLoggedIn ? (
+              <li className="nav-item mobile-login">
+                <button type="button" className="login-btn" onClick={handleLoginClick}>
+                  LOGIN
+                </button>
+              </li>
+            ) : (
+              <li className="nav-item mobile-login">
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <FaUserCircle 
+                    size={38} 
+                    className="profile-icon" 
+                    onClick={handleProfileClick}
+                    style={{ color: '#8b8df1', cursor: 'pointer' }}
+                  />
+                </div>
+              </li>
+            )}
 
           </ul>
         </nav>
 
-        <button type="button" className="login-btn desktop-login" onClick={handleLoginClick}>
-          LOGIN
-        </button>
+        {!isLoggedIn ? (
+          <button type="button" className="login-btn desktop-login" onClick={handleLoginClick}>
+            LOGIN
+          </button>
+        ) : (
+          <div className="desktop-login">
+            <FaUserCircle 
+              size={38} 
+              className="profile-icon" 
+              onClick={handleProfileClick}
+              style={{ color: '#8b8df1', cursor: 'pointer' }}
+            />
+          </div>
+        )}
       </div>
 
     </header>
