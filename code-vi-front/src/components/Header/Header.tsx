@@ -73,7 +73,7 @@ function Header({ onLoginClick, variant = "default" }) {
   };
 
   const handleProfileClick = () => {
-    navigate('/dashboard'); // Go to dashboard, or can be a profile page
+    navigate('/mypage'); // Go to mypage instead of dashboard
   };
 
   return (
