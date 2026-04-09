@@ -106,14 +106,6 @@ function Header({ onLoginClick, variant = "default" }) {
               </Link>
             </li>
 
-            {isLoggedIn && (
-              <li className="nav-item">
-                <Link to="/dashboard" className="nav-link" onClick={closeMobileMenu}>
-                  Dashboard
-                </Link>
-              </li>
-            )}
-
             <li
               className={`nav-item has-dropdown ${isMoreOpen ? 'dropdown-open' : ''}`}
               onMouseEnter={handleMouseEnter}
@@ -154,12 +146,15 @@ function Header({ onLoginClick, variant = "default" }) {
               </li>
             ) : (
               <li className="nav-item mobile-login">
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <FaUserCircle 
-                    size={38} 
-                    className="profile-icon" 
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
+                  <button type="button" className="dashboard-btn" style={{ width: 'auto' }} onClick={() => { closeMobileMenu(); navigate('/dashboard'); }}>
+                    Dashboard
+                  </button>
+                  <FaUserCircle
+                    size={38}
+                    className="profile-icon"
                     onClick={handleProfileClick}
-                    style={{ color: '#8b8df1', cursor: 'pointer' }}
+                    style={{ color: '#7492B7', cursor: 'pointer' }}
                   />
                 </div>
               </li>
@@ -173,12 +168,15 @@ function Header({ onLoginClick, variant = "default" }) {
             LOGIN
           </button>
         ) : (
-          <div className="desktop-login">
-            <FaUserCircle 
-              size={38} 
-              className="profile-icon" 
+          <div className="desktop-login" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button type="button" className="dashboard-btn" onClick={() => navigate('/dashboard')}>
+              Dashboard
+            </button>
+            <FaUserCircle
+              size={38}
+              className="profile-icon"
               onClick={handleProfileClick}
-              style={{ color: '#8b8df1', cursor: 'pointer' }}
+              style={{ color: '#7492B7', cursor: 'pointer' }}
             />
           </div>
         )}
