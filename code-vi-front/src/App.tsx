@@ -16,10 +16,10 @@ import Login from './pages/Login';
 import Diagnose from './pages/Diagnose';
 import AuthPanel from './components/AuthPanel/AuthPanel';
 
-// --- App.tsx Imports ---
 import LoginPage from './pages/LoginPage/LoginPage';
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import VisualizationPage from './pages/VisualizationPage/VisualizationPage';
+import MyPage from './pages/MyPage/MyPage';
 
 /** 인증 가드 — JWT 토큰이 없으면 /login으로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -90,6 +90,14 @@ export default function App() {
 
             {/* --- App.tsx Routes --- */}
             <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/mypage"
+              element={
+                <PrivateRoute>
+                  <MyPage />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={
