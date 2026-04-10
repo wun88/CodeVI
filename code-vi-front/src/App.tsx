@@ -12,8 +12,6 @@ import Dashboard from './pages/CodeInsight/Dashboard';
 import FAQ from './pages/FAQ';
 import Community from './pages/Community';
 import ContactUs from './pages/ContactUs';
-import Login from './pages/Login';
-import Diagnose from './pages/Diagnose';
 import AuthPanel from './components/AuthPanel/AuthPanel';
 
 import LoginPage from './pages/LoginPage/LoginPage';
@@ -82,11 +80,7 @@ export default function App() {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/community" element={<Community />} />
             <Route path="/contact-us" element={<ContactUs />} />
-            <Route path="/diagnose" element={<Diagnose />} />
             
-            {/* Note: In App.jsx this was path="/login", but App.tsx also has /login. 
-                We keep the older one at /login-old and the newer at /login */}
-            <Route path="/login-old" element={<Login />} />
 
             {/* --- App.tsx Routes --- */}
             <Route path="/login" element={<LoginPage />} />
