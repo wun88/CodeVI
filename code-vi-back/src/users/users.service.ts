@@ -239,7 +239,7 @@ export class UsersService {
             email: (usernames.length === 1) ? (email || undefined) : undefined,
             password: hashedPassword || undefined,
             role: role as UserRole || UserRole.STUDENT,
-            status: UserStatus.ACTIVE,
+            status: password ? UserStatus.ACTIVE : UserStatus.PENDING,
           } as any);
           user = await manager.save(user);
         }
