@@ -1,63 +1,67 @@
 .node {
-  background: #1a1d2e;
-  border: 1.5px solid #2d3150;
-  border-radius: 10px;
-  padding: 8px 12px;
-  min-width: 160px;
-  max-width: 220px;
+  position: relative;
+  --node-accent: #7492b7;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-left: 3px solid var(--node-accent);
+  border-radius: 12px;
+  padding: 7px 10px;
+  min-width: 140px;
+  max-width: 210px;
   cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  transition:
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.12s ease;
+  font-family: inherit;
+  box-shadow: 0 6px 18px rgba(34, 34, 34, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .node:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 26px rgba(34, 34, 34, 0.07);
 }
 
 .selected {
-  box-shadow: 0 0 0 2px #6366f1, 0 4px 20px rgba(99, 102, 241, 0.3);
-  border-color: #6366f1 !important;
+  box-shadow:
+    0 0 0 3px rgba(116, 146, 183, 0.5),
+    0 0 22px rgba(116, 146, 183, 0.22),
+    0 10px 30px rgba(116, 146, 183, 0.14);
+  border-color: rgba(116, 146, 183, 0.55) !important;
 }
 
-/* 디렉토리 */
 .directory {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #1e2a4a 0%, #1a1d2e 100%);
+  --node-accent: #3b82f6;
 }
 
 .directory .emoji {
-  color: #60a5fa;
+  color: #2563eb;
 }
 
-/* 파일 */
 .file {
-  border-color: #10b981;
-  background: linear-gradient(135deg, #1a2e25 0%, #1a1d2e 100%);
+  --node-accent: #10b981;
 }
 
 .file .emoji {
-  color: #34d399;
+  color: #059669;
 }
 
-/* 클래스 */
 .class {
-  border-color: #f59e0b;
-  background: linear-gradient(135deg, #2e2510 0%, #1a1d2e 100%);
+  --node-accent: #f59e0b;
 }
 
 .class .emoji {
-  color: #fbbf24;
+  color: #d97706;
 }
 
-/* 함수 */
 .function {
-  border-color: #a855f7;
-  background: linear-gradient(135deg, #251a3a 0%, #1a1d2e 100%);
+  --node-accent: #a855f7;
 }
 
 .function .emoji {
-  color: #c084fc;
+  color: #9333ea;
 }
 
 .header {
@@ -68,14 +72,14 @@
 }
 
 .emoji {
-  font-size: 14px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
 .label {
   font-size: 12px;
-  font-weight: 600;
-  color: #e2e8f0;
+  font-weight: 800;
+  color: #1e293b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -91,55 +95,39 @@
 
 .metaTag {
   font-size: 10px;
-  color: #94a3b8;
-  background: rgba(255, 255, 255, 0.06);
+  color: rgba(34, 34, 34, 0.55);
+  background: rgba(116, 146, 183, 0.12);
   border-radius: 4px;
   padding: 1px 5px;
+  font-weight: 600;
 }
 
 .handle {
   width: 8px !important;
   height: 8px !important;
-  background: #4a5568 !important;
-  border: 1.5px solid #718096 !important;
+  background: #cbd5e1 !important;
+  border: 1.5px solid #94a3b8 !important;
 }
 
-/* --- CK Metrics Styles --- */
-.ditBadge {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  background: #6366f1;
-  color: white;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 5px;
-  border-radius: 4px;
-  border: 1px solid #2d3150;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.metricsPopover {
+  display: none;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(116, 146, 183, 0.16);
 }
 
-.nocBadge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #10b981;
-  color: white;
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 5px;
-  border-radius: 4px;
-  border: 1px solid #2d3150;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.node:hover .metricsPopover {
+  display: block;
+}
+
+.selected .metricsPopover {
+  display: block;
 }
 
 .metricsGrid {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .metricItem {
@@ -147,39 +135,47 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 2px 6px;
-  border-radius: 4px;
-  flex: 1;
+  background: rgba(116, 146, 183, 0.07);
+  padding: 2px 4px;
+  border-radius: 6px;
 }
 
 .metricLabel {
   font-size: 8px;
-  color: #94a3b8;
+  color: rgba(34, 34, 34, 0.5);
   font-weight: 700;
 }
 
 .metricValue {
   font-size: 10px;
-  color: #f1f5f9;
-  font-family: 'JetBrains Mono', monospace;
+  color: #1e293b;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
 }
 
 .warn {
-  color: #f87171;
+  color: #dc2626;
 }
 
-.wmcBarWrapper {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  margin-top: 6px;
-  border-radius: 2px;
-  overflow: hidden;
+/* 타입별 위계: directory > file > class > function */
+[data-node-type='directory'] {
+  min-width: 180px;
+  max-width: 260px;
+  padding: 9px 12px;
 }
 
-.wmcBar {
-  height: 100%;
-  background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
-  transition: width 0.3s ease;
+[data-node-type='file'] {
+  min-width: 160px;
+  max-width: 240px;
+}
+
+[data-node-type='class'] {
+  min-width: 150px;
+  max-width: 230px;
+}
+
+[data-node-type='function'] {
+  min-width: 120px;
+  max-width: 200px;
+  padding: 6px 9px;
 }

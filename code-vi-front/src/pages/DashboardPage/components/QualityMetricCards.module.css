@@ -1,0 +1,163 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metricCard {
+  border-radius: var(--rf-radius, 18px);
+  padding: 1.15rem 1.2rem 1.2rem;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.metricCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07);
+}
+
+/* 상태별 — 배지·점수·퍼센트·바 동일 계열 */
+.st_danger {
+  --status: #dc2626;
+  --status-soft: rgba(254, 226, 226, 0.88);
+  --status-border: rgba(252, 165, 165, 0.75);
+}
+
+.st_maintain {
+  --status: #ea580c;
+  --status-soft: rgba(255, 237, 213, 0.92);
+  --status-border: rgba(253, 186, 116, 0.75);
+}
+
+.st_good {
+  --status: #2563eb;
+  --status-soft: rgba(219, 234, 254, 0.92);
+  --status-border: rgba(147, 197, 253, 0.8);
+}
+
+.st_excellent {
+  --status: #059669;
+  --status-soft: rgba(209, 250, 229, 0.92);
+  --status-border: rgba(110, 231, 183, 0.75);
+}
+
+.metricTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 3.15rem;
+}
+
+.titleCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.metricTitle {
+  font-size: 0.8125rem;
+  font-weight: 900;
+  color: var(--rf-text, #111111);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.24rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid var(--status-border, rgba(255, 255, 255, 0.35));
+  background: var(--status-soft, rgba(255, 255, 255, 0.5));
+  color: var(--status, #111111);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.scoreRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.scoreStack {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.score {
+  font-size: 1.85rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--status, var(--rf-text, #111111));
+  font-variant-numeric: tabular-nums;
+}
+
+.max {
+  font-size: 0.78rem;
+  color: rgba(34, 34, 34, 0.48);
+  font-weight: 700;
+}
+
+.pct {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: var(--status, rgba(34, 34, 34, 0.5));
+  font-variant-numeric: tabular-nums;
+}
+
+.barTrack {
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--status, #7492b7);
+  transition: width 0.45s ease;
+}
+
+.desc {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: rgba(34, 34, 34, 0.5);
+  font-weight: 500;
+  white-space: pre-line;
+}

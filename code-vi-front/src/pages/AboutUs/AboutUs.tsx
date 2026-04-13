@@ -10,7 +10,7 @@ export default function AboutUs() {
   return (
     <div className="about-container">
 
-      <Header variant="transparent" />
+      <Header />
 
       {/* About RE:FACTORY */}
       <section className="about-section" id="about-refactory">

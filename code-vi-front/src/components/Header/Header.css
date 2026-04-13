@@ -1,10 +1,19 @@
+/*
+ * 전 페이지 공통 — 랜딩(메인)과 동일 톤
+ * 투명 바 + 페이지 배경이 비치도록 (화이트/연블루 모두 자연스럽게 이어짐)
+ */
 .header {
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
-  padding: 20px 60px;
+  z-index: 100;
+  padding: 16px 48px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
+  box-shadow: none;
 }
 
 .header-container {
@@ -21,7 +30,7 @@
 }
 
 .logo {
-  height: 70px;
+  height: 56px;
   width: auto;
 }
 
@@ -123,6 +132,32 @@
 
 .login-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.logout-btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #222222;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 22px;
+  cursor: pointer;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    opacity 0.2s,
+    transform 0.15s ease,
+    border-color 0.2s;
+}
+
+.logout-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  border-color: rgba(116, 146, 183, 0.45);
 }
 
 .hamburger-btn {
@@ -137,7 +172,9 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  z-index: 1001;
+  /* 모바일 메뉴( z-index:1000 ) 위에 닫기 버튼이 보이도록 */
+  z-index: 1100;
+  position: relative;
 }
 
 .hamburger-line {
@@ -169,11 +206,11 @@
 /* Tablet */
 @media (max-width: 1024px) {
   .header {
-    padding: 15px 40px;
+    padding: 14px 32px;
   }
 
   .logo {
-    height: 55px;
+    height: 48px;
   }
 
   .nav-list {
@@ -188,11 +225,11 @@
 /* Mobile */
 @media (max-width: 768px) {
   .header {
-    padding: 15px 20px;
+    padding: 12px 18px;
   }
 
   .logo {
-    height: 50px;
+    height: 44px;
   }
 
   .hamburger-btn {
@@ -212,6 +249,7 @@
     transition: transform 0.3s ease;
     transform: translateY(-100%);
     margin: 0;
+    z-index: 1000;
   }
 
   .nav-open {

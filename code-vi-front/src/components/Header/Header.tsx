@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import logo from '../../assets/main-page/logo.png';
 import './Header.css';
 
-function Header({ onLoginClick, variant = "default" }) {
+function Header({ onLoginClick, onLogout, variant = 'default' }) {
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -120,17 +120,36 @@ function Header({ onLoginClick, variant = "default" }) {
             </li>
 
             <li className="nav-item mobile-login">
-              <button type="button" className="login-btn" onClick={handleLoginClick}>
-                LOGIN
-              </button>
+              {onLogout ? (
+                <button
+                  type="button"
+                  className="logout-btn"
+                  onClick={() => {
+                    closeMobileMenu();
+                    onLogout();
+                  }}
+                >
+                  LOGOUT
+                </button>
+              ) : (
+                <button type="button" className="login-btn" onClick={handleLoginClick}>
+                  LOGIN
+                </button>
+              )}
             </li>
 
           </ul>
         </nav>
 
-        <button type="button" className="login-btn desktop-login" onClick={handleLoginClick}>
-          LOGIN
-        </button>
+        {onLogout ? (
+          <button type="button" className="logout-btn desktop-login" onClick={onLogout}>
+            LOGOUT
+          </button>
+        ) : (
+          <button type="button" className="login-btn desktop-login" onClick={handleLoginClick}>
+            LOGIN
+          </button>
+        )}
       </div>
 
     </header>
