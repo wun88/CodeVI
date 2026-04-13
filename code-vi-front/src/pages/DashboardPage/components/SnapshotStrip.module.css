@@ -1,0 +1,229 @@
+.snapshotRoot[data-has-selection='true'] .liveBar {
+  border-left: 4px solid #7492b7;
+  box-shadow: 0 6px 22px rgba(116, 146, 183, 0.18);
+}
+
+.snapshotRoot[data-has-selection='true'] .current {
+  border: 2px solid rgba(116, 146, 183, 0.75);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 6px 22px rgba(116, 146, 183, 0.12);
+}
+
+.liveBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: -0.35rem 0 1rem;
+  padding: 0.6rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(116, 146, 183, 0.32);
+  border-left-width: 1px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.045);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.liveLabel {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7492b7;
+}
+
+.liveValue {
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: var(--rf-text, #111111);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  letter-spacing: -0.02em;
+}
+
+.liveTime {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(34, 34, 34, 0.48);
+}
+
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.strong {
+  color: var(--rf-text, #111111);
+  font-weight: 900;
+}
+
+.current {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.currentLabel {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7492b7;
+}
+
+.currentValue {
+  font-size: 0.88rem;
+  font-weight: 900;
+  color: var(--rf-text, #111111);
+  letter-spacing: -0.02em;
+}
+
+.snapCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: left;
+  min-width: 16.5rem;
+  border-radius: 18px;
+  font-family: inherit;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.055);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  overflow: hidden;
+}
+
+.snapCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);
+  border-color: rgba(116, 146, 183, 0.45);
+}
+
+.snapMain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem 0.5rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.snapCardActive {
+  border: 2px solid rgba(116, 146, 183, 0.95);
+  box-shadow:
+    0 0 0 3px rgba(116, 146, 183, 0.22),
+    0 14px 40px rgba(0, 0, 0, 0.09);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.topRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.snapId {
+  font-weight: 900;
+  font-size: 0.98rem;
+  color: var(--rf-text, #111111);
+  letter-spacing: -0.02em;
+}
+
+.selectedPill {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.52rem;
+  border-radius: 999px;
+  background: rgba(116, 146, 183, 0.22);
+  color: #3d5a73;
+  border: 1px solid rgba(116, 146, 183, 0.45);
+}
+
+.midRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.build {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: rgba(34, 34, 34, 0.82);
+}
+
+.dot {
+  color: rgba(34, 34, 34, 0.3);
+  font-weight: 900;
+}
+
+.date {
+  font-size: 0.7rem;
+  color: rgba(34, 34, 34, 0.48);
+  font-weight: 600;
+}
+
+.bottomRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 1rem 0.85rem;
+  border-top: 1px dashed rgba(116, 146, 183, 0.28);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.hint {
+  font-size: 0.7rem;
+  color: rgba(34, 34, 34, 0.48);
+  font-weight: 700;
+}
+
+.snapSecondary {
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.72rem !important;
+}

@@ -26,12 +26,15 @@ export default function LoginPage() {
           password: form.password,
         });
         localStorage.setItem('accessToken', res.accessToken);
+        localStorage.setItem('cv_teamName', form.teamName);
+        if (form.jenkinsJobName) localStorage.setItem('cv_jobName', form.jenkinsJobName);
       } else {
         const res = await authService.signin({
           teamName: form.teamName,
           password: form.password,
         });
         localStorage.setItem('accessToken', res.accessToken);
+        localStorage.setItem('cv_teamName', form.teamName);
       }
       navigate('/dashboard');
     } catch {

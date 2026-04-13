@@ -18,22 +18,12 @@ function AstNode({ data: rawData, selected }: NodeProps) {
   const { metrics } = data;
 
   return (
-    <div className={`${styles.node} ${config.className} ${selected ? styles.selected : ''}`}>
+    <div
+      className={`${styles.node} ${config.className} ${selected ? styles.selected : ''}`}
+      data-node-type={data.nodeType}
+      data-selected={selected ? 'true' : 'false'}
+    >
       <Handle type="target" position={Position.Top} className={styles.handle} />
-
-      {/* DIT Badge (상속 깊이) */}
-      {data.nodeType === 'class' && metrics && (
-        <div className={styles.ditBadge} title="Depth of Inheritance Tree">
-          D{metrics.dit}
-        </div>
-      )}
-
-      {/* NOC Badge (자식 수) */}
-      {data.nodeType === 'class' && metrics && metrics.noc > 0 && (
-        <div className={styles.nocBadge} title={`Number of Children: ${metrics.noc}`}>
-          N{metrics.noc}
-        </div>
-      )}
 
       <div className={styles.header}>
         <span className={styles.emoji}>{config.emoji}</span>
@@ -44,11 +34,6 @@ function AstNode({ data: rawData, selected }: NodeProps) {
 
       {data.meta && (
         <div className={styles.meta}>
-          {data.meta.startLine != null && (
-            <span className={styles.metaTag}>
-              L{data.meta.startLine}–{data.meta.endLine}
-            </span>
-          )}
           {data.meta.methodCount != null && (
             <span className={styles.metaTag}>{data.meta.methodCount} methods</span>
           )}
@@ -58,31 +43,35 @@ function AstNode({ data: rawData, selected }: NodeProps) {
         </div>
       )}
 
-      {/* CK Metrics Grid (클래스 전용) */}
+      {/* 상세 메트릭은 hover/selected에서만 노출 (CSS로 제어) */}
       {data.nodeType === 'class' && metrics && (
-        <div className={styles.metricsGrid}>
-          <div className={styles.metricItem} title="Coupling Between Objects">
-            <span className={styles.metricLabel}>CBO</span>
-            <span className={styles.metricValue}>{metrics.cbo}</span>
+        <div className={styles.metricsPopover} aria-hidden={!selected}>
+          <div className={styles.metricsGrid}>
+            <div className={styles.metricItem} title="Coupling Between Objects">
+              <span className={styles.metricLabel}>CBO</span>
+              <span className={styles.metricValue}>{metrics.cbo}</span>
+            </div>
+            <div className={styles.metricItem} title="Response For a Class">
+              <span className={styles.metricLabel}>RFC</span>
+              <span className={styles.metricValue}>{metrics.rfc}</span>
+            </div>
+            <div className={styles.metricItem} title="Lack of Cohesion in Methods">
+              <span className={`${styles.metricLabel} ${metrics.lcom > 50 ? styles.warn : ''}`}>LCOM</span>
+              <span className={styles.metricValue}>{metrics.lcom}</span>
+            </div>
+            <div className={styles.metricItem} title="Weighted Methods per Class (Complexity)">
+              <span className={styles.metricLabel}>WMC</span>
+              <span className={styles.metricValue}>{metrics.wmc}</span>
+            </div>
+            <div className={styles.metricItem} title="Depth of Inheritance Tree">
+              <span className={styles.metricLabel}>DIT</span>
+              <span className={styles.metricValue}>{metrics.dit}</span>
+            </div>
+            <div className={styles.metricItem} title="Number of Children">
+              <span className={styles.metricLabel}>NOC</span>
+              <span className={styles.metricValue}>{metrics.noc}</span>
+            </div>
           </div>
-          <div className={styles.metricItem} title="Response For a Class">
-            <span className={styles.metricLabel}>RFC</span>
-            <span className={styles.metricValue}>{metrics.rfc}</span>
-          </div>
-          <div className={styles.metricItem} title="Lack of Cohesion in Methods">
-            <span className={`${styles.metricLabel} ${metrics.lcom > 50 ? styles.warn : ''}`}>LCOM</span>
-            <span className={styles.metricValue}>{metrics.lcom}</span>
-          </div>
-        </div>
-      )}
-
-      {/* 가로형 WMC 게이지 (복잡도) */}
-      {data.nodeType === 'class' && metrics && (
-        <div className={styles.wmcBarWrapper} title={`Weighted Methods (Complexity): ${metrics.wmc}`}>
-          <div 
-            className={styles.wmcBar} 
-            style={{ width: `${Math.min(metrics.wmc * 5, 100)}%` }} 
-          />
         </div>
       )}
 

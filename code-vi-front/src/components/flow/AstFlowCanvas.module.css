@@ -2,7 +2,19 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background: #0a0c15;
+  flex: 1;
+  /* flex 높이 붕괴 시에도 그래프 영역이 완전히 사라지지 않도록 하한 */
+  min-height: clamp(240px, 35vh, 560px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(165deg, #dceef9 0%, #e8f4fc 45%, #ebf5fb 100%);
+}
+
+.canvasWrapper :global(.react-flow) {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .empty {
@@ -11,75 +23,63 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #4a5568;
-  gap: 12px;
+  min-height: 320px;
+  color: var(--rf-muted, rgba(34, 34, 34, 0.55));
+  gap: 0.75rem;
   user-select: none;
+  padding: 1.5rem;
 }
 
 .emptyIcon {
-  font-size: 48px;
-  opacity: 0.4;
+  font-size: 2.5rem;
+  opacity: 0.45;
 }
 
 .empty h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--rf-text, #222222);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .empty p {
-  font-size: 13px;
-  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rf-muted, rgba(34, 34, 34, 0.68));
   margin: 0;
+  text-align: center;
+  max-width: 280px;
+  line-height: 1.45;
 }
 
 .loadingOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 12, 21, 0.8);
+  background: rgba(235, 245, 251, 0.72);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  gap: 16px;
-  color: #94a3b8;
-  font-size: 14px;
-  backdrop-filter: blur(4px);
+  gap: 1rem;
+  color: var(--rf-muted, rgba(34, 34, 34, 0.68));
+  font-size: 0.875rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
 }
 
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #1a1d2e;
-  border-top-color: #6366f1;
+  border: 3px solid rgba(116, 146, 183, 0.25);
+  border-top-color: #7492b7;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.statsBar {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 10;
-  display: flex;
-  gap: 10px;
-  background: rgba(26, 29, 46, 0.9);
-  border: 1px solid #2d3150;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
-  color: #94a3b8;
-  backdrop-filter: blur(8px);
-}
-
-.statsBar span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -6,7 +6,6 @@ import './Header.css';
 
 function Header({ onLoginClick, variant = "default" }) {
   const navigate = useNavigate();
-
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -159,7 +158,6 @@ function Header({ onLoginClick, variant = "default" }) {
                 </div>
               </li>
             )}
-
           </ul>
         </nav>
 
