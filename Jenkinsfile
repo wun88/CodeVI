@@ -1,9 +1,8 @@
-// CodeVi/Jenkinsfile
 pipeline {
     agent any
 
     environment {
-        // 실제 폴더명으로 확인해 주세요! (하이픈 유무 등)
+        // 실제 프로젝트 폴더명과 일치하는지 다시 확인해주세요.
         BACK_DIR = "code-vi-back"
         FRONT_DIR = "code-vi-front"
     }
@@ -11,25 +10,27 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // GitHub에서 소스 코드를 전체적으로 긁어옵니다.
+                // SCM(Git)에서 최신 코드를 가져옵니다.
                 checkout scm
             }
         }
 
         stage('Build & Deploy (In Parallel)') {
+            // 핵심: 'Deploy' 브랜치로 머지/푸시될 때만 이 전체 스테이지를 실행합니다.
+            when {
+                branch 'Deploy'
+            }
             parallel {
-                // 1. 백엔드 빌드 및 배포
                 stage('Backend CD') {
                     steps {
                         dir("${BACK_DIR}") {
                             echo "🚀 Starting Backend Deployment..."
-                            // 각 폴더 내부의 docker-compose.prod.yml을 사용합니다.
+                            // 각 폴더 안의 prod 설정 파일로 빌드 및 실행
                             sh "docker-compose -f docker-compose.prod.yml up -d --build"
                         }
                     }
                 }
 
-                // 2. 프론트엔드 빌드 및 배포
                 stage('Frontend CD') {
                     steps {
                         dir("${FRONT_DIR}") {
@@ -40,14 +41,25 @@ pipeline {
                 }
             }
         }
+
+        stage('Post-Deployment Cleanup') {
+            when {
+                branch 'deploy'
+            }
+            steps {
+                echo "🧹 Cleaning up unused Docker images..."
+                // 빌드 후 남은 'dangling' 이미지들을 정리하여 디스크 공간 확보
+                sh "docker image prune -f"
+            }
+        }
     }
 
     post {
         success {
-            echo "✅ All services (Front & Back) deployed successfully!"
+            echo "✅ CodeVi (Front & Back) deployed successfully to the server!"
         }
         failure {
-            echo "❌ Deployment failed. Please check the logs."
+            echo "❌ Deployment failed. Check the Jenkins console output."
         }
     }
 }

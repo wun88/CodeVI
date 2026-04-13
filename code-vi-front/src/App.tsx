@@ -12,14 +12,12 @@ import Dashboard from './pages/CodeInsight/Dashboard';
 import FAQ from './pages/FAQ';
 import Community from './pages/Community';
 import ContactUs from './pages/ContactUs';
-import Login from './pages/Login';
-import Diagnose from './pages/Diagnose';
 import AuthPanel from './components/AuthPanel/AuthPanel';
 
-// --- App.tsx Imports ---
 import LoginPage from './pages/LoginPage/LoginPage';
 import DashboardPage from './pages/DashboardPage/DashboardPage';
 import VisualizationPage from './pages/VisualizationPage/VisualizationPage';
+import MyPage from './pages/MyPage/MyPage';
 
 /** 인증 가드 — JWT 토큰이 없으면 /login으로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -82,14 +80,18 @@ export default function App() {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/community" element={<Community />} />
             <Route path="/contact-us" element={<ContactUs />} />
-            <Route path="/diagnose" element={<Diagnose />} />
             
-            {/* Note: In App.jsx this was path="/login", but App.tsx also has /login. 
-                We keep the older one at /login-old and the newer at /login */}
-            <Route path="/login-old" element={<Login />} />
 
             {/* --- App.tsx Routes --- */}
             <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/mypage"
+              element={
+                <PrivateRoute>
+                  <MyPage />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={

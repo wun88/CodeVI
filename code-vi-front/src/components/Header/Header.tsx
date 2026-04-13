@@ -1,22 +1,36 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaUserCircle } from 'react-icons/fa';
 import logo from '../../assets/main-page/logo.png';
 import './Header.css';
 
-function Header({ onLoginClick, onLogout, variant = 'default' }) {
-
+function Header({ onLoginClick, variant = "default" }) {
+  const navigate = useNavigate();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const timeoutRef = useRef(null);
 
   useEffect(() => {
+    // Initial check
+    setIsLoggedIn(!!localStorage.getItem('accessToken'));
+
+    // Listen to storage changes in case login happens in another tab or we trigger a custom event
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem('accessToken'));
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleMouseEnter = () => {
@@ -55,6 +69,10 @@ function Header({ onLoginClick, onLogout, variant = 'default' }) {
     if (onLoginClick) {
       onLoginClick();
     }
+  };
+
+  const handleProfileClick = () => {
+    navigate('/mypage'); // Go to mypage instead of dashboard
   };
 
   return (
@@ -119,36 +137,46 @@ function Header({ onLoginClick, onLogout, variant = 'default' }) {
 
             </li>
 
-            <li className="nav-item mobile-login">
-              {onLogout ? (
-                <button
-                  type="button"
-                  className="logout-btn"
-                  onClick={() => {
-                    closeMobileMenu();
-                    onLogout();
-                  }}
-                >
-                  LOGOUT
-                </button>
-              ) : (
+            {!isLoggedIn ? (
+              <li className="nav-item mobile-login">
                 <button type="button" className="login-btn" onClick={handleLoginClick}>
                   LOGIN
                 </button>
-              )}
-            </li>
-
+              </li>
+            ) : (
+              <li className="nav-item mobile-login">
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
+                  <button type="button" className="dashboard-btn" style={{ width: 'auto' }} onClick={() => { closeMobileMenu(); navigate('/dashboard'); }}>
+                    Dashboard
+                  </button>
+                  <FaUserCircle
+                    size={38}
+                    className="profile-icon"
+                    onClick={handleProfileClick}
+                    style={{ color: '#7492B7', cursor: 'pointer' }}
+                  />
+                </div>
+              </li>
+            )}
           </ul>
         </nav>
 
-        {onLogout ? (
-          <button type="button" className="logout-btn desktop-login" onClick={onLogout}>
-            LOGOUT
-          </button>
-        ) : (
+        {!isLoggedIn ? (
           <button type="button" className="login-btn desktop-login" onClick={handleLoginClick}>
             LOGIN
           </button>
+        ) : (
+          <div className="desktop-login" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button type="button" className="dashboard-btn" onClick={() => navigate('/dashboard')}>
+              Dashboard
+            </button>
+            <FaUserCircle
+              size={38}
+              className="profile-icon"
+              onClick={handleProfileClick}
+              style={{ color: '#7492B7', cursor: 'pointer' }}
+            />
+          </div>
         )}
       </div>
 

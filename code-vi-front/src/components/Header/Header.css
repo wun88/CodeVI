@@ -160,6 +160,24 @@
   border-color: rgba(116, 146, 183, 0.45);
 }
 
+.dashboard-btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: #7492B7;
+  background-color: transparent;
+  border: 1.5px solid #7492B7;
+  border-radius: 8px;
+  padding: 6.5px 20.5px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.dashboard-btn:hover {
+  background-color: rgba(116, 146, 183, 0.1);
+}
+
 .hamburger-btn {
   display: none;
   flex-direction: column;
