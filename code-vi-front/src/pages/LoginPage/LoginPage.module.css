@@ -185,24 +185,72 @@
   background: #2d3150;
 }
 
-.googleBtn {
+.socialButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.socialButtons button {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: #0f1117;
-  border: 1.5px solid #2d3150;
   border-radius: 10px;
   padding: 11px;
-  color: #94a3b8;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.socialButtons button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* GitHub - 검정 */
+.githubBtn {
+  background: #24292e;
+  border: 1.5px solid #24292e;
+  color: #ffffff;
+}
+
+.githubBtn:hover {
+  box-shadow: 0 4px 12px rgba(36, 41, 46, 0.4);
+}
+
+/* Google - 흰색 테두리 */
+.googleBtn {
+  background: #ffffff;
+  border: 1.5px solid #dadce0;
+  color: #3c4043;
 }
 
 .googleBtn:hover {
-  border-color: #4285F4;
-  color: #e2e8f0;
+  background: #f8f9fa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 카카오 - 노랑 */
+.kakaoBtn {
+  background: #FEE500;
+  border: 1.5px solid #FEE500;
+  color: #000000;
+}
+
+.kakaoBtn:hover {
+  box-shadow: 0 4px 12px rgba(254, 229, 0, 0.4);
+}
+
+/* 네이버 - 초록 */
+.naverBtn {
+  background: #03C75A;
+  border: 1.5px solid #03C75A;
+  color: #ffffff;
+}
+
+.naverBtn:hover {
+  box-shadow: 0 4px 12px rgba(3, 199, 90, 0.4);
 }
