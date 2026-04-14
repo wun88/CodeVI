@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import './AuthPanel.css';
 import loginBg from '../../assets/auth/login_bg.png';
 import signupBg from '../../assets/auth/signup_bg.png';
+import { authService } from '../../services/authService';
 
 interface AuthPanelProps {
   step: 'closed' | 'login' | 'signup';
@@ -117,7 +118,7 @@ function AuthPanel({ step, onClose, onGoSignup, onGoLogin }: AuthPanelProps) {
                   <button
                     type="button"
                     className="auth-social-btn auth-social-github"
-                    onClick={() => console.log('GitHub 로그인 클릭')}
+                    onClick={() => authService.redirectToGithubSignIn()}
                     aria-label="GitHub 로그인"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

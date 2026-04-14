@@ -20,4 +20,8 @@ export const authService = {
   redirectToGoogleSignIn: (): void => {
     window.location.href = 'http://localhost:13000/api/auth/google/signin';
   },
+
+  redirectToGithubSignIn: (): void => {
+    window.location.href = 'http://localhost:13000/api/auth/github/signin';
+  },
 };

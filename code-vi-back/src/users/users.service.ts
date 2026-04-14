@@ -8,6 +8,7 @@ import { User } from './entities/user.entity';
 import { CreateUserDto, CreateUserWithAstAndBuildDto } from './dto/create-user-request.dto';
 import { UpdateUserRequestDto } from './dto/update-user-request.dto';
 import { CreateGoogleUserRequestDto } from './dto/create-google-user-request.dto';
+import { CreateGithubUserRequestDto } from './dto/create-github-user-request.dto';
 import { UserStatus } from './entities/user-status.enum';
 import { UserRole } from './entities/user-role.enum';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
@@ -168,6 +169,58 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     return existingUser;
+  }
+
+  // READ - by GitHub UID
+  async getUserByGithubUid(githubUid: number): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { githubUid },
+    });
+  }
+
+  // CREATE - GitHub User
+  async createUserByGithub(
+    createGithubUserRequestDto: CreateGithubUserRequestDto,
+  ): Promise<User> {
+    this.logger.verbose(
+      `Creating a new GitHub account with email: ${createGithubUserRequestDto.email}`,
+    );
+    const { githubUid, username, email, role } = createGithubUserRequestDto;
+
+    if (!githubUid || !username || !email) {
+      this.logger.error('Required fields missing for GitHub user creation.');
+      throw new BadRequestException(
+        'GitHub UID, username, and email must be provided for GitHub login.',
+      );
+    }
+
+    try {
+      await this.checkEmailExist(email);
+      const tempPassword = uuidv4();
+      const hashedPassword = await this.hashPassword(tempPassword);
+
+      const newUser = this.usersRepository.create({
+        githubUid,
+        username,
+        password: hashedPassword,
+        email,
+        role: role || UserRole.STUDENT,
+      });
+
+      const savedUser = await this.usersRepository.save(newUser);
+      this.logger.verbose(
+        `New GitHub account created successfully: ${savedUser.email} (ID: ${savedUser.id})`,
+      );
+      return savedUser;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(
+        `Error creating GitHub user: ${errorMessage}`,
+        errorStack,
+      );
+      throw error;
+    }
   }
 
   async remove(id: number): Promise<void> {

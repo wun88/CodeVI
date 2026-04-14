@@ -126,7 +126,7 @@ export default function LoginPage() {
         <div className={styles.socialButtons}>
           <button
             className={styles.githubBtn}
-            onClick={() => console.log('GitHub 로그인 클릭')}
+            onClick={() => authService.redirectToGithubSignIn()}
             type="button"
             aria-label="GitHub 로그인"
           >
