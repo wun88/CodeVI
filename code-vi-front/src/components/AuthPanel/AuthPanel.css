@@ -614,6 +614,93 @@
   outline-offset: 2px;
 }
 
+/* ---------- 소셜 로그인 버튼 ---------- */
+.auth-social-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 14px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.auth-social-divider::before,
+.auth-social-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.auth-social-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+}
+
+.auth-social-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.auth-social-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+/* GitHub - 검정 */
+.auth-social-github {
+  background: #24292e;
+  border: 1px solid #24292e;
+  color: #ffffff;
+}
+
+.auth-social-github:hover {
+  box-shadow: 0 4px 12px rgba(36, 41, 46, 0.3);
+}
+
+/* Google - 흰색 테두리 */
+.auth-social-google {
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+}
+
+.auth-social-google:hover {
+  background: #f8f9fa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 카카오 - 노랑 */
+.auth-social-kakao {
+  background: #FEE500;
+  border: 1px solid #FEE500;
+  color: #000000;
+}
+
+.auth-social-kakao:hover {
+  box-shadow: 0 4px 12px rgba(254, 229, 0, 0.35);
+}
+
+/* 네이버 - 초록 */
+.auth-social-naver {
+  background: #03C75A;
+  border: 1px solid #03C75A;
+  color: #ffffff;
+}
+
+.auth-social-naver:hover {
+  box-shadow: 0 4px 12px rgba(3, 199, 90, 0.35);
+}
+
 @media (max-width: 768px) {
   .auth-modal {
     width: 100%;

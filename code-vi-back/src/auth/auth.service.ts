@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { UserRole } from 'src/users/entities/user-role.enum';
 import { CreateGoogleUserRequestDto } from 'src/users/dto/create-google-user-request.dto';
+import { CreateGithubUserRequestDto } from 'src/users/dto/create-github-user-request.dto';
 import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
@@ -60,6 +61,34 @@ export class AuthService {
             this.logger.verbose(`New user with google email: ${email} created successfully`);
         }
         this.logger.verbose(`User with G-mail: ${email} found`);
+        return existingUser;
+    }
+
+    async findOrCreateGithubUser(githubProfile: { githubUid: number; email: string; name: string }): Promise<User | null> {
+        this.logger.verbose(`User with GitHub UID: ${githubProfile.githubUid} is trying to sign in`);
+        const { githubUid, email, name } = githubProfile;
+
+        // 먼저 GitHub UID로 사용자 검색
+        let existingUser = await this.userService.getUserByGithubUid(githubUid);
+
+        if (!existingUser) {
+            // GitHub UID가 없으면 이메일로 검색
+            existingUser = await this.userService.getUserByEmail(email).catch(() => null);
+
+            if (!existingUser) {
+                this.logger.verbose(`User with GitHub UID: ${githubUid} not found, creating new user`);
+                const createGithubUserRequestDto: CreateGithubUserRequestDto = {
+                    githubUid,
+                    email,
+                    username: name || email.split('@')[0],
+                    role: UserRole.STUDENT,
+                };
+                existingUser = await this.userService.createUserByGithub(createGithubUserRequestDto);
+                this.logger.verbose(`New user with GitHub UID: ${githubUid} created successfully`);
+            }
+        }
+
+        this.logger.verbose(`User with GitHub UID: ${githubUid} found`);
         return existingUser;
     }
 

@@ -6,6 +6,7 @@ import { ApiResponseDto } from 'src/common/api-response-dto/api-response.dto';
 import { CreateUserDto } from 'src/users/dto/create-user-request.dto';
 import { UsersService } from 'src/users/users.service';
 import { GoogleAuthGuard } from './custom-guards-decorators/google-auth.guard';
+import { GithubAuthGuard } from './custom-guards-decorators/github-auth.guard';
 import { User } from 'src/users/entities/user.entity';
 import { UserRole } from 'src/users/entities/user-role.enum';
 import { Roles } from './custom-guards-decorators/roles.decorator';
@@ -125,6 +126,45 @@ export class AuthController {
             this.logger.error(
                 `Error processing Google callback for user: ${req.user ? (req.user as any).id : 'unknown'}`,
                 error.stack
+            );
+            return res.redirect(
+                `${this.frontendUrl}/auth/sign-in?error=jwt_generation_failed`,
+            );
+        }
+    }
+
+    @Get('/github/signin')
+    @UseGuards(GithubAuthGuard)
+    async githubAuth(): Promise<void> {
+        this.logger.verbose(`User is trying to GitHub social sign-in`);
+        // GitHub 로그인 페이지로 리디렉션 (Passport가 처리)
+    }
+
+    @Get('/github/callback')
+    @UseGuards(GithubAuthGuard)
+    async githubAuthRedirect(
+        @Req() req: Request,
+        @Res() res: Response,
+    ): Promise<void> {
+        this.logger.verbose(`Processing GitHub authentication callback`);
+        if (!req.user) {
+            this.logger.error(`GitHub authentication failed, req.user is null`);
+            return res.redirect(
+                `${this.frontendUrl}/auth/sign-in?error=github_auth_failed`,
+            );
+        }
+        try {
+            const jwtToken = await this.authService.generateJwt(req.user as User);
+            this.logger.verbose(
+                `GitHub authentication successful for user, JWT issued.`,
+            );
+
+            const callbackUrlWithToken = `${this.frontendUrl}/auth/github-callback?jwtToken=Bearer ${jwtToken}`;
+            return res.redirect(callbackUrlWithToken);
+        } catch (error) {
+            this.logger.error(
+                `Error processing GitHub callback for user: ${req.user ? (req.user as User).id : 'unknown'}`,
+                error instanceof Error ? error.stack : undefined
             );
             return res.redirect(
                 `${this.frontendUrl}/auth/sign-in?error=jwt_generation_failed`,
