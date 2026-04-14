@@ -635,27 +635,25 @@
 
 .auth-social-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
 }
 
 .auth-social-btn {
-  width: 100%;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 12px;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
 .auth-social-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  opacity: 0.85;
+  transform: translateY(-2px);
 }
 
 /* GitHub - 검정 */
