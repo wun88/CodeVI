@@ -129,7 +129,7 @@ function AuthPanel({ step, onClose, onGoSignup, onGoLogin }: AuthPanelProps) {
                   <button
                     type="button"
                     className="auth-social-btn auth-social-google"
-                    onClick={() => console.log('Google 로그인 클릭')}
+                    onClick={() => authService.redirectToGoogleSignIn()}
                     aria-label="Google 로그인"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24">

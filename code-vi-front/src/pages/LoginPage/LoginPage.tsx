@@ -137,7 +137,7 @@ export default function LoginPage() {
 
           <button
             className={styles.googleBtn}
-            onClick={() => console.log('Google 로그인 클릭')}
+            onClick={() => authService.redirectToGoogleSignIn()}
             type="button"
             aria-label="Google 로그인"
           >
