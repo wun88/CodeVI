@@ -24,4 +24,8 @@ export const authService = {
   redirectToGithubSignIn: (): void => {
     window.location.href = 'http://localhost:13000/api/auth/github/signin';
   },
+
+  redirectToKakaoSignIn: (): void => {
+    window.location.href = 'http://localhost:13000/api/auth/kakao/signin';
+  },
 };

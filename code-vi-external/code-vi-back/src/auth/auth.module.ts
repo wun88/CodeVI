@@ -12,6 +12,8 @@ import { GoogleAuthGuard } from './custom-guards-decorators/google-auth.guard';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { GithubAuthGuard } from './custom-guards-decorators/github-auth.guard';
 import { GithubStrategy } from './strategies/github.strategy';
+import { KakaoAuthGuard } from './custom-guards-decorators/kakao-auth.guard';
+import { KakaoStrategy } from './strategies/kakao.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()
@@ -41,6 +43,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     GoogleStrategy,
     GithubAuthGuard,
     GithubStrategy,
+    KakaoAuthGuard,
+    KakaoStrategy,
   ],
   controllers: [AuthController],
   exports: [AuthService, PassportModule, RolesGuard, JwtModule],

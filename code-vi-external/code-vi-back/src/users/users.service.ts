@@ -9,6 +9,7 @@ import { CreateUserDto, CreateUserWithAstAndBuildDto } from './dto/create-user-r
 import { UpdateUserRequestDto } from './dto/update-user-request.dto';
 import { CreateGoogleUserRequestDto } from './dto/create-google-user-request.dto';
 import { CreateGithubUserRequestDto } from './dto/create-github-user-request.dto';
+import { CreateKakaoUserRequestDto } from './dto/create-kakao-user-request.dto';
 import { UserStatus } from './entities/user-status.enum';
 import { UserRole } from './entities/user-role.enum';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
@@ -171,6 +172,13 @@ export class UsersService {
     return existingUser;
   }
 
+  // READ - by Kakao UID
+  async getUserByKakaoUid(kakaoUid: number): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { kakaoUid },
+    });
+  }
+
   // READ - by GitHub UID
   async getUserByGithubUid(githubUid: number): Promise<User | null> {
     return await this.usersRepository.findOne({
@@ -217,6 +225,53 @@ export class UsersService {
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
         `Error creating GitHub user: ${errorMessage}`,
+        errorStack,
+      );
+      throw error;
+    }
+  }
+
+  // CREATE - Kakao User
+  async createUserByKakao(
+    createKakaoUserRequestDto: CreateKakaoUserRequestDto,
+  ): Promise<User> {
+    this.logger.verbose(
+      `Creating a new Kakao account with email: ${createKakaoUserRequestDto.email}`,
+    );
+    const { kakaoUid, username, email, role } = createKakaoUserRequestDto;
+
+    if (!kakaoUid || !username) {
+      this.logger.error('Required fields missing for Kakao user creation.');
+      throw new BadRequestException(
+        'Kakao UID and username must be provided for Kakao login.',
+      );
+    }
+
+    try {
+      if (email) {
+        await this.checkEmailExist(email);
+      }
+      const tempPassword = uuidv4();
+      const hashedPassword = await this.hashPassword(tempPassword);
+
+      const newUser = this.usersRepository.create({
+        kakaoUid,
+        username,
+        password: hashedPassword,
+        email,
+        role: role || UserRole.STUDENT,
+      });
+
+      const savedUser = await this.usersRepository.save(newUser);
+      this.logger.verbose(
+        `New Kakao account created successfully: ${savedUser.email} (ID: ${savedUser.id})`,
+      );
+      return savedUser;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(
+        `Error creating Kakao user: ${errorMessage}`,
         errorStack,
       );
       throw error;

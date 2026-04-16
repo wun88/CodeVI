@@ -6,6 +6,7 @@ import { UsersService } from 'src/users/users.service';
 import { UserRole } from 'src/users/entities/user-role.enum';
 import { CreateGoogleUserRequestDto } from 'src/users/dto/create-google-user-request.dto';
 import { CreateGithubUserRequestDto } from 'src/users/dto/create-github-user-request.dto';
+import { CreateKakaoUserRequestDto } from 'src/users/dto/create-kakao-user-request.dto';
 import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
@@ -89,6 +90,34 @@ export class AuthService {
         }
 
         this.logger.verbose(`User with GitHub UID: ${githubUid} found`);
+        return existingUser;
+    }
+
+    async findOrCreateKakaoUser(kakaoProfile: { kakaoUid: number; email: string; name: string }): Promise<User | null> {
+        this.logger.verbose(`User with Kakao UID: ${kakaoProfile.kakaoUid} is trying to sign in`);
+        const { kakaoUid, email, name } = kakaoProfile;
+
+        // 먼저 Kakao UID로 사용자 검색
+        let existingUser = await this.userService.getUserByKakaoUid(kakaoUid);
+
+        if (!existingUser) {
+            // Kakao UID가 없으면 이메일로 검색
+            existingUser = await this.userService.getUserByEmail(email).catch(() => null);
+
+            if (!existingUser) {
+                this.logger.verbose(`User with Kakao UID: ${kakaoUid} not found, creating new user`);
+                const createKakaoUserRequestDto: CreateKakaoUserRequestDto = {
+                    kakaoUid,
+                    email,
+                    username: name || email.split('@')[0],
+                    role: UserRole.STUDENT,
+                };
+                existingUser = await this.userService.createUserByKakao(createKakaoUserRequestDto);
+                this.logger.verbose(`New user with Kakao UID: ${kakaoUid} created successfully`);
+            }
+        }
+
+        this.logger.verbose(`User with Kakao UID: ${kakaoUid} found`);
         return existingUser;
     }
 
