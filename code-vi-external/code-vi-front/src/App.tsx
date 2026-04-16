@@ -19,6 +19,7 @@ import DashboardPage from './pages/DashboardPage/DashboardPage';
 import VisualizationPage from './pages/VisualizationPage/VisualizationPage';
 import MyPage from './pages/MyPage/MyPage';
 import GithubCallback from './pages/GithubCallback/GithubCallback';
+import GoogleCallback from './pages/GoogleCallback/GoogleCallback';
 
 /** 인증 가드 — JWT 토큰이 없으면 /login으로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -86,6 +87,7 @@ export default function App() {
             {/* --- App.tsx Routes --- */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/github-callback" element={<GithubCallback />} />
+            <Route path="/auth/google-callback" element={<GoogleCallback />} />
             <Route
               path="/mypage"
               element={

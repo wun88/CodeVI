@@ -95,7 +95,6 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     async googleAuth(): Promise<void> {
         this.logger.verbose(`User is trying to Google social sign-in`);
-        // Google 로그인 페이지로 리디렉션 (Passport가 처리)
     }
 
     @Get('/google/callback')
@@ -112,20 +111,18 @@ export class AuthController {
             );
         }
         try {
-            const jwtToken = await this.authService.generateJwt(req.user as User); // User 타입 캐스팅
+            const jwtToken = await this.authService.generateJwt(req.user as User);
             this.logger.verbose(
                 `Google authentication successful for user, JWT issued.`,
             );
 
-            // JWT 토큰을 쿼리 파라미터로 프론트엔드 콜백 URL에 추가
             const callbackUrlWithToken = `${this.frontendUrl}/auth/google-callback?jwtToken=Bearer ${jwtToken}`;
 
-            // 헤더에 토큰을 담지 않고, 쿼리 파라미터로 리디렉션
             return res.redirect(callbackUrlWithToken);
         } catch (error) {
             this.logger.error(
-                `Error processing Google callback for user: ${req.user ? (req.user as any).id : 'unknown'}`,
-                error.stack
+                `Error processing Google callback for user: ${req.user ? (req.user as User).id : 'unknown'}`,
+                error instanceof Error ? error.stack : undefined
             );
             return res.redirect(
                 `${this.frontendUrl}/auth/sign-in?error=jwt_generation_failed`,
