@@ -6,13 +6,18 @@ import './Header.css';
 
 import { authService } from '../../services/authService';
 
-function Header({ onLoginClick, variant = "default" }) {
+interface HeaderProps {
+  onLoginClick?: () => void;
+  variant?: 'default' | 'transparent' | 'white' | string;
+}
+
+function Header({ onLoginClick, variant = "default" }: HeaderProps) {
   const navigate = useNavigate();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Initial check
