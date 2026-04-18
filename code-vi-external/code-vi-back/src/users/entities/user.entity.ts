@@ -29,6 +29,10 @@ export class User extends CommonEntity {
   @Column({ type: 'bigint', nullable: true })
   kakaoUid: number;
 
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  naverUid: string;
+
   @ManyToMany(() => TeamProject, (teamProject) => teamProject.users)
   teamProjects: TeamProject[];
 }

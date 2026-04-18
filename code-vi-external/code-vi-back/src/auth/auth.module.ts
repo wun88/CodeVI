@@ -14,6 +14,8 @@ import { GithubAuthGuard } from './custom-guards-decorators/github-auth.guard';
 import { GithubStrategy } from './strategies/github.strategy';
 import { KakaoAuthGuard } from './custom-guards-decorators/kakao-auth.guard';
 import { KakaoStrategy } from './strategies/kakao.strategy';
+import { NaverAuthGuard } from './custom-guards-decorators/naver-auth.guard';
+import { NaverStrategy } from './strategies/naver.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()
@@ -45,6 +47,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     GithubStrategy,
     KakaoAuthGuard,
     KakaoStrategy,
+    NaverAuthGuard,
+    NaverStrategy,
   ],
   controllers: [AuthController],
   exports: [AuthService, PassportModule, RolesGuard, JwtModule],

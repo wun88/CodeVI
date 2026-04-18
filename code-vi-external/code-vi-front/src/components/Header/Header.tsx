@@ -4,6 +4,8 @@ import { FaUserCircle } from 'react-icons/fa';
 import logo from '../../assets/main-page/logo.png';
 import './Header.css';
 
+import { authService } from '../../services/authService';
+
 function Header({ onLoginClick, variant = "default" }) {
   const navigate = useNavigate();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -16,11 +18,13 @@ function Header({ onLoginClick, variant = "default" }) {
     // Initial check
     setIsLoggedIn(!!localStorage.getItem('accessToken'));
 
-    // Listen to storage changes in case login happens in another tab or we trigger a custom event
+    // Listen to storage changes
     const handleStorageChange = () => {
       setIsLoggedIn(!!localStorage.getItem('accessToken'));
     };
     window.addEventListener('storage', handleStorageChange);
+    // Custom event for same-tab login/logout
+    window.addEventListener('auth-change', handleStorageChange);
 
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -30,8 +34,25 @@ function Header({ onLoginClick, variant = "default" }) {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-change', handleStorageChange);
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      setIsLoggedIn(false);
+      navigate('/');
+      // Trigger event for other components if needed
+      window.dispatchEvent(new Event('auth-change'));
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if backend fails, clear local state
+      localStorage.removeItem('accessToken');
+      setIsLoggedIn(false);
+      navigate('/');
+    }
+  };
 
   const handleMouseEnter = () => {
     if (isMobile) return;
@@ -145,16 +166,21 @@ function Header({ onLoginClick, variant = "default" }) {
               </li>
             ) : (
               <li className="nav-item mobile-login">
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
-                  <button type="button" className="dashboard-btn" style={{ width: 'auto' }} onClick={() => { closeMobileMenu(); navigate('/dashboard'); }}>
-                    Dashboard
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
+                    <button type="button" className="dashboard-btn" style={{ width: 'auto' }} onClick={() => { closeMobileMenu(); navigate('/dashboard'); }}>
+                      Dashboard
+                    </button>
+                    <FaUserCircle
+                      size={38}
+                      className="profile-icon"
+                      onClick={handleProfileClick}
+                      style={{ color: '#7492B7', cursor: 'pointer' }}
+                    />
+                  </div>
+                  <button type="button" className="login-btn" style={{ width: '100%', padding: '8px 0' }} onClick={handleLogout}>
+                    LOGOUT
                   </button>
-                  <FaUserCircle
-                    size={38}
-                    className="profile-icon"
-                    onClick={handleProfileClick}
-                    style={{ color: '#7492B7', cursor: 'pointer' }}
-                  />
                 </div>
               </li>
             )}
@@ -176,6 +202,9 @@ function Header({ onLoginClick, variant = "default" }) {
               onClick={handleProfileClick}
               style={{ color: '#7492B7', cursor: 'pointer' }}
             />
+            <button type="button" className="login-btn" style={{ marginLeft: '5px' }} onClick={handleLogout}>
+              LOGOUT
+            </button>
           </div>
         )}
       </div>

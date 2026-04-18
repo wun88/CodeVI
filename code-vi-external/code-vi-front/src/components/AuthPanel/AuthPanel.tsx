@@ -154,7 +154,7 @@ function AuthPanel({ step, onClose, onGoSignup, onGoLogin }: AuthPanelProps) {
                   <button
                     type="button"
                     className="auth-social-btn auth-social-naver"
-                    onClick={() => console.log('네이버 로그인 클릭')}
+                    onClick={() => authService.redirectToNaverSignIn()}
                     aria-label="네이버 로그인"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

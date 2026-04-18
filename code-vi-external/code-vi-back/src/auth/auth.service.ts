@@ -2,12 +2,13 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
-import { UserRole } from 'src/users/entities/user-role.enum';
-import { CreateGoogleUserRequestDto } from 'src/users/dto/create-google-user-request.dto';
-import { CreateGithubUserRequestDto } from 'src/users/dto/create-github-user-request.dto';
-import { CreateKakaoUserRequestDto } from 'src/users/dto/create-kakao-user-request.dto';
-import { User } from 'src/users/entities/user.entity';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/entities/user-role.enum';
+import { CreateGoogleUserRequestDto } from '../users/dto/create-google-user-request.dto';
+import { CreateGithubUserRequestDto } from '../users/dto/create-github-user-request.dto';
+import { CreateKakaoUserRequestDto } from '../users/dto/create-kakao-user-request.dto';
+import { CreateNaverUserRequestDto } from '../users/dto/create-naver-user-request.dto';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -118,6 +119,35 @@ export class AuthService {
         }
 
         this.logger.verbose(`User with Kakao UID: ${kakaoUid} found`);
+        return existingUser;
+    }
+
+
+    async findOrCreateNaverUser(naverProfile: { naverUid: string; email: string; name: string }): Promise<User | null> {
+        this.logger.verbose(`User with Naver UID: ${naverProfile.naverUid} is trying to sign in`);
+        const { naverUid, email, name } = naverProfile;
+
+        // 먼저 Naver UID로 사용자 검색
+        let existingUser = await this.userService.getUserByNaverUid(naverUid);
+
+        if (!existingUser) {
+            // Naver UID가 없으면 이메일로 검색
+            existingUser = await this.userService.getUserByEmail(email).catch(() => null);
+
+            if (!existingUser) {
+                this.logger.verbose(`User with Naver UID: ${naverUid} not found, creating new user`);
+                const createNaverUserRequestDto: CreateNaverUserRequestDto = {
+                    naverUid,
+                    email,
+                    username: name || email.split('@')[0],
+                    role: UserRole.STUDENT,
+                };
+                existingUser = await this.userService.createUserByNaver(createNaverUserRequestDto);
+                this.logger.verbose(`New user with Naver UID: ${naverUid} created successfully`);
+            }
+        }
+
+        this.logger.verbose(`User with Naver UID: ${naverUid} found`);
         return existingUser;
     }
 

@@ -28,4 +28,8 @@ export const authService = {
   redirectToKakaoSignIn: (): void => {
     window.location.href = 'http://localhost:13000/api/auth/kakao/signin';
   },
+
+  redirectToNaverSignIn: (): void => {
+    window.location.href = 'http://localhost:13000/api/auth/naver/signin';
+  },
 };

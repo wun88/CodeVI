@@ -10,6 +10,7 @@ import { UpdateUserRequestDto } from './dto/update-user-request.dto';
 import { CreateGoogleUserRequestDto } from './dto/create-google-user-request.dto';
 import { CreateGithubUserRequestDto } from './dto/create-github-user-request.dto';
 import { CreateKakaoUserRequestDto } from './dto/create-kakao-user-request.dto';
+import { CreateNaverUserRequestDto } from './dto/create-naver-user-request.dto';
 import { UserStatus } from './entities/user-status.enum';
 import { UserRole } from './entities/user-role.enum';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
@@ -186,6 +187,13 @@ export class UsersService {
     });
   }
 
+  // READ - by Naver UID
+  async getUserByNaverUid(naverUid: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { naverUid },
+    });
+  }
+
   // CREATE - GitHub User
   async createUserByGithub(
     createGithubUserRequestDto: CreateGithubUserRequestDto,
@@ -274,6 +282,50 @@ export class UsersService {
         `Error creating Kakao user: ${errorMessage}`,
         errorStack,
       );
+      throw error;
+    }
+  }
+
+
+  // CREATE - Naver User
+  async createUserByNaver(
+    createNaverUserRequestDto: CreateNaverUserRequestDto,
+  ): Promise<User> {
+    this.logger.verbose(
+      `Creating a new Naver account with email: ${createNaverUserRequestDto.email}`,
+    );
+    const { naverUid, username, email, role } = createNaverUserRequestDto;
+
+    if (!naverUid || !username || !email) {
+      this.logger.error('Required fields missing for Naver user creation.');
+      throw new BadRequestException(
+        'Naver UID, username, and email must be provided for Naver login.',
+      );
+    }
+
+    try {
+      await this.checkEmailExist(email);
+      const tempPassword = uuidv4();
+      const hashedPassword = await this.hashPassword(tempPassword);
+
+      const newUser = this.usersRepository.create({
+        naverUid,
+        username,
+        password: hashedPassword,
+        email,
+        role: role || UserRole.STUDENT,
+      });
+
+      const savedUser = await this.usersRepository.save(newUser);
+      this.logger.verbose(
+        `New Naver account created successfully: ${savedUser.email} (ID: ${savedUser.id})`,
+      );
+      return savedUser;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error creating Naver user: ${errorMessage}`, errorStack);
       throw error;
     }
   }
