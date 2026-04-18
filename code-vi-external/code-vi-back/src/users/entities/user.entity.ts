@@ -25,6 +25,10 @@ export class User extends CommonEntity {
   @Column({ type: 'bigint', nullable: true })
   githubUid: number;
 
+  @Index({ unique: true })
+  @Column({ type: 'bigint', nullable: true })
+  kakaoUid: number;
+
   @ManyToMany(() => TeamProject, (teamProject) => teamProject.users)
   teamProjects: TeamProject[];
 }
