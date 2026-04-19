@@ -35,10 +35,19 @@ function AstNode({ data: rawData, selected }: NodeProps) {
       {data.meta && (
         <div className={styles.meta}>
           {data.meta.methodCount != null && (
-            <span className={styles.metaTag}>{data.meta.methodCount} methods</span>
+            <span className={styles.metaTag}>
+              {data.meta.methodCount} method{data.meta.methodCount !== 1 ? 's' : ''}
+            </span>
           )}
           {data.meta.fileCount != null && (
-            <span className={styles.metaTag}>{data.meta.fileCount} files</span>
+            <span className={styles.metaTag}>
+              {data.meta.fileCount} file{data.meta.fileCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          {data.meta.childDirCount != null && data.meta.childDirCount > 0 && (
+            <span className={styles.metaTag}>
+              {data.meta.childDirCount} sub
+            </span>
           )}
         </div>
       )}

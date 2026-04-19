@@ -114,7 +114,7 @@ export default function AstFlowCanvas({
       base.map((e) => ({
         ...e,
         animated: false,
-        style: { ...(e.style ?? {}), opacity: 0.55, stroke: '#6b90ad', strokeWidth: 1.6 },
+        style: { ...(e.style ?? {}), opacity: 0.5, stroke: '#94a3b8', strokeWidth: 1.4 },
       }))
     );
   }, [setEdges]);
@@ -134,9 +134,9 @@ export default function AstFlowCanvas({
             animated: connected,
             style: {
               ...(e.style ?? {}),
-              opacity: connected ? 1 : 0.18,
-              stroke: connected ? '#4a6a8a' : '#8fb0c8',
-              strokeWidth: connected ? 2.8 : 1.4,
+              opacity: connected ? 1 : 0.12,
+              stroke: connected ? '#475569' : '#cbd5e1',
+              strokeWidth: connected ? 2.4 : 1.2,
             },
           };
         })
@@ -262,7 +262,7 @@ export default function AstFlowCanvas({
             boxShadow: '0 4px 14px rgba(34,34,34,0.05)',
           }}
         />
-        <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} color="rgba(124, 161, 191, 0.55)" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(148, 163, 184, 0.4)" />
       </ReactFlow>
     </div>
   );

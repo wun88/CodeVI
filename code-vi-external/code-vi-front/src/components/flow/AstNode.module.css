@@ -1,39 +1,47 @@
 .node {
   position: relative;
   --node-accent: #7492b7;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  border-left: 3px solid var(--node-accent);
-  border-radius: 12px;
-  padding: 7px 10px;
+  --node-accent-soft: rgba(116, 146, 183, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-left: 3.5px solid var(--node-accent);
+  border-radius: 14px;
+  padding: 8px 11px;
   min-width: 140px;
   max-width: 210px;
   cursor: pointer;
   transition:
-    box-shadow 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.12s ease;
+    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.22s ease,
+    transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
-  box-shadow: 0 6px 18px rgba(34, 34, 34, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 20px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(12px) saturate(1.6);
+  -webkit-backdrop-filter: blur(12px) saturate(1.6);
 }
 
 .node:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 26px rgba(34, 34, 34, 0.07);
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.07);
+  border-color: rgba(255, 255, 255, 0.7);
 }
 
 .selected {
   box-shadow:
-    0 0 0 3px rgba(116, 146, 183, 0.5),
-    0 0 22px rgba(116, 146, 183, 0.22),
-    0 10px 30px rgba(116, 146, 183, 0.14);
-  border-color: rgba(116, 146, 183, 0.55) !important;
+    0 0 0 2.5px color-mix(in srgb, var(--node-accent) 45%, transparent),
+    0 0 18px color-mix(in srgb, var(--node-accent) 18%, transparent),
+    0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: color-mix(in srgb, var(--node-accent) 50%, transparent) !important;
 }
 
+/* ═══════════════════════ Node Types ═══════════════════════ */
 .directory {
   --node-accent: #3b82f6;
+  --node-accent-soft: rgba(59, 130, 246, 0.06);
 }
 
 .directory .emoji {
@@ -42,6 +50,7 @@
 
 .file {
   --node-accent: #10b981;
+  --node-accent-soft: rgba(16, 185, 129, 0.06);
 }
 
 .file .emoji {
@@ -50,6 +59,7 @@
 
 .class {
   --node-accent: #f59e0b;
+  --node-accent-soft: rgba(245, 158, 11, 0.06);
 }
 
 .class .emoji {
@@ -58,34 +68,39 @@
 
 .function {
   --node-accent: #a855f7;
+  --node-accent-soft: rgba(168, 85, 247, 0.06);
 }
 
 .function .emoji {
   color: #9333ea;
 }
 
+/* ═══════════════════════ Header ═══════════════════════ */
 .header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   overflow: hidden;
 }
 
 .emoji {
   font-size: 13px;
   flex-shrink: 0;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.06));
 }
 
 .label {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 800;
-  color: #1e293b;
+  color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+  letter-spacing: -0.01em;
 }
 
+/* ═══════════════════════ Meta Tags ═══════════════════════ */
 .meta {
   display: flex;
   flex-wrap: wrap;
@@ -94,26 +109,36 @@
 }
 
 .metaTag {
-  font-size: 10px;
-  color: rgba(34, 34, 34, 0.55);
-  background: rgba(116, 146, 183, 0.12);
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-weight: 600;
+  font-size: 9.5px;
+  color: rgba(15, 23, 42, 0.5);
+  background: var(--node-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--node-accent) 10%, transparent);
+  border-radius: 5px;
+  padding: 1.5px 6px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
+/* ═══════════════════════ Handles ═══════════════════════ */
 .handle {
   width: 8px !important;
   height: 8px !important;
-  background: #cbd5e1 !important;
+  background: #e2e8f0 !important;
   border: 1.5px solid #94a3b8 !important;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+.node:hover .handle {
+  background: #cbd5e1 !important;
+  border-color: #64748b !important;
+}
+
+/* ═══════════════════════ Metrics Popover ═══════════════════════ */
 .metricsPopover {
   display: none;
-  margin-top: 7px;
-  padding-top: 7px;
-  border-top: 1px solid rgba(116, 146, 183, 0.16);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(116, 146, 183, 0.14);
 }
 
 .node:hover .metricsPopover {
@@ -124,10 +149,11 @@
   display: block;
 }
 
+/* ═══════════════════════ Metrics Grid ═══════════════════════ */
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+  gap: 3px;
 }
 
 .metricItem {
@@ -135,28 +161,38 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(116, 146, 183, 0.07);
-  padding: 2px 4px;
+  background: rgba(241, 245, 249, 0.7);
+  padding: 3px 4px;
   border-radius: 6px;
+  border: 1px solid rgba(226, 232, 240, 0.45);
+  transition: background 0.15s ease;
+}
+
+.metricItem:hover {
+  background: rgba(226, 232, 240, 0.55);
 }
 
 .metricLabel {
-  font-size: 8px;
-  color: rgba(34, 34, 34, 0.5);
-  font-weight: 700;
+  font-size: 7.5px;
+  color: rgba(71, 85, 105, 0.7);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .metricValue {
-  font-size: 10px;
-  color: #1e293b;
+  font-size: 11px;
+  color: #0f172a;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .warn {
   color: #dc2626;
 }
 
+/* ═══════════════════════ Node Type Sizing ═══════════════════════ */
 /* 타입별 위계: directory > file > class > function */
 [data-node-type='directory'] {
   min-width: 180px;
