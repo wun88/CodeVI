@@ -6,7 +6,7 @@
 ---
 
 ## Phase 0: 작업 대상 결정
-- `docs/specs/` 폴더를 스캔하여 파일명 번호 순으로 정렬한다.
+- `docs/specs/` 폴더를 스캔하여 `MemberName_NN_feature_name.md` 형식의 파일을 번호 순으로 정렬한다.
 - `docs/history/`에 해당 명세의 완료 기록이 없는 가장 낮은 번호의 명세를 선택한다.
 - 해당 명세 파일을 정독하여 목표, Phase, 검증 기준을 파악한다.
 

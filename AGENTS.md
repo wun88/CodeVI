@@ -14,7 +14,7 @@
 **동작:**
 1. 사용자의 요구사항을 분석하고, 기술적으로 실현 가능한 단위(Phase)로 분해한다.
 2. 각 Phase를 `docs/specs/` 폴더 하위에 **구조화된 명세 파일**로 자동 생성한다.
-   - 파일명 규칙: `NN_feature_name.md` (예: `05_dashboard_visualization.md`)
+   - 파일명 규칙: `MemberName_NN_feature_name.md` (예: `jaeho_05_dashboard_visualization.md`)
    - 필수 포함 항목: 목표, 기술 스택, 구현 단계(Phase), 검증 기준(Acceptance Criteria), 의존성
 3. 생성된 명세 목록을 사용자에게 보고하고 승인을 대기한다.
 4. **이 모드에서는 코드를 작성하지 않는다.** 오직 명세 문서만 생산한다.
