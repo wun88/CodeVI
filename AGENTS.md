@@ -23,7 +23,7 @@
 **트리거:** 사용자가 **"진행시켜"**라고 지시할 때.
 
 **동작:**
-1. `docs/specs/` 폴더를 스캔하여 아직 `docs/history/`에 완료 기록이 없는 명세를 파악한다.
+1. `docs/specs/` 폴더를 스캔하여 아직 `docs/history/` 하위(이름/월별 폴더 포함)에 완료 기록이 없는 명세를 파악한다.
 2. 가장 낮은 번호(우선순위가 높은)의 미완료 명세부터 순서대로 착수한다.
 3. `docs/development_process.md`의 자율 루프를 따라 [분석 → 구현 → 검증 → 기록]을 수행한다.
 4. 한 Phase의 구현과 검증(`npm run build` 등)이 완료되면, **사용자 승인 없이** 즉시 다음 Phase로 전진한다.
@@ -40,7 +40,7 @@
 1. **Analyze Specs:** `docs/specs/` 내 최신 명세 파악.
 2. **Execute Loop:** `docs/development_process.md`의 구현 주기 수행.
 3. **Validate:** 빌드 및 테스트를 통한 자가 검증.
-4. **Persist History:** `docs/history/`에 작업 내역 박제 후 다음 단계 자동 착수.
+4. **Persist History:** `docs/history/{MemberName}/{MM}/` 폴더에 작업 내역 박제 후 다음 단계 자동 착수. (템플릿 준수 필수)
 
 ## 5. Supplementary Rules
 * **코드 작성 전:** `docs/policy/convention.md`를 읽어 코딩 스타일을 확인하십시오.

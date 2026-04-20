@@ -19,7 +19,7 @@
 |------|------|------|
 | 🧠 Mind (두뇌) | [docs/specs/](docs/specs/) | 모든 기술·비즈니스 명세서. 에이전트의 작업 지시서. |
 | ⚙️ Engine (엔진) | [docs/development_process.md](docs/development_process.md) | 자율 개발 루프: Spec → Impl → Verify → History |
-| 📜 Memory (기억) | [docs/history/](docs/history/) | 모든 구현 의도와 결과 기록. 컨텍스트 복구용. |
+| 📜 Memory (기억) | [docs/history/](docs/history/) | 모든 구현 의도와 결과 기록. `{이름}/{월}/` 구조로 관리. |
 | 📋 Directives (지침) | [AGENTS.md](AGENTS.md) | 에이전트 행동 규칙 및 2-Mode 정의. |
 
 ---
