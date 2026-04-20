@@ -3,6 +3,14 @@
   min-height: 100vh;
 }
 
+/* 메인 페이지에서만 Header를 absolute로 오버라이드 */
+.main-page .header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
 .hero-section {
   position: relative;
   width: 100%;
