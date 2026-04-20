@@ -1,4 +1,5 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -14,12 +15,54 @@ import { User } from '../users/entities/user.entity';
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
     private readonly googleClientId: string;
+    private privateKey: string;
+    private publicKey: string;
 
     constructor(
         private jwtService: JwtService,
         private userService: UsersService,
     ) {
         this.googleClientId = process.env.GOOGLE_CLIENT_ID || '';
+        this.generateRsaKeyPair();
+    }
+
+    private generateRsaKeyPair() {
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 2048,
+            publicKeyEncoding: {
+                type: 'spki',
+                format: 'pem',
+            },
+            privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'pem',
+            },
+        });
+        this.publicKey = publicKey;
+        this.privateKey = privateKey;
+        this.logger.log('RSA Key Pair generated for secure onboarding.');
+    }
+
+    getRsaPublicKey(): string {
+        return this.publicKey;
+    }
+
+    decryptText(encryptedText: string): string {
+        try {
+            const buffer = Buffer.from(encryptedText, 'base64');
+            const decrypted = crypto.privateDecrypt(
+                {
+                    key: this.privateKey,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                    oaepHash: 'sha256',
+                },
+                buffer,
+            );
+            return decrypted.toString('utf8');
+        } catch (error) {
+            this.logger.error(`RSA Decryption Failed: ${error.message}`);
+            throw new InternalServerErrorException('Failed to decrypt data');
+        }
     }
 
     // Sign-In
@@ -56,7 +99,7 @@ export class AuthService {
             const createGoogleUserRequestDto: CreateGoogleUserRequestDto = {
                 email,
                 username: name || email.split('@')[0],
-                role: UserRole.STUDENT,
+                role: UserRole.USER,
             };
             await this.userService.createUserByGoogle(createGoogleUserRequestDto);
             existingUser = await this.userService.getUserByEmail(email);
@@ -77,13 +120,16 @@ export class AuthService {
             // GitHub UID가 없으면 이메일로 검색
             existingUser = await this.userService.getUserByEmail(email).catch(() => null);
 
-            if (!existingUser) {
+            if (existingUser) {
+                this.logger.verbose(`User found by email: ${email}, linking GitHub UID: ${githubUid}`);
+                existingUser = await this.userService.updateGithubUid(existingUser.id, githubUid);
+            } else {
                 this.logger.verbose(`User with GitHub UID: ${githubUid} not found, creating new user`);
                 const createGithubUserRequestDto: CreateGithubUserRequestDto = {
                     githubUid,
                     email,
                     username: name || email.split('@')[0],
-                    role: UserRole.STUDENT,
+                    role: UserRole.USER,
                 };
                 existingUser = await this.userService.createUserByGithub(createGithubUserRequestDto);
                 this.logger.verbose(`New user with GitHub UID: ${githubUid} created successfully`);
@@ -111,7 +157,7 @@ export class AuthService {
                     kakaoUid,
                     email,
                     username: name || email.split('@')[0],
-                    role: UserRole.STUDENT,
+                    role: UserRole.USER,
                 };
                 existingUser = await this.userService.createUserByKakao(createKakaoUserRequestDto);
                 this.logger.verbose(`New user with Kakao UID: ${kakaoUid} created successfully`);
@@ -140,7 +186,7 @@ export class AuthService {
                     naverUid,
                     email,
                     username: name || email.split('@')[0],
-                    role: UserRole.STUDENT,
+                    role: UserRole.USER,
                 };
                 existingUser = await this.userService.createUserByNaver(createNaverUserRequestDto);
                 this.logger.verbose(`New user with Naver UID: ${naverUid} created successfully`);

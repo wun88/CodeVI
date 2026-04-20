@@ -248,7 +248,7 @@ export class AuthController {
     }
 
     @Get('/attendance/:classId/:sessionId')
-    @Roles(UserRole.INSTRUCTOR, UserRole.ADMIN)
+    @Roles(UserRole.ADMIN)
     async getAttendanceJwt(
         @Param('classId') classId: number,
         @Param('sessionId') sessionId: number,
@@ -266,6 +266,18 @@ export class AuthController {
             HttpStatus.CREATED,
             `JWT Token generated Successfully`,
             jwt,
+        );
+    }
+
+    @Get('/rsa-public-key')
+    async getRsaPublicKey(): Promise<ApiResponseDto<string>> {
+        this.logger.verbose(`Retrieving RSA Public Key`);
+        const publicKey = this.authService.getRsaPublicKey();
+        return new ApiResponseDto(
+            true,
+            HttpStatus.OK,
+            'Public key retrieved successfully',
+            publicKey,
         );
     }
 }
