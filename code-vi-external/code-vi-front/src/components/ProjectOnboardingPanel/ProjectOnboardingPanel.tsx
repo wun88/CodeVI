@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { onboardingService } from '../../services/onboardingService';
 import { FaGithub, FaKey, FaRocket, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import './ProjectOnboardingPanel.css';
 
 const ProjectOnboardingPanel: React.FC = () => {
   const [repoUrl, setRepoUrl] = useState('');
@@ -41,18 +42,6 @@ const ProjectOnboardingPanel: React.FC = () => {
         </form>
         {message && <div className={`msg ${status}`}>{message}</div>}
       </div>
-      <style>{`
-        .onboard-wrapper { display: flex; justify-content: center; padding: 40px; }
-        .onboard-card { background: #1a1a1a; padding: 30px; border-radius: 15px; color: white; width: 400px; border: 1px solid #333; }
-        .input-field { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
-        input { background: #000; border: 1px solid #444; padding: 10px; color: white; border-radius: 5px; }
-        button { width: 100%; padding: 12px; background: linear-gradient(to right, #4facfe, #00f2fe); border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .msg { margin-top: 20px; padding: 10px; border-radius: 5px; font-size: 0.9rem; }
-        .msg.success { background: rgba(0, 255, 0, 0.1); color: #00ff00; }
-        .msg.error { background: rgba(255, 0, 0, 0.1); color: #ff0000; }
-      `}</style>
     </div>
   );
 };

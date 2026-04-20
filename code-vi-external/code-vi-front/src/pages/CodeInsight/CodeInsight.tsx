@@ -52,7 +52,7 @@ function CodeInsight() {
 
           <div
             className="upload-card"
-            onClick={() => navigate('/code-insight/github')}
+            onClick={() => navigate('/code-insight/onboarding')}
           >
             <div className="upload-icon">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="#7492B7">

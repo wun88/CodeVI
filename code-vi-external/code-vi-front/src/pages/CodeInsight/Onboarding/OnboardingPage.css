@@ -1,0 +1,68 @@
+.onboarding-page {
+  min-height: 100vh;
+  background-color: #f5f9fc;
+}
+
+.onboarding-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 100px 40px 40px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666666;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+  transition: color 0.2s;
+}
+
+.back-btn:hover {
+  color: #222222;
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.onboarding-header h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 12px 0;
+}
+
+.onboarding-header p {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  color: #666666;
+  margin: 0;
+}
+
+.onboarding-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Override ProjectOnboardingPanel inner styles if needed to fit the page better */
+.onboarding-container .onboard-wrapper {
+  padding: 0;
+  width: 100%;
+}
+
+.onboarding-container .onboard-card {
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}

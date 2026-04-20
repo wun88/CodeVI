@@ -4,7 +4,7 @@ import axios from 'axios';
 @Injectable()
 export class JenkinsService {
   private readonly logger = new Logger(JenkinsService.name);
-  private readonly jenkinsUrl = process.env.JENKINS_URL || 'http://localhost:8080';
+  private readonly jenkinsUrl = process.env.JENKINS_URL || 'http://jenkins:9002';
   private readonly jenkinsUser = process.env.JENKINS_USER || 'admin';
   private readonly jenkinsToken = process.env.JENKINS_TOKEN || 'admin_token';
 

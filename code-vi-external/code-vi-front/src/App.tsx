@@ -21,6 +21,7 @@ import GithubCallback from './pages/GithubCallback/GithubCallback';
 import GoogleCallback from './pages/GoogleCallback/GoogleCallback';
 import KakaoCallback from './pages/KakaoCallback/KakaoCallback';
 import NaverCallback from './pages/NaverCallback/NaverCallback';
+import OnboardingPage from './pages/CodeInsight/Onboarding/OnboardingPage';
 
 /** 인증 가드 — JWT 토큰이 없으면 /login으로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -79,6 +80,7 @@ export default function App() {
             <Route path="/code-insight" element={<CodeInsight />} />
             <Route path="/code-insight/upload" element={<ZipUpload />} />
             <Route path="/code-insight/github" element={<GitHubConnect />} />
+            <Route path="/code-insight/onboarding" element={<OnboardingPage />} />
             <Route path="/code-insight/dashboard" element={<Dashboard />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/community" element={<Community />} />
