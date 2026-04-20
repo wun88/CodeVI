@@ -3,7 +3,10 @@
  * 투명 바 + 페이지 배경이 비치도록 (화이트/연블루 모두 자연스럽게 이어짐)
  */
 .header {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   padding: 16px 48px;
   background: transparent;
