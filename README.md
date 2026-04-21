@@ -344,3 +344,150 @@ code_analysis    (빌드 알림 및 SonarQube 분석 결과)
 - 백엔드: 포트 `13000`
 - 프론트엔드: Nginx 포트 `80`
 - MySQL: 포트 `13306` (Docker 내부 `3306`)
+
+---
+
+## Harness Team Engineering
+
+### 개요
+
+Harness는 CodeVi 팀이 여러 AI 에이전트(Claude Code, Cursor, Antigravity, Codex 등)와 협업할 때 **일관된 품질과 추적성**을 보장하기 위한 자율 개발 운영 체계입니다.
+
+**핵심 목표**: 어떤 AI 도구를 사용하더라도 동일한 품질의 결과물을 생산하고, 모든 작업 기록을 구조화된 방식으로 보존합니다.
+
+---
+
+### 운영 모드
+
+Harness는 두 가지 모드로 동작합니다.
+
+#### Mode 1 — 명세 생성 모드
+
+사용자가 자연어로 기능 요구사항을 입력하면:
+
+1. 에이전트가 요구사항을 기술적으로 분해하여 Phase 단위로 구조화
+2. `docs/specs/` 디렉토리에 명세 파일 생성
+   - 파일명 규칙: `{멤버이름}_{NN}_{feature_name}.md` (예: `jaeho_05_ast_data_integration.md`)
+3. 생성된 명세를 사용자에게 보고하고 승인 대기
+4. **코드는 작성하지 않음** — 명세 문서만 생성
+
+#### Mode 2 — 무한 개발 모드
+
+사용자가 **"진행시켜"** 라고 입력하면:
+
+1. `docs/specs/`에서 아직 완료되지 않은 명세 중 가장 낮은 번호부터 선택
+2. 각 Phase를 사용자 승인 없이 자율적으로 진행
+3. 완료된 Phase는 즉시 다음 Phase로 자동 전진
+4. 모든 명세가 완료될 때까지 루프 지속
+
+---
+
+### 자율 개발 루프
+
+```
+Phase 0: 작업 대상 선택
+  └─ docs/specs/ 스캔 → 미완료 명세 중 최소 번호 선택
+
+Phase 1: 명세 분석
+  └─ 목표·Phase·인수 조건 파악 → 모호한 부분은 사용자에게 질문 (Triage)
+
+Phase 2: 반복 구현
+  └─ 소단위 구현 → 기존 코드베이스 패턴 준수
+
+Phase 3: 자동 검증
+  └─ npm run build 실행 → 실패 시 자가 수정 최소 3회 시도
+      └─ 3회 후에도 실패 → Triage (사용자에게 보고)
+
+Phase 4: 기록 & 자동 전진
+  └─ docs/history/{이름}/{월}/{날짜_feature.md} 기록
+  └─ 다음 Phase/명세로 자동 전진
+```
+
+**Triage 규칙**: 명세가 모호하거나 빌드가 3회 이상 실패할 경우, 추측하지 않고 반드시 사용자에게 보고합니다.
+
+---
+
+### Harness 디렉토리 구조
+
+```
+docs/
+├── specs/                          # 명세 파일 (INPUT)
+│   ├── jaeho_00_onboarding_specs.md
+│   ├── jaeho_03_github_automation.md
+│   ├── jaeho_04_jenkins_automation.md
+│   ├── jaeho_05_ast_data_integration.md
+│   └── jaeho_06_frontend_real_data_wiring.md
+│
+├── history/                        # 작업 기록 (OUTPUT)
+│   ├── Template_Intent_Result.md   # 기록 템플릿
+│   └── {멤버이름}/{월}/
+│       └── YYYY-MM-DD_feature.md  # Intent / Result / Retrospective
+│
+├── policy/
+│   ├── convention.md               # 코딩 컨벤션
+│   └── hooks.md                    # Git 훅 및 자동화 정책
+│
+├── harness/
+│   ├── plan.md                     # 구현 로드맵
+│   └── mcp_registry.md             # MCP 서버 연동 가이드
+│
+└── development_process.md          # 자율 루프 정의
+```
+
+| 디렉토리 | 역할 |
+|----------|------|
+| `docs/specs/` | "두뇌" — 모든 기술·비즈니스 명세 (번호순 우선순위) |
+| `docs/history/` | "기억" — 멤버/월별 작업 기록 (Intent/Result/Retrospective) |
+| `docs/policy/` | "규칙" — 코딩 컨벤션 및 자동화 정책 |
+| `docs/harness/` | "엔진" — 시스템 문서 및 MCP 연동 가이드 |
+
+---
+
+### 규칙 및 컨벤션
+
+#### 핵심 원칙
+
+| 원칙 | 내용 |
+|------|------|
+| **Triage** | 모호한 명세는 추측하지 않고 사람에게 묻는다 |
+| **자가 치유** | 빌드 오류 발생 시 최소 3회 자가 수정 시도 후 보고 |
+| **의존성 무결성** | 신규 라이브러리 도입 전 기존 `package.json` 검토 필수 |
+| **필수 검증** | 매 구현 후 lint·build 통과 확인 후 다음 단계 진행 |
+| **No Hallucination** | 미지 라이브러리 사용 전 공식 문서 확인 필수 |
+
+#### 코딩 컨벤션
+
+- **TypeScript strict** 모드 기본 적용
+- **함수형 프로그래밍** 지향: 순수 함수, 사이드 이펙트 최소화
+- **시각화 규칙**: 그래프 노드 간격 최대 200px, 레이아웃 알고리즘 최적화
+- **자기 문서화**: 모든 함수에 JSDoc 주석 작성
+- **보안**: 커밋 전 시크릿 스캔 필수
+
+#### 커밋 메시지 규칙
+
+```
+feat:     새로운 기능 (예: AST 파서 추가)
+fix:      버그 수정
+docs:     문서 업데이트 (AGENTS.md, Navigator.md 등)
+refactor: 코드 리팩토링
+chore:    빌드/도구 설정 변경
+```
+
+#### 히스토리 기록 형식
+
+`docs/history/Template_Intent_Result.md` 형식을 따릅니다:
+
+```markdown
+## Intent
+- 작업 목적 및 배경
+- 주요 설계 결정과 근거
+- 참고 문서 링크
+
+## Result
+- 변경된 파일 목록 및 요약
+- 검증 체크리스트 (Lint ✓ / Build ✓ / UI ✓)
+
+## Retrospective
+- 발생한 문제와 해결 방법
+- 다음 단계 및 후속 과제
+```
