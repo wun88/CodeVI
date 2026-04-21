@@ -65,3 +65,8 @@ select {
     z-index: 0;
   }
 }
+
+/* 대시보드 페이지에서는 Header가 공간을 차지하도록 설정 */
+.dashboard-page .header {
+  position: relative;
+}
