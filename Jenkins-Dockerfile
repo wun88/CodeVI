@@ -1,0 +1,31 @@
+FROM jenkins/jenkins:lts-jdk17
+USER root
+RUN apt-get update && \
+    apt-get install -y \
+	python3 \
+	python3-pip \
+	python3-venv \
+	git \
+	curl \
+	unzip \
+	lsb-release \
+	gnupg \
+    && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
+ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN mkdir -p /usr/src/pyexamine_project
+WORKDIR /usr/src/pyexamine_project
+RUN git clone https://github.com/yjmd2222/pyexamine && \
+    cd pyexamine && \
+    git checkout json && \
+    python3 -m venv jenkinstestvenv && \
+    ./jenkinstestvenv/bin/pip install --upgrade pip && \
+    ./jenkinstestvenv/bin/pip install -e .
+RUN chown -R jenkins:jenkins /usr/src/pyexamine_project
+USER jenkins

@@ -151,7 +151,10 @@ export class AuthService {
             // Kakao UID가 없으면 이메일로 검색
             existingUser = await this.userService.getUserByEmail(email).catch(() => null);
 
-            if (!existingUser) {
+            if (existingUser) {
+                this.logger.verbose(`User found by email: ${email}, linking Kakao UID: ${kakaoUid}`);
+                existingUser = await this.userService.updateKakaoUid(existingUser.id, kakaoUid);
+            } else {
                 this.logger.verbose(`User with Kakao UID: ${kakaoUid} not found, creating new user`);
                 const createKakaoUserRequestDto: CreateKakaoUserRequestDto = {
                     kakaoUid,
@@ -180,7 +183,10 @@ export class AuthService {
             // Naver UID가 없으면 이메일로 검색
             existingUser = await this.userService.getUserByEmail(email).catch(() => null);
 
-            if (!existingUser) {
+            if (existingUser) {
+                this.logger.verbose(`User found by email: ${email}, linking Naver UID: ${naverUid}`);
+                existingUser = await this.userService.updateNaverUid(existingUser.id, naverUid);
+            } else {
                 this.logger.verbose(`User with Naver UID: ${naverUid} not found, creating new user`);
                 const createNaverUserRequestDto: CreateNaverUserRequestDto = {
                     naverUid,

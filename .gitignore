@@ -29,6 +29,8 @@ out/
 .env.test.local
 .env.production.local
 *.env
+code-vi-external/.env
+code-vi-external/code-vi-back/.env
 code-vi-back/.env
 code-vi-front-ang/.env
 

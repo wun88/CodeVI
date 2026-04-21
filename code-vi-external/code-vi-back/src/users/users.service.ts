@@ -375,9 +375,24 @@ export class UsersService {
 
   // Update GitHub UID for merging (Phase 1)
   async updateGithubUid(id: number, githubUid: number): Promise<User> {
-    const user = await this.getUserById(id);
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
     user.githubUid = githubUid;
     user.status = UserStatus.ACTIVE;
+    return await this.usersRepository.save(user);
+  }
+
+  async updateKakaoUid(id: number, kakaoUid: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    user.kakaoUid = kakaoUid;
+    return await this.usersRepository.save(user);
+  }
+
+  async updateNaverUid(id: number, naverUid: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    user.naverUid = naverUid;
     return await this.usersRepository.save(user);
   }
 
