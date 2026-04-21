@@ -68,6 +68,21 @@
   box-shadow: 0 0 0 3px rgba(116, 146, 183, 0.1);
 }
 
+.pat-notice {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #7492B7;
+  background-color: #f0f5fb;
+  border: 1px solid #d1dff0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+.pat-notice strong {
+  color: #4a6fa5;
+}
+
 .onboard-card button {
   width: 100%;
   padding: 16px;

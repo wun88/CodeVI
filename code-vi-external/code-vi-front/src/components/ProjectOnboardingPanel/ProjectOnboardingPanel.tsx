@@ -35,6 +35,9 @@ const ProjectOnboardingPanel: React.FC = () => {
           <div className="input-field">
             <label><FaKey /> GitHub PAT</label>
             <input type="password" value={pat} onChange={e => setPat(e.target.value)} required />
+            <div className="pat-notice">
+              🔑 PAT 발급 시 <strong>Contents → Read and Write</strong> 권한을 체크해주세요.
+            </div>
           </div>
           <button type="submit" disabled={status === 'loading'} className={status}>
             {status === 'loading' ? <FaSpinner className="spin" /> : '연동 시작'}

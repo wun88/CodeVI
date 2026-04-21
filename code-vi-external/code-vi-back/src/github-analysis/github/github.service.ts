@@ -34,6 +34,11 @@ export class GithubService {
       });
       this.logger.log('Jenkinsfile injected successfully.');
     } catch (error) {
+      if (error.status === 403) {
+        throw new BadRequestException(
+          'PAT에 레포지토리 쓰기 권한이 없습니다. GitHub에서 PAT를 재발급하고 "repo" 스코프(또는 fine-grained token의 경우 Contents: Read & Write)를 허용해주세요.',
+        );
+      }
       throw new BadRequestException(`GitHub Error: ${error.message}`);
     }
   }
