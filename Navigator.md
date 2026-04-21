@@ -1,7 +1,28 @@
 # Project Navigator (Knowledge Map)
 
-본 문서는 가시화 프로젝트의 전체 문서 및 코드 구조를 안내하는 인덱스입니다.
+본 문서는 프로젝트의 전체 문서 및 코드 구조를 안내하는 인덱스입니다.
 작업에 필요한 도메인 지식을 아래 경로에서 확인하십시오. 전체를 읽지 말고 필요한 섹션의 문서만 열람하십시오.
+
+---
+
+## 🔥 Harness System (자율 개발 운영 체제)
+
+이 프로젝트는 **2-Mode System**으로 운영됩니다. 자세한 규칙은 [AGENTS.md](AGENTS.md)를 참조하십시오.
+
+| Mode | 트리거 | 입력 | 출력 |
+|------|--------|------|------|
+| **Mode 1: 명세 생성** | 사용자가 요구사항을 전달 | 자연어 요구사항 | `docs/specs/*.md` 명세 파일 |
+| **Mode 2: 무한 개발** | 사용자가 **"진행시켜"** 지시 | `docs/specs/` 명세 | 구현 코드 + `docs/history/` 기록 |
+
+### 핵심 문서 (Core Documents)
+| 역할 | 경로 | 설명 |
+|------|------|------|
+| 🧠 Mind (두뇌) | [docs/specs/](docs/specs/) | 모든 기술·비즈니스 명세서. 에이전트의 작업 지시서. |
+| ⚙️ Engine (엔진) | [docs/development_process.md](docs/development_process.md) | 자율 개발 루프: Spec → Impl → Verify → History |
+| 📜 Memory (기억) | [docs/history/](docs/history/) | 모든 구현 의도와 결과 기록. `{이름}/{월}/` 구조로 관리. |
+| 📋 Directives (지침) | [AGENTS.md](AGENTS.md) | 에이전트 행동 규칙 및 2-Mode 정의. |
+
+---
 
 ## 1. System Architecture & Specs (시스템 구조 및 명세)
 * **전체 아키텍처:** `docs/architecture/system_design.md` (AST 추출부터 프론트엔드 렌더링까지의 데이터 플로우)
@@ -20,7 +41,7 @@
 ## 4. Codebase Structure (코드베이스 구조)
 * `/src/parser` : Tree-sitter 기반 언어별 AST 추출 로직
 * `/src/metrics` : 결합도, 응집도 등 코드 스멜 및 메트릭 계산 모듈
-* `/src/frontend` : D3.js/Stitch 기반 그래프 시각화 컴포넌트
+* `/src/frontend` : React Flow (`@xyflow/react`) 및 `dagre` 기반 의존성 그래프 시각화 컴포넌트
 * `/scripts` : CI/CD 및 검증용 스크립트
 
 ## 5. History (히스토리)

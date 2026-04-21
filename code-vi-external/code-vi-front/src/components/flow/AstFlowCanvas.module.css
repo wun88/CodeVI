@@ -7,7 +7,10 @@
   min-height: clamp(240px, 35vh, 560px);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, #dceef9 0%, #e8f4fc 45%, #ebf5fb 100%);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(186, 215, 243, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(191, 219, 254, 0.25) 0%, transparent 50%),
+    linear-gradient(165deg, #dceef9 0%, #e6f2fb 40%, #ebf5fb 100%);
 }
 
 .canvasWrapper :global(.react-flow) {

@@ -18,7 +18,7 @@ export class User extends CommonEntity {
   @Column({ type: 'enum', enum: UserRole, nullable: true })
   role: UserRole;
 
-  @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
+  @Column({ type: 'enum', enum: UserStatus, default: UserStatus.PENDING })
   status: UserStatus;
 
   @Index({ unique: true })

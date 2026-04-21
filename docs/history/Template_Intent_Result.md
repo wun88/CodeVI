@@ -1,4 +1,13 @@
-# [작업 요약 서식] Intent & Result
+# [Record Template] 구현 히스토리 기록 양식
+
+> **저장 경로 규칙**: `docs/history/{MemberName}/{MM}/{YYYY-MM-DD_feature.md}`  
+> (예: `docs/history/jaeho/04/2026-04-20_admin_refactoring.md`)
+> 
+> **관리 규칙**: 
+> 1. 월별 폴더(01~12)를 생성하여 관리합니다.
+> 2. 한 폴더 내 파일이 30개를 초과할 경우, 중요도가 낮은 기록은 'Monthly Summary'로 통합합니다.
+
+---
 
 ## 1. 작업 개요
 - **일시**: {{DATE}}

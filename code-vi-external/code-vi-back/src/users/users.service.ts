@@ -220,7 +220,8 @@ export class UsersService {
         username,
         password: hashedPassword,
         email,
-        role: role || UserRole.STUDENT,
+        role: role || UserRole.USER,
+        status: UserStatus.ACTIVE,
       });
 
       const savedUser = await this.usersRepository.save(newUser);
@@ -267,7 +268,7 @@ export class UsersService {
         username,
         password: hashedPassword,
         email,
-        role: role || UserRole.STUDENT,
+        role: role || UserRole.USER,
       });
 
       const savedUser = await this.usersRepository.save(newUser);
@@ -313,7 +314,7 @@ export class UsersService {
         username,
         password: hashedPassword,
         email,
-        role: role || UserRole.STUDENT,
+        role: role || UserRole.USER,
       });
 
       const savedUser = await this.usersRepository.save(newUser);
@@ -372,6 +373,29 @@ export class UsersService {
     return await bcrypt.hash(password, salt);
   }
 
+  // Update GitHub UID for merging (Phase 1)
+  async updateGithubUid(id: number, githubUid: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    user.githubUid = githubUid;
+    user.status = UserStatus.ACTIVE;
+    return await this.usersRepository.save(user);
+  }
+
+  async updateKakaoUid(id: number, kakaoUid: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    user.kakaoUid = kakaoUid;
+    return await this.usersRepository.save(user);
+  }
+
+  async updateNaverUid(id: number, naverUid: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    user.naverUid = naverUid;
+    return await this.usersRepository.save(user);
+  }
+
   // BUILD REPORT HANDLING
   async createBuildReport(dto: CreateUserWithAstAndBuildDto): Promise<any> {
     const { username, email, role, password, ProjectDto } = dto;
@@ -398,7 +422,7 @@ export class UsersService {
             username: uname,
             email: (usernames.length === 1) ? (email || undefined) : undefined,
             password: hashedPassword || undefined,
-            role: role as UserRole || UserRole.STUDENT,
+            role: role as UserRole || UserRole.USER,
             status: password ? UserStatus.ACTIVE : UserStatus.PENDING,
           } as any);
           user = await manager.save(user);

@@ -8,6 +8,7 @@ import { TeamProjectModule } from './team-project/team-project.module';
 import { CodeAnalysisModule } from './code-analysis/code-analysis.module';
 import { MetricModule } from './metric/metric.module';
 import { AstRelationalModule } from './ast-relational/ast-relational.module';
+import { OnboardingModule } from './github-analysis/onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AstRelationalModule } from './ast-relational/ast-relational.module';
     CodeAnalysisModule,
     MetricModule,
     AstRelationalModule,
+    OnboardingModule,
   ],
 })
 export class AppModule { }

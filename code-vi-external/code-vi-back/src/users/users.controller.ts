@@ -49,7 +49,7 @@ export class UsersController {
 
     @Get(':id')
     @UseGuards(AuthGuard(), RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.STUDENT)
+    @Roles(UserRole.ADMIN, UserRole.USER)
     async getUser(
         @Param('id') userId: number,
     ): Promise<{ message: string; user: User }> {
@@ -60,7 +60,7 @@ export class UsersController {
     // UPDATE
     @Put(':id')
     @UseGuards(AuthGuard(), RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.STUDENT)
+    @Roles(UserRole.ADMIN, UserRole.USER)
     async updateUser(
         @Param('id') id: number,
         @Body() updateUserRequestDto: UpdateUserRequestDto,
@@ -90,7 +90,7 @@ export class UsersController {
 
     @Delete(':id')
     @UseGuards(AuthGuard(), RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.STUDENT)
+    @Roles(UserRole.ADMIN, UserRole.USER)
     async deleteUser(@Param('id') id: number): Promise<ApiResponseDto<void>> {
         await this.usersService.remove(id);
         return new ApiResponseDto(

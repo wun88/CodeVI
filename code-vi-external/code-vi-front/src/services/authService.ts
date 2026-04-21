@@ -32,4 +32,26 @@ export const authService = {
   redirectToNaverSignIn: (): void => {
     window.location.href = 'http://localhost:13000/api/auth/naver/signin';
   },
+
+  getRsaPublicKey: async (): Promise<string> => {
+    const res = await api.get('/api/auth/rsa-public-key');
+    return res.data.data;
+  },
+
+  encryptPat: async (pat: string, pemKey: string): Promise<string> => {
+    const b64 = pemKey.replace(/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\s/g, '');
+    const byteString = window.atob(b64);
+    const byteArray = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) byteArray[i] = byteString.charCodeAt(i);
+
+    const cryptoKey = await window.crypto.subtle.importKey(
+      'spki', byteArray.buffer, { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']
+    );
+
+    const encrypted = await window.crypto.subtle.encrypt(
+      { name: 'RSA-OAEP' }, cryptoKey, new TextEncoder().encode(pat)
+    );
+
+    return window.btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+  },
 };

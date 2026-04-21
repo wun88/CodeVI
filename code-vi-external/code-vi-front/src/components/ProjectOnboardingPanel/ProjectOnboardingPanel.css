@@ -1,0 +1,152 @@
+.onboard-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.onboard-card {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  color: #222222;
+  width: 100%;
+  max-width: 500px;
+  border: 1px solid #e8eef3;
+  box-shadow: 0 10px 30px rgba(116, 146, 183, 0.08);
+}
+
+.onboard-card h2 {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.onboard-card h2 svg {
+  color: #7492B7;
+}
+
+.input-field {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-field label {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444444;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-field label svg {
+  color: #7492B7;
+}
+
+.onboard-card input {
+  background: #ffffff;
+  border: 1px solid #d1d9e2;
+  padding: 14px 16px;
+  color: #222222;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  border-radius: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.onboard-card input:focus {
+  outline: none;
+  border-color: #7492B7;
+  box-shadow: 0 0 0 3px rgba(116, 146, 183, 0.1);
+}
+
+.pat-notice {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #7492B7;
+  background-color: #f0f5fb;
+  border: 1px solid #d1dff0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+.pat-notice strong {
+  color: #4a6fa5;
+}
+
+.onboard-card button {
+  width: 100%;
+  padding: 16px;
+  background-color: #7492B7;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.onboard-card button:hover:not(:disabled) {
+  background-color: #6381a7;
+}
+
+.onboard-card button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.onboard-card button:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.msg {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.msg.loading {
+  background-color: #f0f7ff;
+  color: #3182ce;
+  border: 1px solid #bee3f8;
+}
+
+.msg.success {
+  background-color: #f0fff4;
+  color: #2f855a;
+  border: 1px solid #c6f6d5;
+}
+
+.msg.error {
+  background-color: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
