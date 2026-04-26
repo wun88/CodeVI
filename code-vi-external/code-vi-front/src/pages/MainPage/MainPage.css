@@ -14,17 +14,6 @@
   background-color: #e8f4fc;
 }
 
-/* AuthPanel 열릴 때: 텍스트/버튼은 숨기고 배경만 노출 */
-.main-wrapper.login-open .hero-content,
-.main-wrapper.signup-open .hero-content {
-  opacity: 0;
-  transform: translateY(-50%) translateY(8px);
-  pointer-events: none;
-  transition:
-    opacity 0.35s ease,
-    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 /* Mobile */
 @media (max-width: 768px) {
   .hero-section::before {

@@ -1,20 +1,21 @@
-import Header from '../../components/Header'
-import HeroContent from '../../components/HeroContent'
-import './MainPage.css'
+import Header from '../../components/Header';
+import HeroContent from '../../components/HeroContent';
+import './MainPage.css';
 
-function MainPage({ onLoginClick }) {
-
-  return (
-    <div className="main-page">
-
-      <Header onLoginClick={onLoginClick}/>
-
-      <section className="hero-section">
-        <HeroContent/>
-      </section>
-
-    </div>
-  )
+interface MainPageProps {
+  onLoginClick?: () => void;
 }
 
-export default MainPage
+function MainPage({ onLoginClick }: MainPageProps) {
+  return (
+    <div className="main-page">
+      <Header onLoginClick={onLoginClick} />
+
+      <section className="hero-section">
+        <HeroContent onCtaClick={onLoginClick} />
+      </section>
+    </div>
+  );
+}
+
+export default MainPage;

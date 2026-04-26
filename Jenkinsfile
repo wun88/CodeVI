@@ -2,21 +2,20 @@ pipeline {
     agent any
 
     environment {
-        // 실제 프로젝트 폴더명과 일치하는지 다시 확인해주세요.
-        BACK_DIR = "code-vi-back"
-        FRONT_DIR = "code-vi-front"
+        // CodeVi 플랫폼(internal)과 회사 소개 페이지(external) 디렉토리
+        BACK_DIR = "code-vi-internal/code-vi-back"
+        INTERNAL_FRONT_DIR = "code-vi-internal/code-vi-front"
+        EXTERNAL_FRONT_DIR = "code-vi-external/code-vi-front"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // SCM(Git)에서 최신 코드를 가져옵니다.
                 checkout scm
             }
         }
 
         stage('Build & Deploy (In Parallel)') {
-            // 핵심: 'Deploy' 브랜치로 머지/푸시될 때만 이 전체 스테이지를 실행합니다.
             when {
                 branch 'Deploy'
             }
@@ -25,16 +24,24 @@ pipeline {
                     steps {
                         dir("${BACK_DIR}") {
                             echo "🚀 Starting Backend Deployment..."
-                            // 각 폴더 안의 prod 설정 파일로 빌드 및 실행
                             sh "docker-compose -f docker-compose.prod.yml up -d --build"
                         }
                     }
                 }
 
-                stage('Frontend CD') {
+                stage('Internal Frontend CD (CodeVi Platform)') {
                     steps {
-                        dir("${FRONT_DIR}") {
-                            echo "🎨 Starting Frontend Deployment..."
+                        dir("${INTERNAL_FRONT_DIR}") {
+                            echo "🎨 Starting Internal (CodeVi) Frontend Deployment..."
+                            sh "docker-compose -f docker-compose.prod.yml up -d --build"
+                        }
+                    }
+                }
+
+                stage('External Frontend CD (Re:Factory Intro)') {
+                    steps {
+                        dir("${EXTERNAL_FRONT_DIR}") {
+                            echo "🎨 Starting External (Marketing) Frontend Deployment..."
                             sh "docker-compose -f docker-compose.prod.yml up -d --build"
                         }
                     }
@@ -48,7 +55,6 @@ pipeline {
             }
             steps {
                 echo "🧹 Cleaning up unused Docker images..."
-                // 빌드 후 남은 'dangling' 이미지들을 정리하여 디스크 공간 확보
                 sh "docker image prune -f"
             }
         }
@@ -56,7 +62,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ CodeVi (Front & Back) deployed successfully to the server!"
+            echo "✅ CodeVi (Back & Internal Front & External Front) deployed successfully!"
         }
         failure {
             echo "❌ Deployment failed. Check the Jenkins console output."
