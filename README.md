@@ -98,10 +98,16 @@ React Frontend (React Flow + Dagre)
 
 ## 프로젝트 구조
 
+CodeVi는 **회사 소개(external)** 와 **CodeVi 플랫폼 본체(internal)** 두 축으로 분리되어 있습니다. 외부 사이트의 LOGIN 버튼은 별도 포트/서브도메인의 internal 플랫폼으로 redirect 됩니다.
+
 ```
 CodeVi/
 ├── code-vi-external/
-│   ├── code-vi-back/          # NestJS 백엔드
+│   └── code-vi-front/         # Re:Factory 회사 소개 페이지 (Vite, :5173)
+│       └── src/pages/         # MainPage, AboutUs, FAQ, Community, ContactUs
+│
+├── code-vi-internal/
+│   ├── code-vi-back/          # NestJS 백엔드 (:13000) — external·internal 양쪽이 공유
 │   │   ├── src/
 │   │   │   ├── auth/          # 인증 (JWT, OAuth 전략)
 │   │   │   ├── users/         # 사용자 관리
@@ -112,21 +118,26 @@ CodeVi/
 │   │   │   └── metric/        # 코드 품질 메트릭 계산
 │   │   ├── Dockerfile
 │   │   └── docker-compose.prod.yml
-│   └── code-vi-front/         # React 프론트엔드
-│       ├── src/
-│       │   ├── pages/         # 페이지 컴포넌트
-│       │   ├── components/    # 재사용 UI 컴포넌트 (AstFlowCanvas 등)
-│       │   ├── hooks/         # 커스텀 훅 (useAstGraphData 등)
-│       │   ├── services/      # API 클라이언트
-│       │   ├── interface/     # TypeScript 인터페이스
-│       │   └── utils/         # AST → Flow 그래프 변환 유틸
-│       ├── Dockerfile
-│       └── docker-compose.prod.yml
+│   └── code-vi-front/         # CodeVi 플랫폼 프런트엔드 (Vite, :5174)
+│       └── src/
+│           ├── pages/         # CodeInsight, DashboardPage, VisualizationPage, MyPage, *Callback
+│           ├── components/    # AuthPanel, Header, ProjectOnboardingPanel, flow/
+│           ├── hooks/         # useAstGraphData, useDashboardData
+│           ├── services/      # API 클라이언트
+│           ├── interface/     # TypeScript 인터페이스
+│           └── utils/         # AST → Flow 그래프 변환 유틸
+│
 ├── code-vi-legacy/            # (deprecated) Angular 기반 구버전 프론트엔드
 ├── docs/                      # 프로젝트 명세 및 개발 기록
 ├── Jenkinsfile                # CI/CD 파이프라인 정의
 └── docker-compose.yml         # 로컬 개발용 전체 스택 구성
 ```
+
+### 로그인 흐름
+
+1. 사용자가 `code-vi-external` 사이트의 헤더 `LOGIN` 또는 Hero `코드 진단하기` 버튼 클릭
+2. `VITE_INTERNAL_URL` (기본 `http://localhost:5174`) 로 redirect
+3. internal 플랫폼은 진입 시 비로그인이면 AuthPanel 모달을 자동 오픈, 인증된 상태이면 `/dashboard` 로 이동
 
 ---
 
@@ -141,7 +152,7 @@ CodeVi/
 ### 백엔드 설정
 
 ```bash
-cd code-vi-external/code-vi-back
+cd code-vi-internal/code-vi-back
 
 # 의존성 설치
 npm install
@@ -161,21 +172,28 @@ Swagger UI: `http://localhost:13000/api`
 
 ### 프론트엔드 설정
 
+CodeVi 플랫폼(internal, 포트 5174):
+
+```bash
+cd code-vi-internal/code-vi-front
+
+npm install
+npm run dev      # http://localhost:5174
+npm run build
+npm run lint
+```
+
+회사 소개 페이지(external, 포트 5173):
+
 ```bash
 cd code-vi-external/code-vi-front
 
-# 의존성 설치
 npm install
-
-# 개발 서버 실행 (포트 5173)
-npm run dev
-
-# 프로덕션 빌드
+npm run dev      # http://localhost:5173
 npm run build
-
-# 린트 검사
-npm run lint
 ```
+
+> external 의 LOGIN / `코드 진단하기` 버튼은 `VITE_INTERNAL_URL` 로 redirect 됩니다 (기본 `http://localhost:5174`).
 
 ### Docker로 실행
 
@@ -190,18 +208,22 @@ docker-compose up -d
 
 ```bash
 # 백엔드
-cd code-vi-external/code-vi-back
+cd code-vi-internal/code-vi-back
 docker-compose -f docker-compose.prod.yml up -d
 
-# 프론트엔드
+# CodeVi 플랫폼 프런트엔드
+cd code-vi-internal/code-vi-front
+docker-compose -f docker-compose.prod.yml up -d
+
+# 회사 소개 페이지
 cd code-vi-external/code-vi-front
-docker-compose -f docker-compose.prod.yml up -d  # Nginx, 포트 80
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### 데모 데이터 시드
 
 ```bash
-cd code-vi-external/code-vi-back
+cd code-vi-internal/code-vi-back
 node seed.js
 ```
 
@@ -211,7 +233,7 @@ node seed.js
 
 ## 환경 변수
 
-`code-vi-external/code-vi-back/.env` 파일을 생성하고 다음 변수를 설정합니다:
+`code-vi-internal/code-vi-back/.env` 파일을 생성하고 다음 변수를 설정합니다:
 
 ```env
 # Database
@@ -256,7 +278,8 @@ JENKINS_USER=your_jenkins_user
 JENKINS_TOKEN=your_jenkins_token
 
 # CORS - Frontend URLs
-DEVELOP_FRONTEND_URL=http://localhost:5173
+DEVELOP_EXTERNAL_FRONTEND_URL=http://localhost:5173
+DEVELOP_INTERNAL_FRONTEND_URL=http://localhost:5174
 ```
 
 ---

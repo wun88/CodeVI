@@ -45,7 +45,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // CORS 설정
+  // CORS 설정 — code-vi-external(회사 소개)·code-vi-internal(CodeVi 플랫폼) 양쪽 origin 허용
   const allowedOrigins = [
     process.env.DEPLOY_FRONTEND_URL1,
     process.env.DEPLOY_FRONTEND_URL2,
@@ -53,8 +53,9 @@ async function bootstrap() {
     process.env.DEPLOY_FRONTEND_URL4,
     process.env.DEPLOY_FRONTEND_URL5,
     process.env.DEPLOY_FRONTEND_URL6,
-    process.env.DEVELOP_FRONTEND_URL || 'http://localhost:4200', // 개발 환경 기본값
-    // 'http://192.168.0.25:18080',
+    process.env.DEVELOP_EXTERNAL_FRONTEND_URL || 'http://localhost:5173',
+    process.env.DEVELOP_INTERNAL_FRONTEND_URL || 'http://localhost:5174',
+    process.env.DEVELOP_FRONTEND_URL, // 호환용
   ].filter(Boolean) as string[];
 
   app.enableCors({

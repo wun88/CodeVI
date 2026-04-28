@@ -1,66 +1,37 @@
-# ⬡ Code Visualizer (Frontend)
+# Re:Factory — 회사 소개 페이지 (Frontend)
 
-코드 파일의 구조를 AST(Abstract Syntax Tree) 기반으로 계층화하여 시각화해주는 웹 애플리케이션입니다. NestJS 백엔드에서 제공하는 코드 파싱 데이터를 React Flow를 사용하여 직관적인 노드-엣지 그래프로 변환합니다.
+`code-vi-external/code-vi-front`는 Re:Factory 사의 마케팅·회사 소개 사이트입니다. 실제 코드 분석/시각화 기능은 본 프런트엔드에 포함되지 않으며, **LOGIN 버튼 / 코드 진단하기 CTA** 클릭 시 별도의 CodeVi 플랫폼(`code-vi-internal/code-vi-front`) 으로 이동합니다.
 
-## 🚀 주요 기능
+## 페이지 구성
 
-- **코드 구조 시각화**: 디렉토리 > 파일 > 클래스 > 메서드/함수의 계층 구조를 직관적으로 탐색.
-- **자동 레이아웃**: `Dagre` 엔진을 활용하여 복잡한 코드 구조를 최적의 위치에 자동 배치.
-- **빌드 스냅샷 관리**: CI/CD 파이프라인(Jenkins)에서 생성된 빌드 회차별 코드 상태 조회.
-- **상세 분석 패널**: 노드 클릭 시 코드 위치(Line Range), 품질 지표 등의 추가 정보 제공.
-- **프리미엄 디자인**: 다크 테마 기반의 글래스모피즘 인터페이스와 부드러운 애니메이션 적용.
+| 경로 | 설명 |
+|------|------|
+| `/` | 메인 (RE:FACTORY 소개 + Hero CTA) |
+| `/about-us` | 회사 가치, 핵심 기능, Why Re:Factory |
+| `/faq` | 자주 묻는 질문 |
+| `/community` | 커뮤니티 |
+| `/contact-us` | 문의 |
 
-## 🛠 Tech Stack
+## CodeVi 플랫폼으로의 이동
 
-- **Core**: React 18, TypeScript, Vite
-- **Visualization**: @xyflow/react (React Flow v12), Dagre (Layout Engine)
-- **State Management**: Zustand
-- **Networking**: Axios
-- **Styling**: CSS Modules (Vanilla CSS)
+- 헤더의 `LOGIN` 버튼, Hero 영역의 `코드 진단하기` 버튼 → `VITE_INTERNAL_URL` 로 redirect
+- 기본값: `http://localhost:5174` (internal 프런트엔드 dev 서버)
+- 프로덕션에서는 `.env.production` 또는 빌드 시점에 별도 서브도메인으로 설정
 
-## 📸 Screenshots
+```bash
+# .env (옵션)
+VITE_INTERNAL_URL=https://codevi.refactory.example.com
+```
 
-| Dashboard | Visualization |
-| :---: | :---: |
-| ![Dashboard](file:///C:/Users/jaehokim/.gemini/antigravity/brain/4d98a2d9-5956-4385-9eda-75e29a18a0a0/dashboard_snapshots_1774671756431.png) | ![Visualization](file:///C:/Users/jaehokim/.gemini/antigravity/brain/4d98a2d9-5956-4385-9eda-75e29a18a0a0/visualization_snapshot_55_1774671770996.png) |
+## 시작하기
 
-## ⚙️ 시작하기
-
-### 1. 의존성 설치
 ```bash
 npm install
+npm run dev      # http://localhost:5173
+npm run build
+npm run lint
 ```
 
-### 2. 개발 서버 실행
-현재 디자인 테스트를 위해 8080 포트로 설정되어 있습니다.
-```bash
-npm run dev
-# 또는
-npx vite --port 8080
-```
+## 의존성
 
-### 3. 테스트 계정 (Dummy 모드)
-현재 `test_astDataService.ts`를 사용하여 실제 백엔드 없이도 데이터를 확인하실 수 있습니다. `App.tsx`에서 인증 체크가 임시로 비활성화되어 있습니다.
-
-## 📁 프로젝트 구조
-
-```text
-src/
-├── components/      # 공통 UI 및 Flow 커스텀 노드
-│   └── flow/        # AstFlowCanvas, AstNode 등 핵심 시각화 컴포넌트
-├── interface/       # API 및 데이터 타입 정의
-├── pages/           # 페이지 컴포넌트 (Login, Dashboard, Visualization)
-├── services/        # API 통신 (실제 API 및 테스트용 Dummy 서비스)
-├── utils/           # AST -> Flow 변환 로직, 레이아웃 엔진
-└── dummy/           # UI 테스트용 Mock 데이터
-```
-
-## 📄 문서
-
-상세 개발 기획 및 스펙은 `docs/` 디렉토리를 참조하세요.
-- [개발 진행 상황](docs/development_state.md)
-- [아키텍처 및 컨벤션](docs/architecture_and_convention.md)
-- [API 명세서](docs/api_spec.md)
-
-# 향후 계획
-- 본 프로젝트를 CodeVi 프로젝트에 통합하고, code-vi-back과 연동하여 실제 서비스화
+회사 소개 사이트라 시각화·HTTP·상태 라이브러리는 포함하지 않습니다 (React + react-router-dom 만).
