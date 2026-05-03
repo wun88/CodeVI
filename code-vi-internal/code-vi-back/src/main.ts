@@ -7,6 +7,8 @@ import { Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import * as fs from 'fs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+
 
 async function bootstrap() {
   let httpsOptions: any = undefined;
@@ -31,6 +33,7 @@ async function bootstrap() {
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
 
+  app.useGlobalInterceptors(new TransformInterceptor());
   // 최대 요청 크기 설정 (예: 1000MB)
   app.use(bodyParser.json({ limit: '1000mb' }));
   app.use(bodyParser.urlencoded({ limit: '1000mb', extended: true }));
