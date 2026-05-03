@@ -61,15 +61,15 @@ export class UsersService {
   // CREATE - Google User
   async createUserByGoogle(
     createGoogleUserRequestDto: CreateGoogleUserRequestDto,
-  ): Promise<void> {
+  ): Promise<User> {
     this.logger.verbose(
       `Creating a new Google account with email: ${createGoogleUserRequestDto.email}`,
     );
-    const { username, email, role } = createGoogleUserRequestDto;
-    if (!username || !email || !role) {
+    const { googleUid, username, email, role } = createGoogleUserRequestDto;
+    if (!googleUid || !username || !email || !role) {
       this.logger.error('Required fields missing for Google user creation.');
       throw new BadRequestException(
-        'Username, email, and role must be provided for Google login.',
+        'Google UID, username, email, and role must be provided for Google login.',
       );
     }
     try {
@@ -77,6 +77,7 @@ export class UsersService {
       const tempPassword = uuidv4();
       const hashedPassword = await this.hashPassword(tempPassword);
       const newUser = this.usersRepository.create({
+        googleUid,
         username,
         password: hashedPassword,
         email,
@@ -86,6 +87,7 @@ export class UsersService {
       this.logger.verbose(
         `New Google account created successfully: ${savedUser.email} (ID: ${savedUser.id})`,
       );
+      return savedUser;
     } catch (error) {
       this.logger.error(
         `Error creating Google user: ${error.message}`,
@@ -93,6 +95,12 @@ export class UsersService {
       );
       throw error;
     }
+  }
+
+  async getUserByGoogleUid(googleUid: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { googleUid },
+    });
   }
 
   // READ - All users

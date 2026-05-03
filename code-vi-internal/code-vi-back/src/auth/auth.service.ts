@@ -88,24 +88,42 @@ export class AuthService {
         }
     }
 
-    async findOrCreateGoogleUser(googleProfile: { email: string, name: string }): Promise<User | null> {
-        this.logger.verbose(`User with G-mail: ${googleProfile.email} is trying to sign in`);
-        const { email, name } = googleProfile;
+    async findOrCreateGoogleUser(googleProfile: {
+        googleUid: string;
+        email: string;
+        name: string;
+    }): Promise<User | null> {
+        this.logger.verbose(
+        `User with Google UID: ${googleProfile.googleUid} is trying to sign in`,
+        );
+        const { googleUid, email, name } = googleProfile;
 
-        let existingUser = await this.userService.getUserByEmail(email).catch(() => null);
+        // 먼저 Google UID로 사용자 검색
+        let existingUser = await this.userService.getUserByGoogleUid(googleUid);
 
         if (!existingUser) {
-            this.logger.verbose(`User with email: ${email} not found, creating new user with Google profile`);
-            const createGoogleUserRequestDto: CreateGoogleUserRequestDto = {
-                email,
-                username: name || email.split('@')[0],
-                role: UserRole.USER,
-            };
-            await this.userService.createUserByGoogle(createGoogleUserRequestDto);
-            existingUser = await this.userService.getUserByEmail(email);
-            this.logger.verbose(`New user with google email: ${email} created successfully`);
+            // Google UID가 없으면 이메일로 검색
+            existingUser = await this.userService
+            .getUserByEmail(email)
+            .catch(() => null);
+            if (!existingUser) {
+                this.logger.verbose(
+                `User with Google UID: ${googleUid} not found, creating new user`,
+                );
+                const createGoogleUserRequestDto: CreateGoogleUserRequestDto = {
+                    googleUid,
+                    email,
+                    username: name || email.split('@')[0],
+                    role: UserRole.USER,
+                };
+                existingUser = await this.userService.createUserByGoogle(
+                    createGoogleUserRequestDto,
+                );
+                this.logger.verbose(
+                    `New user with Google UID: ${googleUid} created successfully`,
+                );
+            }
         }
-        this.logger.verbose(`User with G-mail: ${email} found`);
         return existingUser;
     }
 

@@ -22,6 +22,10 @@ export class User extends CommonEntity {
   status: UserStatus;
 
   @Index({ unique: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  googleUid: string;
+
+  @Index({ unique: true })
   @Column({ type: 'bigint', nullable: true })
   githubUid: number;
 

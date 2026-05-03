@@ -4,6 +4,10 @@ import { UserRole } from '../entities/user-role.enum';
 export class CreateGoogleUserRequestDto {
   @IsString()
   @IsNotEmpty()
+  googleUid: string;
+
+  @IsString()
+  @IsNotEmpty()
   username: string;
 
   @IsEmail()

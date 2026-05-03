@@ -25,14 +25,20 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     this.logger.debug('Getting Google Profile');
 
     try {
+      const googleId = profile.id;
       const { emails, displayName, name } = profile;
       const email = emails?.[0]?.value;
+
+      if (!googleId) {
+        throw new UnauthorizedException('Google 계정 식별자(id)가 없습니다.');
+      }
 
       if (!email) {
         throw new UnauthorizedException('Google 계정에 이메일 정보가 없습니다.');
       }
 
       const user = await this.authService.findOrCreateGoogleUser({
+        googleUid: String(googleId),
         email,
         name: displayName || name?.givenName || email.split('@')[0],
       });
