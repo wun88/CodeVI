@@ -64,7 +64,7 @@ export class UsersController {
     async updateUser(
         @Param('id') id: number,
         @Body() updateUserRequestDto: UpdateUserRequestDto,
-    ): Promise<ApiResponseDto<void>> {
+    ): Promise<void> {
         this.logger.verbose(`Updating user with ID: ${id}`);
 
         const foundUser = await this.usersService.getUserById(id);
@@ -78,11 +78,6 @@ export class UsersController {
         try {
             await this.usersService.updateUserById(id, updateUserRequestDto);
             this.logger.verbose(`User with ID: ${id} updated successfully`);
-            return new ApiResponseDto(
-                true,
-                HttpStatus.NO_CONTENT,
-                '회원 정보가 성공적으로 수정되었습니다.',
-            );
         } catch (error) {
             throw new BadRequestException('회원 정보 수정 중 오류가 발생했습니다.');
         }
@@ -91,13 +86,8 @@ export class UsersController {
     @Delete(':id')
     @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.USER)
-    async deleteUser(@Param('id') id: number): Promise<ApiResponseDto<void>> {
+    async deleteUser(@Param('id') id: number): Promise<void> {
         await this.usersService.remove(id);
-        return new ApiResponseDto(
-            true,
-            HttpStatus.NO_CONTENT,
-            '회원 정보가 성공적으로 삭제되었습니다.',
-        );
     }
 
     @Post('logout')
