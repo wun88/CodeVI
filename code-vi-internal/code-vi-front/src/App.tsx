@@ -17,6 +17,7 @@ import GithubCallback from './pages/GithubCallback/GithubCallback';
 import GoogleCallback from './pages/GoogleCallback/GoogleCallback';
 import KakaoCallback from './pages/KakaoCallback/KakaoCallback';
 import NaverCallback from './pages/NaverCallback/NaverCallback';
+import InternalHome from './pages/InternalHome/InternalHome';
 
 /** 인증 가드 — JWT 토큰이 없으면 /로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -35,10 +36,9 @@ function PlatformLanding({ onOpenAuth }: { onOpenAuth: () => void }) {
       navigate('/dashboard', { replace: true });
       return;
     }
-    onOpenAuth();
   }, [navigate, onOpenAuth]);
 
-  return <div className="platform-landing" />;
+  return <InternalHome onLoginClick={onOpenAuth} />;
 }
 
 export default function App() {

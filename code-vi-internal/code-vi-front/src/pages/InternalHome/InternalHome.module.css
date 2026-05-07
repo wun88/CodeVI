@@ -1,0 +1,477 @@
+.page {
+  min-height: 100vh;
+  background: #202931;
+  color: #e6edf3;
+
+  /* Mouse-driven viewport coords (keep stable) */
+  --x: -9999px;
+  --y: -9999px;
+
+  /* Parallax base */
+  --px: 0px;
+  --py: 0px;
+
+  /* Ambient spotlight radii */
+  --sr: 520px;
+  --tr: 720px;
+}
+
+.bg {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.24;
+  background-image:
+    radial-gradient(1200px circle at 50% 70%, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.55)),
+    repeating-linear-gradient(
+      to right,
+      rgba(235, 245, 251, 0.055) 0,
+      rgba(235, 245, 251, 0.055) 1px,
+      transparent 1px,
+      transparent 84px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(235, 245, 251, 0.05) 0,
+      rgba(235, 245, 251, 0.05) 1px,
+      transparent 1px,
+      transparent 84px
+    );
+  mix-blend-mode: overlay;
+}
+
+.bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.14;
+  background-image:
+    radial-gradient(rgba(235, 245, 251, 0.12) 1px, transparent 1px),
+    radial-gradient(1200px circle at 50% 105%, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.62));
+  background-size: 200px 200px, auto;
+  filter: blur(0.3px);
+}
+
+.scanLine {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: -30%;
+  height: 90px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(235, 245, 251, 0.05),
+    transparent
+  );
+  opacity: 0.12;
+  filter: blur(0.8px);
+  animation: scanDown 11s ease-in-out infinite;
+  mix-blend-mode: overlay;
+}
+
+@keyframes scanDown {
+  0% {
+    transform: translateY(-8vh);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.14;
+  }
+  55% {
+    transform: translateY(92vh);
+    opacity: 0.12;
+  }
+  100% {
+    transform: translateY(108vh);
+    opacity: 0;
+  }
+}
+
+.codeFrags {
+  position: absolute;
+  inset: 0;
+}
+
+.codeFrag {
+  position: absolute;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: var(--fs, 12px);
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: rgba(235, 245, 251, 0.18);
+  opacity: var(--op, 0.045);
+  filter: blur(var(--bl, 0.4px));
+  transform: translate(
+    calc(var(--px) * 0.18 + var(--dx, 0px)),
+    calc(var(--py) * 0.12 + var(--dy, 0px))
+  );
+  will-change: transform, opacity, filter;
+  animation: fragFloat var(--dur, 14s) ease-in-out infinite;
+  animation-delay: var(--del, 0s);
+}
+
+.codeFrag::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  background: radial-gradient(
+    200px circle at var(--x) var(--y),
+    rgba(235, 245, 251, 0.70) 0%,
+    rgba(159, 231, 240, 0.26) 40%,
+    transparent 72%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  pointer-events: none;
+  opacity: 0.22;
+}
+
+@keyframes fragFloat {
+  0%,
+  100% {
+    transform: translate(
+      calc(var(--px) * 0.18 + var(--dx, 0px)),
+      calc(var(--py) * 0.12 + var(--dy, 0px))
+    );
+  }
+  50% {
+    transform: translate(
+      calc(var(--px) * 0.18 + var(--dx, 0px)),
+      calc(var(--py) * 0.12 + var(--dy, 0px) - 2px)
+    );
+  }
+}
+
+.gearSilhouette {
+  position: absolute;
+  right: clamp(-220px, -14vw, -80px);
+  top: clamp(-30px, -3vw, 24px);
+  width: min(720px, 56vw);
+  height: min(660px, 52vw);
+  background-image: url('../../assets/main-page/logo.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: right top;
+  opacity: 0.075;
+  filter: blur(0.12px) saturate(0.92);
+  transform: translate(calc(var(--px) * 0.75), calc(var(--py) * 0.55));
+  transition: transform 0.1s linear;
+}
+
+.gearSilhouette::before {
+  content: '';
+  position: absolute;
+  inset: -6%;
+  background: inherit;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: right top;
+  opacity: 0.22;
+  filter: blur(14px);
+}
+
+.main {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 132px 48px 112px;
+  min-height: 100vh;
+}
+
+.ctaArea {
+  position: absolute;
+  left: 58vw;
+  top: 58vh;
+  transform: translate(calc(var(--px) * -0.32), calc(var(--py) * -0.24));
+}
+
+.cta {
+  position: relative;
+  border-radius: 999px;
+  border: 1px solid rgba(235, 245, 251, 0.22);
+  padding: 14px 26px;
+  color: rgba(235, 245, 251, 0.92);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 220px;
+  background: linear-gradient(180deg, rgba(235, 245, 251, 0.055), rgba(255, 255, 255, 0.03));
+  overflow: visible;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.25s ease;
+  box-shadow:
+    0 22px 70px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(235, 245, 251, 0.1);
+}
+
+.ctaLabel {
+  position: relative;
+  z-index: 2;
+}
+
+.ctaGlow {
+  --glow-line-color: #ebf5fb;
+  --glow-blur-color: rgba(79, 183, 197, 0.52);
+  --glow-line-thickness: 1.5px;
+  --glow-blur-size: 8px;
+  --glow-line-length: 18;
+  --animation-speed: 1200ms;
+
+  position: absolute;
+  inset: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.ctaGlowBlur,
+.ctaGlowLine {
+  fill: transparent;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--glow-line-length) 100;
+  stroke-dashoffset: 0;
+}
+
+.ctaGlowBlur {
+  stroke: var(--glow-blur-color);
+  stroke-width: calc(var(--glow-line-thickness) + 1px);
+  filter: blur(var(--glow-blur-size));
+  opacity: 0.6;
+}
+
+.ctaGlowLine {
+  stroke: rgba(235, 245, 251, 0.78);
+  stroke-width: var(--glow-line-thickness);
+  opacity: 0.9;
+}
+
+.cta:hover .ctaGlow,
+.cta:focus-visible .ctaGlow {
+  opacity: 1;
+  animation: ctaGlowPulse var(--animation-speed) linear infinite;
+}
+
+.cta:hover .ctaGlowBlur,
+.cta:focus-visible .ctaGlowBlur,
+.cta:hover .ctaGlowLine,
+.cta:focus-visible .ctaGlowLine {
+  animation: ctaGlowDash var(--animation-speed) linear infinite;
+}
+
+@keyframes ctaGlowDash {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes ctaGlowPulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    720px circle at var(--x) var(--y),
+    rgba(235, 245, 251, 0.14),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  border-color: rgba(235, 245, 251, 0.32);
+  background: linear-gradient(180deg, rgba(235, 245, 251, 0.09), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    0 26px 86px rgba(0, 0, 0, 0.54),
+    0 0 0 6px rgba(235, 245, 251, 0.045),
+    0 0 64px rgba(235, 245, 251, 0.06);
+}
+
+.cta:hover .ctaArrow {
+  transform: translate(3px, -0.5px);
+  opacity: 0.82;
+}
+
+.cta:hover::after {
+  opacity: 1;
+}
+
+.cta:focus-visible {
+  outline: none;
+  box-shadow:
+    0 26px 86px rgba(0, 0, 0, 0.54),
+    0 0 0 6px rgba(235, 245, 251, 0.06);
+}
+
+.ctaArrow {
+  display: inline-block;
+  margin-left: 10px;
+  opacity: 0.75;
+  transform: translateY(-0.5px);
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.ctaSub {
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(235, 245, 251, 0.28);
+  letter-spacing: -0.01em;
+}
+
+.sysMsgs {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  /* Above big typography layer, below spotlight */
+  z-index: 40;
+}
+
+.sysMsg {
+  position: fixed;
+  max-width: min(520px, 56vw);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: rgba(235, 245, 251, 0.52);
+  opacity: 0;
+  filter: blur(0.6px);
+  transform: translateY(8px);
+  will-change: transform, opacity, filter, clip-path;
+  text-shadow: 0 14px 48px rgba(0, 0, 0, 0.38);
+}
+
+.sysAccent {
+  color: rgba(159, 231, 240, 0.65);
+}
+
+.bigWordLayer {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.heroTitle {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.heroTitle::before,
+.heroTitle::after {
+  /* IMPORTANT: terminate \A escape properly */
+  content: 'RE:\A' 'FACTORY';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-left: 0;
+  padding-bottom: 0;
+
+  font-size: clamp(11rem, 19vw, 24rem);
+  font-weight: 840;
+  letter-spacing: -0.075em;
+  line-height: 0.78;
+  white-space: pre-line;
+  user-select: none;
+}
+
+.heroTitle::before {
+  color: rgba(235, 245, 251, 0.015);
+  -webkit-text-stroke: 1.5px rgba(235, 245, 251, 0.32);
+  text-shadow:
+    0 0 24px rgba(235, 245, 251, 0.04),
+    0 16px 60px rgba(0, 0, 0, 0.35);
+
+  /* subtle parallax without breaking coord system */
+  transform: translate3d(calc(var(--px) * -0.12), calc(var(--py) * -0.08 + 2.8vw), 0);
+}
+
+.heroTitle::after {
+  color: transparent;
+  /* MUST match ::before position exactly (no misalignment) */
+  transform: translate3d(calc(var(--px) * -0.12), calc(var(--py) * -0.08 + 2.8vw), 0);
+  background: radial-gradient(
+    240px circle at var(--x) var(--y),
+    #ebf5fb 0%,
+    rgba(159, 231, 240, 0.85) 35%,
+    rgba(235, 245, 251, 0.16) 65%,
+    transparent 78%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  pointer-events: none;
+}
+
+.spotlightLayer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 120;
+  background:
+    radial-gradient(
+      180px circle at var(--x) var(--y),
+      rgba(235, 245, 251, 0.16),
+      rgba(235, 245, 251, 0.06) 30%,
+      transparent 65%
+    ),
+    radial-gradient(
+      clamp(260px, calc(var(--sr) * 0.5), 420px) circle at var(--x) var(--y),
+      rgba(235, 245, 251, 0.018) 0%,
+      transparent 62%
+    );
+  mix-blend-mode: screen;
+  filter: blur(8px) saturate(1.02);
+  opacity: 0.22;
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 96px 18px 84px;
+  }
+
+  .ctaArea {
+    left: 50%;
+    top: 60vh;
+    transform: translate(-50%, 0);
+  }
+
+  .heroTitle::before,
+  .heroTitle::after {
+    font-size: clamp(8.5rem, 30vw, 17rem);
+    line-height: 0.82;
+  }
+
+  /* No transform on wrapper: keep spotlight coords stable */
+}
