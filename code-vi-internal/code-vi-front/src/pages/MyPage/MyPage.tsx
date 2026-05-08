@@ -5,7 +5,7 @@ import './MyPage.css';
 const MyPage: React.FC = () => {
   return (
     <div className="mypage-container">
-      <Header onLoginClick={() => {}} />
+      <Header onLoginClick={() => {}} variant="internal" />
       <main className="mypage-content">
         <div className="mypage-card">
           <div className="profile-header">

@@ -10,19 +10,17 @@
 .insightCard {
   position: relative;
   border-radius: var(--rf-radius, 18px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.12));
+  background: var(--rf-surface-2, #1b2024);
   padding: 1.25rem 1.35rem 1.3rem;
   padding-left: calc(1.35rem + 3px);
   display: flex;
   flex-direction: column;
   gap: 1.05rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .insightCard::before {
@@ -33,24 +31,24 @@
   bottom: 14px;
   width: 4px;
   border-radius: 4px;
-  background: linear-gradient(180deg, #7492b7 0%, #a8bfd9 100%);
+  background: rgba(159, 231, 240, 0.55);
 }
 
 .insightCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08);
+  border-color: var(--rf-border-strong, rgba(235, 245, 251, 0.18));
+  background: #20262b;
 }
 
 .sev_risk::before {
-  background: linear-gradient(180deg, #dc2626 0%, #f87171 100%);
+  background: rgba(248, 113, 113, 0.7);
 }
 
 .sev_improve::before {
-  background: linear-gradient(180deg, #ea580c 0%, #fb923c 100%);
+  background: rgba(251, 191, 36, 0.75);
 }
 
 .sev_clear::before {
-  background: linear-gradient(180deg, #059669 0%, #34d399 100%);
+  background: rgba(110, 231, 183, 0.7);
 }
 
 .cardTop {
@@ -67,9 +65,9 @@
   text-transform: uppercase;
   padding: 0.22rem 0.52rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.5);
-  color: rgba(34, 34, 34, 0.55);
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.12));
+  background: var(--rf-chip-bg, #14181b);
+  color: rgba(235, 245, 251, 0.62);
 }
 
 .targetName {
@@ -77,7 +75,7 @@
   min-width: 0;
   font-size: 1.02rem;
   font-weight: 900;
-  color: var(--rf-text, #111111);
+  color: var(--rf-text, rgba(235, 245, 251, 0.92));
   letter-spacing: -0.02em;
 }
 
@@ -94,30 +92,28 @@
 }
 
 .status_risk {
-  background: rgba(254, 226, 226, 0.9);
-  border-color: rgba(252, 165, 165, 0.85);
-  color: #b91c1c;
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.28);
+  color: rgba(248, 113, 113, 0.9);
 }
 
 .status_improve {
-  background: rgba(255, 237, 213, 0.92);
-  border-color: rgba(253, 186, 116, 0.85);
-  color: #c2410c;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.28);
+  color: rgba(251, 191, 36, 0.92);
 }
 
 .status_clear {
-  background: rgba(209, 250, 229, 0.92);
-  border-color: rgba(110, 231, 183, 0.8);
-  color: #047857;
+  background: rgba(110, 231, 183, 0.1);
+  border-color: rgba(110, 231, 183, 0.26);
+  color: rgba(110, 231, 183, 0.9);
 }
 
 .block {
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  background: var(--rf-chip-bg, #14181b);
 }
 
 .blockHead {
@@ -125,7 +121,7 @@
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(34, 34, 34, 0.46);
+  color: rgba(235, 245, 251, 0.46);
   margin-bottom: 0.4rem;
 }
 
@@ -134,7 +130,7 @@
   font-size: 0.92rem;
   font-weight: 900;
   line-height: 1.5;
-  color: var(--rf-text, #111111);
+  color: var(--rf-text, rgba(235, 245, 251, 0.92));
 }
 
 .metricChips {
@@ -150,9 +146,9 @@
   letter-spacing: -0.02em;
   padding: 0.22rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid rgba(116, 146, 183, 0.32);
-  background: rgba(255, 255, 255, 0.6);
-  color: #3d5a73;
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  background: var(--rf-chip-bg, #14181b);
+  color: rgba(235, 245, 251, 0.72);
   font-variant-numeric: tabular-nums;
 }
 
@@ -180,11 +176,11 @@
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b91c1c;
+  color: rgba(248, 113, 113, 0.92);
 }
 
 .codeHeadAfter {
-  color: #047857;
+  color: rgba(110, 231, 183, 0.92);
 }
 
 .code {
@@ -198,26 +194,25 @@
 }
 
 .codeBefore {
-  background: rgba(254, 242, 242, 0.92);
-  color: #450a0a;
-  border: 2px solid rgba(220, 38, 38, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(254, 202, 202, 0.5);
+  background: rgba(248, 113, 113, 0.08);
+  color: rgba(235, 245, 251, 0.88);
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.08);
 }
 
 .codeAfter {
-  background: rgba(236, 253, 245, 0.95);
-  color: #064e3b;
-  border: 2px solid rgba(5, 150, 105, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(167, 243, 208, 0.5);
+  background: rgba(110, 231, 183, 0.08);
+  color: rgba(235, 245, 251, 0.88);
+  border: 1px solid rgba(110, 231, 183, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.08);
 }
 
 .effect {
   padding: 1rem 1.05rem;
   border-radius: 14px;
-  border: 1px solid rgba(116, 146, 183, 0.35);
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.85) 0%, rgba(255, 255, 255, 0.55) 100%);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 18px rgba(116, 146, 183, 0.12);
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  background: var(--rf-chip-bg, #14181b);
+  box-shadow: none;
 }
 
 .effectText {
@@ -225,28 +220,26 @@
   font-size: 0.88rem;
   font-weight: 650;
   line-height: 1.6;
-  color: var(--rf-text, #111111);
+  color: rgba(235, 245, 251, 0.86);
 }
 
 .effectKw {
   font-weight: 900;
-  color: #1e3a5f;
+  color: rgba(159, 231, 240, 0.88);
 }
 
 .detail {
   padding: 0.75rem 0.95rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  background: rgba(19, 22, 24, 0.9);
 }
 
 .detailSummary {
   cursor: pointer;
   font-size: 0.7rem;
   font-weight: 900;
-  color: rgba(34, 34, 34, 0.55);
+  color: rgba(235, 245, 251, 0.62);
   list-style: none;
   outline: none;
 }
@@ -258,7 +251,7 @@
 .detailSummary::after {
   content: '▾';
   float: right;
-  color: rgba(34, 34, 34, 0.45);
+  color: rgba(235, 245, 251, 0.48);
 }
 
 .detail[open] .detailSummary::after {
@@ -270,6 +263,6 @@
   margin-top: 0.6rem;
   font-size: 0.8125rem;
   line-height: 1.55;
-  color: rgba(34, 34, 34, 0.52);
+  color: rgba(235, 245, 251, 0.58);
   font-weight: 500;
 }

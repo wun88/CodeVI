@@ -84,7 +84,7 @@ function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <Header />
+      <Header variant="internal" />
       <main className="dashboard-content">
         <div className="dashboard-header">
           <div className="header-left">

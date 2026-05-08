@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
   return (
     <div className={`${styles.shell} dashboard-page`}>
-      <Header onLoginClick={() => navigate('/login')} onLogout={handleLogout} />
+      <Header onLoginClick={() => navigate('/login')} onLogout={handleLogout} variant="internal" />
       <div className={styles.inner}>
         <section className={styles.introCard}>
           <div className={styles.introLeft}>

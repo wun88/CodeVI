@@ -7,7 +7,7 @@ function CodeInsight() {
 
   return (
     <div className="code-insight-page">
-      <Header />
+      <Header variant="internal" />
       <main className="code-insight-content">
         <div className="code-insight-header">
           <h1>Code Insight</h1>

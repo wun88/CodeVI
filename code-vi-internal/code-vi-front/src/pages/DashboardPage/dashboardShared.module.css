@@ -1,21 +1,19 @@
 /* RE:FACTORY dashboard — glass 카드·버튼 공통 (.shell에서 토큰 상속) */
 
 .card {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--rf-surface, #171b1e);
   border-radius: var(--rf-radius, 18px);
-  box-shadow: var(--rf-shadow, 0 8px 24px rgba(0, 0, 0, 0.06));
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--rf-shadow, 0 10px 30px rgba(0, 0, 0, 0.45));
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.14));
   padding: var(--rf-card-pad, 1.35rem 1.5rem);
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07);
+  border-color: var(--rf-border-strong, rgba(235, 245, 251, 0.22));
+  background: var(--rf-surface-2, #1b2024);
 }
 
 .sectionTitle {
@@ -24,7 +22,7 @@
   gap: 0.5rem;
   font-size: 1.08rem;
   font-weight: 900;
-  color: var(--rf-text, #111111);
+  color: rgba(235, 245, 251, 0.92);
   margin: 0 0 1rem;
   letter-spacing: -0.03em;
   line-height: 1.25;
@@ -32,63 +30,59 @@
 
 .sectionIcon {
   font-size: 1.2rem;
-  opacity: 0.92;
+  opacity: 0.88;
 }
 
 .muted {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--rf-muted, rgba(34, 34, 34, 0.52));
+  color: var(--rf-muted, rgba(235, 245, 251, 0.62));
   line-height: 1.5;
   font-weight: 500;
 }
 
 /* Primary / Secondary 버튼 (섹션 내) */
 .btnPrimary {
-  border: none;
-  background: #7492b7;
-  color: #fff;
+  border: 1px solid rgba(159, 231, 240, 0.22);
+  background: rgba(159, 231, 240, 0.08);
+  color: rgba(235, 245, 251, 0.92);
   font-weight: 800;
   font-size: 0.8125rem;
   padding: 0.55rem 1.25rem;
   border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 6px 20px rgba(116, 146, 183, 0.38);
+  box-shadow: none;
   transition:
-    transform 0.2s ease,
+    border-color 0.2s ease,
     background 0.2s ease,
-    box-shadow 0.2s ease;
+    color 0.2s ease;
 }
 
 .btnPrimary:hover {
-  transform: translateY(-2px);
-  background: #5f7fa3;
-  box-shadow: 0 8px 26px rgba(95, 127, 163, 0.42);
+  background: rgba(159, 231, 240, 0.12);
+  border-color: rgba(159, 231, 240, 0.3);
+  color: rgba(235, 245, 251, 0.98);
 }
 
 .btnSecondary {
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.58);
-  color: var(--rf-text, #1a1a1a);
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.14));
+  background: rgba(15, 23, 42, 0.55);
+  color: rgba(235, 245, 251, 0.82);
   font-weight: 800;
   font-size: 0.8125rem;
   padding: 0.5rem 1.1rem;
   border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   transition:
-    transform 0.2s ease,
     border-color 0.2s ease,
     background 0.2s ease,
     color 0.2s ease;
 }
 
 .btnSecondary:hover {
-  transform: translateY(-2px);
-  border-color: rgba(116, 146, 183, 0.55);
-  background: rgba(255, 255, 255, 0.85);
-  color: #3d5a73;
+  border-color: var(--rf-border-strong, rgba(235, 245, 251, 0.22));
+  background: rgba(15, 23, 42, 0.72);
+  color: rgba(235, 245, 251, 0.92);
 }

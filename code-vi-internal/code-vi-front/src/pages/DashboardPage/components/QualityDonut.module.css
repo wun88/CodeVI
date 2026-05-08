@@ -34,13 +34,15 @@
   letter-spacing: 0.08em;
   padding: 0.12rem 0.4rem;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.04);
+  background: var(--rf-chip-bg, #14181b);
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  color: rgba(235, 245, 251, 0.78);
 }
 
 .scoreNum {
   font-size: 2.15rem;
   font-weight: 900;
-  color: var(--donut-accent, #334155);
+  color: rgba(235, 245, 251, 0.92);
   letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums;
 }
@@ -48,14 +50,14 @@
 .scoreOut {
   font-size: 0.78rem;
   font-weight: 700;
-  color: rgba(34, 34, 34, 0.45);
+  color: rgba(235, 245, 251, 0.46);
 }
 
 .gradeDesc {
   margin-top: 0.3rem;
   font-size: 0.74rem;
   font-weight: 700;
-  color: rgba(34, 34, 34, 0.48);
+  color: rgba(235, 245, 251, 0.56);
 }
 
 .scale {
@@ -68,14 +70,9 @@
 .scaleBar {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    #ef4444 0%,
-    #f59e0b 33%,
-    #3b82f6 66%,
-    #10b981 100%
-  );
-  opacity: 0.85;
+  background: rgba(235, 245, 251, 0.1);
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  opacity: 1;
 }
 
 .scaleStops {
@@ -84,7 +81,7 @@
   margin-top: 0.35rem;
   font-size: 0.65rem;
   font-weight: 900;
-  color: rgba(34, 34, 34, 0.45);
+  color: rgba(235, 245, 251, 0.48);
   letter-spacing: 0.08em;
 }
 
@@ -95,12 +92,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  background: var(--rf-chip-bg, #14181b);
+  color: rgba(235, 245, 251, 0.62);
 }
 
 .stopActive {
-  border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
+  border-color: rgba(159, 231, 240, 0.28);
+  background: rgba(159, 231, 240, 0.08);
+  color: rgba(159, 231, 240, 0.9);
 }
