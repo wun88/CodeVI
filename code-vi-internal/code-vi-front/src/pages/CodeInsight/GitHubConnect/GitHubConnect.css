@@ -1,6 +1,7 @@
 .github-connect-page {
   min-height: 100vh;
-  background-color: #f5f9fc;
+  background-color: var(--internal-bg);
+  color: var(--internal-text);
 }
 
 .github-connect-content {
@@ -16,7 +17,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #666666;
+  color: var(--internal-text-2);
   background: none;
   border: none;
   cursor: pointer;
@@ -26,7 +27,7 @@
 }
 
 .back-btn:hover {
-  color: #222222;
+  color: var(--internal-text);
 }
 
 .github-connect-header {
@@ -38,23 +39,26 @@
   font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 8px 0;
 }
 
 .github-connect-header p {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666666;
+  color: var(--internal-text-2);
   margin: 0;
 }
 
 .github-connect-card {
-  background: white;
+  background: var(--internal-surface);
   border-radius: 16px;
   padding: 50px 40px;
   text-align: center;
-  border: 1px solid #e8eef3;
+  border: 1px solid var(--internal-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .github-logo {
@@ -65,14 +69,14 @@
   font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 600;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 10px 0;
 }
 
 .github-connect-card p {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666666;
+  color: var(--internal-text-2);
   margin: 0 0 24px 0;
 }
 
@@ -84,18 +88,20 @@
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: white;
-  background-color: #222222;
-  border: none;
+  color: var(--internal-text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--internal-border);
   border-radius: 10px;
   padding: 14px 28px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
   min-width: 180px;
 }
 
 .github-connect-btn:hover:not(:disabled) {
-  background-color: #333333;
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--internal-border-strong);
 }
 
 .github-connect-btn:disabled {
@@ -126,10 +132,12 @@
 
 /* Repository Section */
 .repository-section {
-  background: white;
+  background: var(--internal-surface);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid #e8eef3;
+  border: 1px solid var(--internal-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .repo-section-header {
@@ -140,14 +148,14 @@
   font-family: 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 6px 0;
 }
 
 .repo-section-header p {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #666666;
+  color: var(--internal-text-2);
   margin: 0;
 }
 
@@ -162,20 +170,20 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border: 1px solid #e8eef3;
+  border: 1px solid rgba(235, 245, 251, 0.10);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .repository-item:hover {
-  border-color: #c5d5e5;
-  background-color: #fafcfe;
+  border-color: rgba(235, 245, 251, 0.16);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .repository-item.selected {
-  border-color: #7492B7;
-  background-color: #f5f9fc;
+  border-color: rgba(159, 231, 240, 0.55);
+  background-color: rgba(159, 231, 240, 0.06);
 }
 
 .repo-info {
@@ -186,14 +194,14 @@
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 4px 0;
 }
 
 .repo-description {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #666666;
+  color: var(--internal-text-2);
   margin: 0 0 8px 0;
 }
 
@@ -203,7 +211,7 @@
   gap: 14px;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #888888;
+  color: var(--internal-muted);
 }
 
 .repo-language {
@@ -240,18 +248,20 @@
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: white;
-  background-color: #7492B7;
-  border: none;
+  color: var(--internal-text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--internal-border);
   border-radius: 10px;
   padding: 14px 24px;
   cursor: pointer;
   margin-top: 20px;
-  transition: opacity 0.2s;
+  transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .analyze-btn:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--internal-border-strong);
 }
 
 /* Responsive */

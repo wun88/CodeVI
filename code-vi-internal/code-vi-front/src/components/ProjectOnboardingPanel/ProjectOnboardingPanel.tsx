@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { onboardingService } from '../../services/onboardingService';
-import { FaGithub, FaKey, FaRocket, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaGithub, FaKey, FaRocket, FaSpinner } from 'react-icons/fa';
 import './ProjectOnboardingPanel.css';
 
 const ProjectOnboardingPanel: React.FC = () => {

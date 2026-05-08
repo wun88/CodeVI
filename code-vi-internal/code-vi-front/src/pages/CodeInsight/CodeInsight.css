@@ -1,6 +1,37 @@
 .code-insight-page {
   min-height: 100vh;
-  background-color: #f5f9fc;
+  background-color: var(--internal-bg);
+  color: var(--internal-text);
+  position: relative;
+  isolation: isolate;
+}
+
+.code-insight-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px circle at 20% 10%, rgba(159, 231, 240, 0.08) 0%, transparent 58%),
+    radial-gradient(900px circle at 70% 85%, rgba(235, 245, 251, 0.06) 0%, transparent 62%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45)),
+    repeating-linear-gradient(
+      to right,
+      rgba(235, 245, 251, 0.04) 0 1px,
+      transparent 1px 120px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(235, 245, 251, 0.03) 0 1px,
+      transparent 1px 120px
+    );
+  opacity: 0.6;
+}
+
+.code-insight-content {
+  position: relative;
+  z-index: 1;
 }
 
 .code-insight-content {
@@ -21,14 +52,14 @@
   font-family: 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 700;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 10px 0;
 }
 
 .code-insight-header p {
   font-family: 'Inter', sans-serif;
   font-size: 15px;
-  color: #666666;
+  color: var(--internal-text-2);
   margin: 0;
 }
 
@@ -36,7 +67,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 600;
-  color: #444444;
+  color: rgba(235, 245, 251, 0.72);
   margin: 0 0 20px 0;
   text-align: center;
 }
@@ -49,14 +80,16 @@
 }
 
 .upload-card {
-  background: white;
+  background: var(--internal-surface);
   border-radius: 16px;
   padding: 28px;
   width: 280px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  border: 1px solid #e8eef3;
+  border: 1px solid var(--internal-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -64,8 +97,8 @@
 
 .upload-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #7492B7;
+  box-shadow: 0 26px 86px rgba(0, 0, 0, 0.34);
+  border-color: var(--internal-border-strong);
 }
 
 .upload-icon {
@@ -79,14 +112,14 @@
   font-family: 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 600;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 8px 0;
 }
 
 .upload-card-desc {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #666666;
+  color: var(--internal-text-2);
   line-height: 1.5;
   margin: 0 0 14px 0;
 }
@@ -100,7 +133,7 @@
 .upload-features li {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #555555;
+  color: rgba(235, 245, 251, 0.54);
   padding: 5px 0;
   display: flex;
   align-items: center;
@@ -108,7 +141,7 @@
 }
 
 .check-icon {
-  color: #7492B7;
+  color: var(--internal-accent);
   font-weight: 600;
   font-size: 13px;
 }

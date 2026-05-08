@@ -4,7 +4,16 @@ import Header from '../../../components/Header';
 import './GitHubConnect.css';
 
 // 더미 데이터
-const dummyRepositories = [
+type Repo = {
+  id: number;
+  name: string;
+  description: string;
+  language: string;
+  stars: number;
+  updatedAt: string;
+};
+
+const dummyRepositories: Repo[] = [
   { id: 1, name: 'my-react-app', description: 'A sample React application', language: 'JavaScript', stars: 12, updatedAt: '2024-03-05' },
   { id: 2, name: 'backend-api', description: 'REST API backend service', language: 'Python', stars: 8, updatedAt: '2024-03-01' },
   { id: 3, name: 'portfolio-website', description: 'Personal portfolio site', language: 'TypeScript', stars: 5, updatedAt: '2024-02-28' },
@@ -14,7 +23,7 @@ const dummyRepositories = [
 function GitHubConnect() {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState(false);
-  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [selectedRepo, setSelectedRepo] = useState<Repo | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleGitHubConnect = () => {
@@ -26,7 +35,7 @@ function GitHubConnect() {
     }, 1500);
   };
 
-  const handleRepoSelect = (repo) => {
+  const handleRepoSelect = (repo: Repo) => {
     setSelectedRepo(repo);
   };
 
@@ -34,8 +43,8 @@ function GitHubConnect() {
     navigate('/code-insight/dashboard');
   };
 
-  const getLanguageColor = (language) => {
-    const colors = {
+  const getLanguageColor = (language: string) => {
+    const colors: Record<string, string> = {
       JavaScript: '#f1e05a',
       TypeScript: '#3178c6',
       Python: '#3572A5',

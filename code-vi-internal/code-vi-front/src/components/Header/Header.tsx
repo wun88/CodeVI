@@ -8,6 +8,7 @@ import { authService } from '../../services/authService';
 
 interface HeaderProps {
   onLoginClick?: () => void;
+  onLogout?: () => void;
   variant?: 'default' | 'transparent' | 'white' | string;
 }
 
