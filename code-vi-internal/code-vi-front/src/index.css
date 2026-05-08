@@ -18,7 +18,7 @@
   -moz-osx-font-smoothing: grayscale;
 
   /* Internal dark cinematic theme tokens */
-  --internal-bg: #202931;
+  --internal-bg: #121619;
   --internal-surface: rgba(255, 255, 255, 0.03);
   --internal-surface-elevated: rgba(255, 255, 255, 0.05);
   --internal-border: rgba(235, 245, 251, 0.12);

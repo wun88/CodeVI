@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import './App.css';
 
 import CodeInsight from './pages/CodeInsight';
+import InstantInsight from './pages/CodeInsight/InstantInsight';
+import ProjectAnalysis from './pages/CodeInsight/ProjectAnalysis';
 import ZipUpload from './pages/CodeInsight/ZipUpload';
 import GitHubConnect from './pages/CodeInsight/GitHubConnect';
 import Dashboard from './pages/CodeInsight/Dashboard';
@@ -76,6 +78,8 @@ export default function App() {
             <Route path="/" element={<PlatformLanding onOpenAuth={openLogin} />} />
 
             <Route path="/code-insight" element={<CodeInsight />} />
+            <Route path="/code-insight/instant" element={<InstantInsight />} />
+            <Route path="/code-insight/project" element={<ProjectAnalysis />} />
             <Route path="/code-insight/upload" element={<ZipUpload />} />
             <Route path="/code-insight/github" element={<GitHubConnect />} />
             <Route path="/code-insight/onboarding" element={<OnboardingPage />} />
