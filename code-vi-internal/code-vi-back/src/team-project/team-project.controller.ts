@@ -2,6 +2,7 @@ import { Controller, Post, Body, Logger, Get } from '@nestjs/common';
 import { TeamProjectService } from './team-project.service';
 import { CreateTeamProjectAnalysisDto } from './dto/create-team-project.dto';
 import { TeamProjectResponseDto } from './dto/team-project-response.dto';
+import { CodeAnalysis } from '../code-analysis/entities/code-analysis.entity';
 
 @Controller('team-projects')
 export class TeamProjectController {
@@ -12,7 +13,7 @@ export class TeamProjectController {
     @Post()
     async createJenkinsNotification(
         @Body() dto: CreateTeamProjectAnalysisDto
-    ): Promise<void> {
+    ): Promise<any> {
         return this.teamProjectService.createJenkinsNotification(dto);
     }
 
