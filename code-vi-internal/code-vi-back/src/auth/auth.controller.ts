@@ -29,7 +29,7 @@ export class AuthController {
     @Post('/signup')
     async createUser(
         @Body() createUserRequestDto: CreateUserDto,
-    ): Promise<ApiResponseDto<void>> {
+    ): Promise<void> {
         this.logger.verbose(
             `Visitor is trying to create a new account with email: ${createUserRequestDto.email}`,
         );
@@ -37,11 +37,6 @@ export class AuthController {
         try {
             await this.usersService.createUser(createUserRequestDto);
             this.logger.verbose(`New account created Successfully`);
-            return new ApiResponseDto(
-                true,
-                HttpStatus.CREATED,
-                '회원가입이 완료되었습니다.',
-            );
         } catch (error) {
             if (error instanceof ConflictException) {
                 throw new ConflictException(error.message);
@@ -252,7 +247,7 @@ export class AuthController {
     async getAttendanceJwt(
         @Param('classId') classId: number,
         @Param('sessionId') sessionId: number,
-    ): Promise<ApiResponseDto<string>> {
+    ): Promise<string> {
         this.logger.verbose(`Generate JWT Token for Attendance`);
 
         const jwt = await this.authService.generateAttendanceJwt(
@@ -261,23 +256,12 @@ export class AuthController {
         );
 
         this.logger.verbose(`JWT Token generated Successfully`);
-        return new ApiResponseDto(
-            true,
-            HttpStatus.CREATED,
-            `JWT Token generated Successfully`,
-            jwt,
-        );
+        return jwt;
     }
 
     @Get('/rsa-public-key')
-    async getRsaPublicKey(): Promise<ApiResponseDto<string>> {
+    async getRsaPublicKey(): Promise<string> {
         this.logger.verbose(`Retrieving RSA Public Key`);
-        const publicKey = this.authService.getRsaPublicKey();
-        return new ApiResponseDto(
-            true,
-            HttpStatus.OK,
-            'Public key retrieved successfully',
-            publicKey,
-        );
+        return this.authService.getRsaPublicKey();
     }
 }

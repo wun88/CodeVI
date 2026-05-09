@@ -19,26 +19,14 @@ export class CodeAnalysisController {
   @Post()
   async createJenkinsNotification(
     @Body() createCodeAnalysisDto: CreateCodeAnalysisDto,
-  ): Promise<ApiResponseDto<void>> {
-    // this.logger.verbose(`Received Jenkins Notification for Build #${createCodeAnalysisDto.buildNumber}`);
-
+  ): Promise<void> {
     await this.codeAnalysisService.createJenkinsNotification(
       createCodeAnalysisDto,
-    );
-    // this.logger.verbose(`Jenkins Notification received successfully`);
-    return new ApiResponseDto(
-      true,
-      HttpStatus.CREATED,
-      'Jenkins Notification received successfully',
     );
   }
 
   @Get()
   async getDashboardData() {
-    const data = await this.codeAnalysisService.findAll();
-    return {
-      success: true,
-      data: data,
-    };
+    return this.codeAnalysisService.findAll();
   }
 }
