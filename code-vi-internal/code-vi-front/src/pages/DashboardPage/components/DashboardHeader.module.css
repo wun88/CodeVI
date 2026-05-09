@@ -3,20 +3,21 @@
   margin-top: 1.25rem;
   border-radius: 28px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: radial-gradient(1200px 380px at 10% 0%, rgba(59, 130, 246, 0.18), transparent 55%),
-    radial-gradient(900px 320px at 70% 15%, rgba(99, 102, 241, 0.16), transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.82));
-  box-shadow: var(--dash-shadow, 0 4px 24px rgba(15, 23, 42, 0.06));
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.12));
+  background:
+    radial-gradient(1000px 420px at 12% 0%, rgba(159, 231, 240, 0.08), transparent 60%),
+    radial-gradient(900px 360px at 78% 18%, rgba(235, 245, 251, 0.045), transparent 64%),
+    var(--rf-surface-3, #131618);
+  box-shadow: var(--rf-shadow, 0 18px 60px rgba(0, 0, 0, 0.42));
 }
 
 .heroBg {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
-    linear-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+  background-image: linear-gradient(90deg, rgba(235, 245, 251, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(235, 245, 251, 0.045) 1px, transparent 1px);
   background-size: 56px 56px;
-  opacity: 0.22;
+  opacity: 0.16;
   pointer-events: none;
 }
 
@@ -44,8 +45,7 @@
 .mark {
   font-size: 1.9rem;
   line-height: 1;
-  color: var(--dash-primary, #3b82f6);
-  filter: drop-shadow(0 8px 18px rgba(59, 130, 246, 0.25));
+  color: rgba(159, 231, 240, 0.88);
 }
 
 .titles {
@@ -60,7 +60,7 @@
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(37, 99, 235, 0.9);
+  color: rgba(235, 245, 251, 0.55);
 }
 
 .product {
@@ -68,19 +68,19 @@
   font-size: 1.6rem;
   font-weight: 900;
   letter-spacing: -0.03em;
-  color: var(--dash-text, #334155);
+  color: var(--rf-text, rgba(235, 245, 251, 0.92));
 }
 
 .subtitle {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.55;
-  color: var(--dash-muted, #64748b);
+  color: var(--rf-muted, rgba(235, 245, 251, 0.62));
 }
 
 .meta {
   font-size: 0.875rem;
-  color: var(--dash-muted, #64748b);
+  color: var(--rf-muted, rgba(235, 245, 251, 0.62));
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -93,8 +93,9 @@
   align-items: center;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
+  background: var(--rf-chip-bg, #14181b);
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.12));
+  color: rgba(235, 245, 251, 0.82);
   font-weight: 600;
   font-size: 0.8125rem;
 }
@@ -104,7 +105,7 @@
 }
 
 .project {
-  color: var(--dash-text, #334155);
+  color: var(--rf-text, rgba(235, 245, 251, 0.92));
   font-weight: 700;
 }
 
@@ -123,8 +124,8 @@
   gap: 0.4rem;
   padding: 0.9rem 1rem;
   border-radius: 18px;
-  background: rgba(248, 250, 252, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: var(--rf-chip-bg, #14181b);
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.12));
   min-width: 15.5rem;
 }
 
@@ -139,7 +140,7 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--dash-muted, #64748b);
+  color: rgba(235, 245, 251, 0.52);
 }
 
 .analysisChip {
@@ -149,27 +150,28 @@
   text-transform: uppercase;
   padding: 0.2rem 0.45rem;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.14);
-  color: #4338ca;
+  background: rgba(159, 231, 240, 0.08);
+  border: 1px solid rgba(159, 231, 240, 0.18);
+  color: rgba(159, 231, 240, 0.9);
 }
 
 .analysisTime {
   font-size: 0.95rem;
   font-weight: 800;
-  color: var(--dash-text, #334155);
+  color: rgba(235, 245, 251, 0.9);
   letter-spacing: -0.02em;
 }
 
 .analysisHint {
   font-size: 0.72rem;
   line-height: 1.45;
-  color: var(--dash-muted, #64748b);
+  color: rgba(235, 245, 251, 0.58);
 }
 
 .logout {
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: #fff;
-  color: var(--dash-muted, #64748b);
+  border: 1px solid var(--rf-border, rgba(235, 245, 251, 0.12));
+  background: var(--rf-chip-bg, #14181b);
+  color: rgba(235, 245, 251, 0.72);
   font-size: 0.8125rem;
   font-weight: 700;
   padding: 0.55rem 1.05rem;
@@ -179,9 +181,9 @@
 }
 
 .logout:hover {
-  border-color: #3b82f6;
-  color: #2563eb;
-  background: rgba(59, 130, 246, 0.06);
+  border-color: var(--rf-border-strong, rgba(235, 245, 251, 0.18));
+  color: rgba(235, 245, 251, 0.88);
+  background: var(--rf-chip-bg-hover, #171c20);
 }
 
 .logout:active {

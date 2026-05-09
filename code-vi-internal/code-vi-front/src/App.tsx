@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import './App.css';
 
 import CodeInsight from './pages/CodeInsight';
+import InstantInsight from './pages/CodeInsight/InstantInsight';
+import ProjectAnalysis from './pages/CodeInsight/ProjectAnalysis';
 import ZipUpload from './pages/CodeInsight/ZipUpload';
 import GitHubConnect from './pages/CodeInsight/GitHubConnect';
 import Dashboard from './pages/CodeInsight/Dashboard';
@@ -17,6 +19,7 @@ import GithubCallback from './pages/GithubCallback/GithubCallback';
 import GoogleCallback from './pages/GoogleCallback/GoogleCallback';
 import KakaoCallback from './pages/KakaoCallback/KakaoCallback';
 import NaverCallback from './pages/NaverCallback/NaverCallback';
+import InternalHome from './pages/InternalHome/InternalHome';
 
 /** 인증 가드 — JWT 토큰이 없으면 /로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -35,10 +38,9 @@ function PlatformLanding({ onOpenAuth }: { onOpenAuth: () => void }) {
       navigate('/dashboard', { replace: true });
       return;
     }
-    onOpenAuth();
   }, [navigate, onOpenAuth]);
 
-  return <div className="platform-landing" />;
+  return <InternalHome onLoginClick={onOpenAuth} />;
 }
 
 export default function App() {
@@ -76,6 +78,8 @@ export default function App() {
             <Route path="/" element={<PlatformLanding onOpenAuth={openLogin} />} />
 
             <Route path="/code-insight" element={<CodeInsight />} />
+            <Route path="/code-insight/instant" element={<InstantInsight />} />
+            <Route path="/code-insight/project" element={<ProjectAnalysis />} />
             <Route path="/code-insight/upload" element={<ZipUpload />} />
             <Route path="/code-insight/github" element={<GitHubConnect />} />
             <Route path="/code-insight/onboarding" element={<OnboardingPage />} />

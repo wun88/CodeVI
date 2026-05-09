@@ -40,7 +40,7 @@ function buildAngleTick(hintFor: (subject: string) => string) {
         <title>{tip}</title>
         <text
           textAnchor={(textAnchor ?? 'middle') as 'start' | 'middle' | 'end'}
-          fill="rgba(34,34,34,0.52)"
+          fill="rgba(235, 245, 251, 0.62)"
           fontSize={10}
           fontWeight={800}
           dy={3}
@@ -79,7 +79,7 @@ export default function MetricsRadarSection({ axes }: Props) {
         <div className={styles.chartBox}>
           <ResponsiveContainer width="100%" height={280}>
             <RadarChart cx="50%" cy="52%" outerRadius="74%" data={data}>
-              <PolarGrid stroke="rgba(116, 146, 183, 0.35)" />
+              <PolarGrid stroke="rgba(235, 245, 251, 0.14)" />
               <PolarAngleAxis dataKey="subject" tick={AngleTick} />
               <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
               <Tooltip
@@ -98,17 +98,21 @@ export default function MetricsRadarSection({ axes }: Props) {
               <Radar
                 name="지표"
                 dataKey="value"
-                stroke="#5f7fa3"
-                fill="#7492b7"
-                fillOpacity={0.26}
+                stroke="rgba(159, 231, 240, 0.62)"
+                fill="rgba(159, 231, 240, 0.22)"
+                fillOpacity={1}
                 strokeWidth={2.5}
-                dot={{ r: 4, fill: '#7492b7', stroke: '#fff', strokeWidth: 2 }}
+                dot={{
+                  r: 4,
+                  fill: 'rgba(159, 231, 240, 0.72)',
+                  stroke: 'rgba(235, 245, 251, 0.55)',
+                  strokeWidth: 2,
+                }}
                 activeDot={{
                   r: 8,
                   strokeWidth: 2,
-                  stroke: '#fff',
-                  fill: '#4a6a8a',
-                  style: { filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.15))' },
+                  stroke: 'rgba(235, 245, 251, 0.72)',
+                  fill: 'rgba(235, 245, 251, 0.2)',
                 }}
               />
             </RadarChart>

@@ -6,13 +6,14 @@ type Props = {
   score: number;
 };
 
-const TRACK = '#e2e8f0';
+const TRACK = 'rgba(235, 245, 251, 0.12)';
 
 function grade(score: number): { label: 'A' | 'B' | 'C' | 'D'; desc: string; color: string } {
-  if (score >= 85) return { label: 'A', desc: '우수 · 안정적인 품질', color: '#10b981' };
-  if (score >= 70) return { label: 'B', desc: '양호 · 일부 개선 여지', color: '#3b82f6' };
-  if (score >= 55) return { label: 'C', desc: '유지 · 리스크 구간 존재', color: '#f59e0b' };
-  return { label: 'D', desc: '위험 · 우선 개선 권장', color: '#ef4444' };
+  // Muted palette to match internal dashboard theme (no neon / rainbow).
+  if (score >= 85) return { label: 'A', desc: '우수 · 안정적인 품질', color: 'rgba(110, 231, 183, 0.92)' };
+  if (score >= 70) return { label: 'B', desc: '양호 · 일부 개선 여지', color: 'rgba(159, 231, 240, 0.92)' };
+  if (score >= 55) return { label: 'C', desc: '유지 · 리스크 구간 존재', color: 'rgba(251, 191, 36, 0.92)' };
+  return { label: 'D', desc: '위험 · 우선 개선 권장', color: 'rgba(248, 113, 113, 0.92)' };
 }
 
 export default function QualityDonut({ score }: Props) {

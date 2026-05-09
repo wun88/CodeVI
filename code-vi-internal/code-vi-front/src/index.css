@@ -16,10 +16,29 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Internal dark cinematic theme tokens */
+  --internal-bg: #121619;
+  --internal-surface: rgba(255, 255, 255, 0.03);
+  --internal-surface-elevated: rgba(255, 255, 255, 0.05);
+  --internal-border: rgba(235, 245, 251, 0.12);
+  --internal-border-strong: rgba(235, 245, 251, 0.16);
+  --internal-text: #ebf5fb;
+  --internal-text-2: rgba(235, 245, 251, 0.62);
+  --internal-muted: rgba(235, 245, 251, 0.32);
+  --internal-accent: #9fe7f0;
+  --internal-danger: rgba(255, 120, 120, 0.85);
+  --internal-success: rgba(120, 255, 180, 0.85);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--internal-bg);
+  color: var(--internal-text);
+}
+
+::selection {
+  background: rgba(159, 231, 240, 0.22);
 }

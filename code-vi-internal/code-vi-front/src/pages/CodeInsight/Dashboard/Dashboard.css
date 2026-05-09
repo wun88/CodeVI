@@ -1,6 +1,7 @@
 .dashboard-page {
   min-height: 100vh;
-  background-color: #f5f9fc;
+  background-color: var(--internal-bg);
+  color: var(--internal-text);
 }
 
 .dashboard-content {
@@ -26,7 +27,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #666666;
+  color: var(--internal-text-2);
   background: none;
   border: none;
   cursor: pointer;
@@ -37,21 +38,21 @@
 }
 
 .back-btn:hover {
-  color: #222222;
+  color: var(--internal-text);
 }
 
 .dashboard-header h1 {
   font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0;
 }
 
 .project-stats {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: #666666;
+  color: var(--internal-text-2);
   margin: 4px 0 0 0;
 }
 
@@ -62,17 +63,20 @@
 }
 
 .dashboard-card {
-  background: white;
+  background: var(--internal-surface);
   border-radius: 14px;
   padding: 22px;
-  border: 1px solid #e8eef3;
+  border: 1px solid var(--internal-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-card h2 {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: #444444;
+  color: rgba(235, 245, 251, 0.62);
   margin: 0 0 16px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -98,8 +102,8 @@
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7492B7 0%, #5a7a9f 100%);
-  color: white;
+  background: linear-gradient(135deg, rgba(159, 231, 240, 0.6) 0%, rgba(235, 245, 251, 0.16) 100%);
+  color: var(--internal-text);
 }
 
 .score-value {
@@ -118,14 +122,14 @@
 
 .quality-bar {
   height: 6px;
-  background-color: #e8eef3;
+  background-color: rgba(235, 245, 251, 0.12);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .quality-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7492B7 0%, #5a7a9f 100%);
+  background: linear-gradient(90deg, rgba(159, 231, 240, 0.75) 0%, rgba(235, 245, 251, 0.22) 100%);
   border-radius: 3px;
 }
 
@@ -158,13 +162,13 @@
 .language-name {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #444444;
+  color: rgba(235, 245, 251, 0.62);
 }
 
 .language-bar {
   flex: 1;
   height: 8px;
-  background-color: #e8eef3;
+  background-color: rgba(235, 245, 251, 0.12);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -178,7 +182,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 500;
-  color: #666666;
+  color: var(--internal-text-2);
   min-width: 36px;
   text-align: right;
 }
@@ -205,7 +209,7 @@
 .issue-label {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #666666;
+  color: var(--internal-text-2);
 }
 
 .issue-stat.critical .issue-count {
@@ -232,14 +236,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  background-color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
 }
 
 .metric-label {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #444444;
+  color: rgba(235, 245, 251, 0.62);
 }
 
 .metric-value {
@@ -249,15 +253,15 @@
 }
 
 .status-good {
-  color: #27ae60;
+  color: var(--internal-success);
 }
 
 .status-warning {
-  color: #f39c12;
+  color: rgba(255, 200, 120, 0.9);
 }
 
 .status-critical {
-  color: #e74c3c;
+  color: var(--internal-danger);
 }
 
 /* Recent Issues Card */
@@ -276,7 +280,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background-color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
 }
 
@@ -292,7 +296,7 @@
 .issue-message {
   font-family: 'Inter', sans-serif;
   font-size: 13px;
-  color: #333333;
+  color: rgba(235, 245, 251, 0.72);
   margin: 0 0 4px 0;
 }
 

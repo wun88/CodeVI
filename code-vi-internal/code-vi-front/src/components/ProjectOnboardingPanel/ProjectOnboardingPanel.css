@@ -5,21 +5,23 @@
 }
 
 .onboard-card {
-  background: white;
+  background: var(--internal-surface);
   padding: 40px;
   border-radius: 16px;
-  color: #222222;
+  color: var(--internal-text);
   width: 100%;
   max-width: 500px;
-  border: 1px solid #e8eef3;
-  box-shadow: 0 10px 30px rgba(116, 146, 183, 0.08);
+  border: 1px solid var(--internal-border);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .onboard-card h2 {
   font-family: 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 700;
-  color: #222222;
+  color: var(--internal-text);
   margin: 0 0 24px 0;
   display: flex;
   align-items: center;
@@ -27,7 +29,7 @@
 }
 
 .onboard-card h2 svg {
-  color: #7492B7;
+  color: var(--internal-accent);
 }
 
 .input-field {
@@ -41,21 +43,21 @@
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: #444444;
+  color: rgba(235, 245, 251, 0.72);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .input-field label svg {
-  color: #7492B7;
+  color: var(--internal-accent);
 }
 
 .onboard-card input {
-  background: #ffffff;
-  border: 1px solid #d1d9e2;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(235, 245, 251, 0.14);
   padding: 14px 16px;
-  color: #222222;
+  color: var(--internal-text);
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   border-radius: 10px;
@@ -64,37 +66,40 @@
 
 .onboard-card input:focus {
   outline: none;
-  border-color: #7492B7;
-  box-shadow: 0 0 0 3px rgba(116, 146, 183, 0.1);
+  border-color: rgba(159, 231, 240, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(159, 231, 240, 0.10),
+    0 18px 60px rgba(0, 0, 0, 0.35);
 }
 
 .pat-notice {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #7492B7;
-  background-color: #f0f5fb;
-  border: 1px solid #d1dff0;
+  color: rgba(159, 231, 240, 0.9);
+  background-color: rgba(159, 231, 240, 0.06);
+  border: 1px solid rgba(159, 231, 240, 0.14);
   border-radius: 8px;
   padding: 10px 12px;
   line-height: 1.5;
 }
 
 .pat-notice strong {
-  color: #4a6fa5;
+  color: rgba(235, 245, 251, 0.82);
 }
 
 .onboard-card button {
   width: 100%;
   padding: 16px;
-  background-color: #7492B7;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(235, 245, 251, 0.16);
   border: none;
   border-radius: 10px;
-  color: white;
+  color: var(--internal-text);
   font-family: 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: transform 0.16s ease, background 0.2s ease, border-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,7 +107,9 @@
 }
 
 .onboard-card button:hover:not(:disabled) {
-  background-color: #6381a7;
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(235, 245, 251, 0.22);
 }
 
 .onboard-card button:active:not(:disabled) {
@@ -110,8 +117,9 @@
 }
 
 .onboard-card button:disabled {
-  background-color: #cbd5e0;
+  background-color: rgba(255, 255, 255, 0.06);
   cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .spin {
@@ -134,19 +142,19 @@
 }
 
 .msg.loading {
-  background-color: #f0f7ff;
-  color: #3182ce;
-  border: 1px solid #bee3f8;
+  background-color: rgba(159, 231, 240, 0.06);
+  color: rgba(159, 231, 240, 0.92);
+  border: 1px solid rgba(159, 231, 240, 0.16);
 }
 
 .msg.success {
-  background-color: #f0fff4;
-  color: #2f855a;
-  border: 1px solid #c6f6d5;
+  background-color: rgba(120, 255, 180, 0.07);
+  color: rgba(120, 255, 180, 0.88);
+  border: 1px solid rgba(120, 255, 180, 0.16);
 }
 
 .msg.error {
-  background-color: #fff5f5;
-  color: #c53030;
-  border: 1px solid #fed7d7;
+  background-color: rgba(255, 120, 120, 0.07);
+  color: rgba(255, 120, 120, 0.88);
+  border: 1px solid rgba(255, 120, 120, 0.16);
 }

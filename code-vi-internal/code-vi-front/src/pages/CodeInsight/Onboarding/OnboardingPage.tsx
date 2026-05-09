@@ -8,7 +8,7 @@ function OnboardingPage() {
 
   return (
     <div className="onboarding-page">
-      <Header />
+      <Header variant="internal" />
       <main className="onboarding-content">
         <button className="back-btn" onClick={() => navigate('/code-insight')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

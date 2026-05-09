@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f7f9fc;
+  background-color: var(--internal-bg);
+  color: var(--internal-text);
   font-family: 'Inter', sans-serif;
 }
 
@@ -15,11 +16,14 @@
 }
 
 .mypage-card {
-  background-color: white;
+  background-color: var(--internal-surface);
   width: 100%;
   max-width: 600px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.46);
+  border: 1px solid var(--internal-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   padding: 40px;
 }
 
@@ -34,8 +38,9 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #7492B7;
-  color: white;
+  background: rgba(159, 231, 240, 0.12);
+  border: 1px solid rgba(159, 231, 240, 0.22);
+  color: var(--internal-text);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -51,21 +56,21 @@
 .profile-name {
   margin: 0 0 5px 0;
   font-size: 24px;
-  color: #222;
+  color: var(--internal-text);
 }
 
 .profile-email {
   margin: 0;
-  color: #666;
+  color: var(--internal-text-2);
   font-size: 16px;
 }
 
 .profile-section h2 {
   font-size: 18px;
-  color: #333;
+  color: rgba(235, 245, 251, 0.72);
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid rgba(235, 245, 251, 0.12);
 }
 
 .settings-list {
@@ -77,8 +82,8 @@
   display: flex;
   justify-content: space-between;
   padding: 15px 0;
-  border-bottom: 1px solid #f2f2f2;
-  color: #444;
+  border-bottom: 1px solid rgba(235, 245, 251, 0.10);
+  color: var(--internal-text-2);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -88,5 +93,5 @@
 }
 
 .settings-item:hover {
-  color: #7492B7;
+  color: rgba(159, 231, 240, 0.92);
 }

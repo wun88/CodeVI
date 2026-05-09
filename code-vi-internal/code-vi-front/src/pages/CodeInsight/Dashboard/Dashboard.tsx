@@ -2,8 +2,22 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../../components/Header';
 import './Dashboard.css';
 
+type StatusKey = 'good' | 'warning' | 'critical';
+type IssueType = StatusKey | 'info';
+
+type AnalysisData = {
+  projectName: string;
+  totalFiles: number;
+  totalLines: number;
+  languages: Array<{ name: string; percentage: number; color: string }>;
+  codeQuality: { score: number; grade: string };
+  issues: { critical: number; warning: number; info: number };
+  metrics: Array<{ label: string; value: string; status: StatusKey }>;
+  recentIssues: Array<{ type: IssueType; message: string; file: string }>;
+};
+
 // 더미 분석 데이터
-const analysisData = {
+const analysisData: AnalysisData = {
   projectName: 'my-react-app',
   totalFiles: 156,
   totalLines: 12450,
@@ -38,8 +52,8 @@ const analysisData = {
 function Dashboard() {
   const navigate = useNavigate();
 
-  const getStatusClass = (status) => {
-    const classes = {
+  const getStatusClass = (status: StatusKey) => {
+    const classes: Record<StatusKey, string> = {
       good: 'status-good',
       warning: 'status-warning',
       critical: 'status-critical',
@@ -47,7 +61,7 @@ function Dashboard() {
     return classes[status] || '';
   };
 
-  const getIssueIcon = (type) => {
+  const getIssueIcon = (type: IssueType) => {
     if (type === 'critical') {
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#e74c3c">
@@ -70,7 +84,7 @@ function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <Header />
+      <Header variant="internal" />
       <main className="dashboard-content">
         <div className="dashboard-header">
           <div className="header-left">
