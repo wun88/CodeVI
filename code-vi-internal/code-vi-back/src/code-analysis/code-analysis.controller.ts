@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { CodeAnalysisService } from './code-analysis.service';
 import { CreateCodeAnalysisDto } from './dto/create-code-analysis.dto';
+import { PartialAnalysisDto } from './dto/partial-analysis.dto';
 import { ApiResponseDto } from '../common/api-response-dto/api-response.dto';
 
 @Controller('code-analysis')
@@ -23,6 +24,11 @@ export class CodeAnalysisController {
     await this.codeAnalysisService.createJenkinsNotification(
       createCodeAnalysisDto,
     );
+  }
+
+  @Post('partial')
+  analyzePartialCode(@Body() partialAnalysisDto: PartialAnalysisDto) {
+    return this.codeAnalysisService.analyzePartialCode(partialAnalysisDto);
   }
 
   @Get()

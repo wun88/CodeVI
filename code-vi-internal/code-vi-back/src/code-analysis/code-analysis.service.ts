@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CodeAnalysis } from './entities/code-analysis.entity';
 import { CreateCodeAnalysisDto } from './dto/create-code-analysis.dto';
+import { PartialAnalysisDto } from './dto/partial-analysis.dto';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
@@ -15,7 +16,7 @@ export class CodeAnalysisService {
     private readonly codeAnalysisRepository: Repository<CodeAnalysis>,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   async createJenkinsNotification(
     dto: CreateCodeAnalysisDto,
@@ -76,5 +77,190 @@ export class CodeAnalysisService {
 
   async findAll() {
     return await this.codeAnalysisRepository.find({ order: { id: 'DESC' } });
+  }
+
+  /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
+  analyzePartialCode(dto: PartialAnalysisDto) {
+    const { code, language } = dto;
+    const lines = code.split('\n');
+    if (lines.length < 3) {
+      throw new BadRequestException('Code must be at least 3 lines long.');
+    }
+    if (lines.length > 1000) {
+      throw new BadRequestException(
+        'Code must be less than 1000 lines. Please use project-level analysis instead.',
+      );
+    }
+
+    let Parser;
+    let languageModule;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      Parser = require('tree-sitter');
+      switch (language) {
+        case 'typescript':
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          languageModule = require('tree-sitter-typescript').typescript;
+          break;
+        case 'javascript':
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          languageModule = require('tree-sitter-javascript');
+          break;
+        case 'python':
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          languageModule = require('tree-sitter-python');
+          break;
+        case 'c':
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          languageModule = require('tree-sitter-c');
+          break;
+        case 'java':
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          languageModule = require('tree-sitter-java');
+          break;
+        default:
+          throw new BadRequestException('Unsupported language');
+      }
+    } catch (e) {
+      this.logger.error('Failed to load tree-sitter or language modules', e);
+      throw new Error(
+        'Internal Server Error: Tree-sitter module missing or not built',
+      );
+    }
+
+    const parser = new Parser();
+    parser.setLanguage(languageModule);
+
+    const tree = parser.parse(code);
+
+    let errorCount = 0;
+    let blockCount = 0;
+    let totalNodes = 0;
+
+    const traverse = (node: any) => {
+      totalNodes++;
+      if (node.type === 'ERROR') {
+        errorCount++;
+      }
+
+      const isBlock =
+        node.type.includes('function') ||
+        node.type.includes('class') ||
+        node.type.includes('method') ||
+        node.type.includes('if') ||
+        node.type.includes('for') ||
+        node.type.includes('while') ||
+        node.type === 'block';
+
+      if (isBlock) {
+        blockCount++;
+      }
+
+      for (let i = 0; i < node.childCount; i++) {
+        traverse(node.child(i));
+      }
+    };
+
+    traverse(tree.rootNode);
+
+    if (totalNodes > 0 && errorCount / totalNodes > 0.1) {
+      throw new BadRequestException(
+        'Too many syntax errors. Invalid code snippet.',
+      );
+    }
+
+    if (blockCount === 0) {
+      throw new BadRequestException(
+        'Code must contain meaningful structures (e.g., functions, classes, control flows), not just simple declarations.',
+      );
+    }
+
+    let cyclomaticComplexity = 1;
+    let couplingCount = 0;
+    let parameterCount = 0;
+
+    const calculateMetrics = (node: any) => {
+      const type = node.type;
+      if (
+        [
+          'if_statement',
+          'for_statement',
+          'while_statement',
+          'catch_clause',
+          'switch_case',
+          'ternary_expression',
+          '&&',
+          '||',
+        ].includes(type) ||
+        type.includes('if') ||
+        type.includes('for') ||
+        type.includes('while')
+      ) {
+        cyclomaticComplexity++;
+      }
+
+      if (type.includes('call') || type.includes('import')) {
+        couplingCount++;
+      }
+
+      if (type === 'formal_parameters' || type === 'parameters') {
+        parameterCount += node.namedChildCount;
+      }
+
+      for (let i = 0; i < node.childCount; i++) {
+        calculateMetrics(node.child(i));
+      }
+    };
+
+    calculateMetrics(tree.rootNode);
+
+    const nodes: any[] = [];
+    const edges: any[] = [];
+    let nodeIdCounter = 0;
+
+    const buildGraph = (node: any, parentId: string | null = null) => {
+      const currentId = `node_${nodeIdCounter++}`;
+
+      nodes.push({
+        id: currentId,
+        type: 'astNode',
+        data: {
+          label: node.type,
+          text:
+            node.text.length > 20
+              ? node.text.substring(0, 20) + '...'
+              : node.text,
+          startPosition: node.startPosition,
+          endPosition: node.endPosition,
+        },
+      });
+
+      if (parentId) {
+        edges.push({
+          id: `edge_${parentId}_${currentId}`,
+          source: parentId,
+          target: currentId,
+        });
+      }
+
+      for (let i = 0; i < node.childCount; i++) {
+        buildGraph(node.child(i), currentId);
+      }
+    };
+
+    buildGraph(tree.rootNode);
+
+    return {
+      metrics: {
+        cyclomaticComplexity,
+        couplingCount,
+        parameterCount,
+        totalLines: lines.length,
+      },
+      ast: {
+        nodes,
+        edges,
+      },
+    };
   }
 }
