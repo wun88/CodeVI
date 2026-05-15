@@ -5,6 +5,7 @@ import {
   Body,
   HttpStatus,
   Get,
+  HttpCode,
 } from '@nestjs/common';
 import { CodeAnalysisService } from './code-analysis.service';
 import { CreateCodeAnalysisDto } from './dto/create-code-analysis.dto';
@@ -26,7 +27,8 @@ export class CodeAnalysisController {
     );
   }
 
-  @Post('partial')
+  @Post('snippet')
+  @HttpCode(201)
   analyzePartialCode(@Body() partialAnalysisDto: PartialAnalysisDto) {
     return this.codeAnalysisService.analyzePartialCode(partialAnalysisDto);
   }

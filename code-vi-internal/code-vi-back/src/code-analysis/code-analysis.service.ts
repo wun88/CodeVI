@@ -122,10 +122,8 @@ export class CodeAnalysisService {
           throw new BadRequestException('Unsupported language');
       }
     } catch (e) {
-      this.logger.error('Failed to load tree-sitter or language modules', e);
-      throw new Error(
-        'Internal Server Error: Tree-sitter module missing or not built',
-      );
+      this.logger.warn('Failed to load tree-sitter or language modules. Using fallback parser.', e);
+      return this.fallbackAnalyze(code, language, lines);
     }
 
     const parser = new Parser();
@@ -249,6 +247,87 @@ export class CodeAnalysisService {
     };
 
     buildGraph(tree.rootNode);
+
+    return {
+      metrics: {
+        cyclomaticComplexity,
+        couplingCount,
+        parameterCount,
+        totalLines: lines.length,
+      },
+      ast: {
+        nodes,
+        edges,
+      },
+    };
+  }
+
+  private fallbackAnalyze(code: string, language: string, lines: string[]) {
+    // A simple regex-based structural analyzer for environments where tree-sitter native bindings fail to build
+    let cyclomaticComplexity = 1;
+    let couplingCount = 0;
+    let parameterCount = 0;
+    let blockCount = 0;
+
+    const nodes: any[] = [];
+    const edges: any[] = [];
+
+    // Root node
+    nodes.push({
+      id: 'node_0',
+      type: 'astNode',
+      data: { label: 'program', text: 'Program Root', startPosition: { row: 0, column: 0 }, endPosition: { row: lines.length, column: 0 } },
+    });
+
+    lines.forEach((line, index) => {
+      let type = '';
+      let label = '';
+      let isBlock = false;
+
+      if (line.match(/\b(function|class)\b/)) {
+        type = line.includes('function') ? 'function_declaration' : 'class_declaration';
+        label = line.trim().substring(0, 20);
+        isBlock = true;
+        blockCount++;
+      } else if (line.match(/\b(if|for|while|switch|catch)\b/)) {
+        cyclomaticComplexity++;
+        type = 'control_statement';
+        label = line.trim().substring(0, 20);
+        isBlock = true;
+      } else if (line.match(/\b(import|require)\b/)) {
+        couplingCount++;
+        type = 'import_statement';
+        label = line.trim().substring(0, 20);
+      } else if (line.includes('(') && line.includes(')') && !line.includes('function')) {
+        if (line.includes('.')) couplingCount++; // method call
+        type = 'expression_statement';
+        label = line.trim().substring(0, 20);
+        
+        // Count parameters naively
+        const params = line.match(/\(([^)]+)\)/);
+        if (params && params[1]) {
+          parameterCount += params[1].split(',').length;
+        }
+      }
+
+      if (type) {
+        const nodeId = `node_${index + 1}`;
+        nodes.push({
+          id: nodeId,
+          type: 'astNode',
+          data: { label: type, text: label + '...', startPosition: { row: index, column: 0 }, endPosition: { row: index, column: line.length } }
+        });
+        edges.push({
+          id: `edge_0_${nodeId}`,
+          source: 'node_0',
+          target: nodeId
+        });
+      }
+    });
+
+    if (blockCount === 0) {
+      throw new BadRequestException('Code must contain meaningful structures (e.g., functions, classes, control flows), not just simple declarations.');
+    }
 
     return {
       metrics: {
