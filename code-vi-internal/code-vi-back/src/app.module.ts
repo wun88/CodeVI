@@ -9,6 +9,7 @@ import { CodeAnalysisModule } from './code-analysis/code-analysis.module';
 import { MetricModule } from './metric/metric.module';
 import { AstRelationalModule } from './ast-relational/ast-relational.module';
 import { OnboardingModule } from './github-analysis/onboarding/onboarding.module';
+import { ZipAnalysisModule } from './zip-analysis/zip-analysis.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OnboardingModule } from './github-analysis/onboarding/onboarding.module
     MetricModule,
     AstRelationalModule,
     OnboardingModule,
+    ZipAnalysisModule,
   ],
 })
 export class AppModule { }
