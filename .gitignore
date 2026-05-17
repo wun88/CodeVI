@@ -151,3 +151,5 @@ lerna-debug.log*
 # ============================================
 .eslintcache
 *.map
+
+scratch/
