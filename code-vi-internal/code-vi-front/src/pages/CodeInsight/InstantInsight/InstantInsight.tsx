@@ -303,21 +303,21 @@ export default function InstantInsight() {
                 <div className="preview-stat">
                   <div className="preview-title">Quality Score</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    {analysisResult ? Math.max(0, Math.min(100, 100 - (analysisResult.metrics.cyclomaticComplexity - 1) * 5 - analysisResult.metrics.couplingCount * 3)) : '—'}
+                    —
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
                 <div className="preview-stat">
                   <div className="preview-title">Complexity</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    {analysisResult ? (analysisResult.metrics.cyclomaticComplexity < 5 ? 'Low' : analysisResult.metrics.cyclomaticComplexity < 10 ? 'Medium' : 'High') : '—'}
+                    —
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
                 <div className="preview-stat">
                   <div className="preview-title">Dependency</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    {analysisResult ? (analysisResult.metrics.couplingCount < 3 ? 'Low' : analysisResult.metrics.couplingCount < 7 ? 'Medium' : 'High') : '—'}
+                    —
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>

@@ -7,6 +7,14 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
   constructor(private readonly configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
+    if (process.env.USE_SQLITE === 'true') {
+      return {
+        type: 'sqlite',
+        database: ':memory:',
+        entities: [__dirname + '/../**/*.entity.{js,ts}'],
+        synchronize: true,
+      };
+    }
     return {
       type: 'mysql',
       host: this.configService.get<string>('DATABASE_HOST'),
