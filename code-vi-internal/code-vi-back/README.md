@@ -55,6 +55,15 @@ $ npm install
 ### 환경 변수 설정
 `.env` 파일을 생성하고 필요한 설정(DB 연결 정보, 포트, SSL 경로 등)을 입력합니다.
 
+#### 로컬 테스트 권장 방식
+도커 네트워크용 `.env`와 분리해서, 로컬 실행 시에는 `.env.local`을 사용하는 것을 권장합니다.
+
+1. `.env.local.example`을 복사해 `.env.local` 생성
+2. 로컬 MySQL 또는 테스트 DB 기준으로 값 수정
+3. `npm run start` 실행
+
+`ConfigModule`은 `.env.local`을 우선 읽고, 없으면 `.env`를 사용합니다.
+
 ### 서버 실행 (Mode별)
 
 CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합니다.

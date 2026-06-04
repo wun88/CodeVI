@@ -3,6 +3,8 @@ import { UserRole } from './user-role.enum';
 import { UserStatus } from './user-status.enum';
 import { CommonEntity } from '../../common/entities/common.entity';
 import { TeamProject } from '../../team-project/entities/team-project.entity';
+import { ApiKey } from '../../api-key/entities/api-key.entity';
+import { MetricAnalysisJob } from '../../metric-analysis/entities/metric-analysis-job.entity';
 
 @Entity()
 export class User extends CommonEntity {
@@ -39,4 +41,13 @@ export class User extends CommonEntity {
 
   @ManyToMany(() => TeamProject, (teamProject) => teamProject.users)
   teamProjects: TeamProject[];
+
+  @OneToMany(() => ApiKey, (apiKey) => apiKey.user, { cascade: true })
+  apiKeys: ApiKey[];
+
+  @OneToMany(
+    () => MetricAnalysisJob,
+    (metricAnalysisJob) => metricAnalysisJob.requestedByUser,
+  )
+  metricAnalysisJobs: MetricAnalysisJob[];
 }
