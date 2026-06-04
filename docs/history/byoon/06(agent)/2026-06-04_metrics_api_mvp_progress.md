@@ -37,10 +37,14 @@
   - [x] `POST /api/auth/signin` 성공
   - [x] `POST /api/api-keys` 성공
   - [x] `GET /api/api-keys` 성공
-- **미완료 검증**
-  - [ ] `POST /api/analyses`
-  - [ ] `GET /api/analyses`
-  - [ ] `GET /api/analyses/:id`
+  - [x] 테스트용 `team_project` 및 사용자 연결 데이터 생성
+  - [x] `POST /api/analyses` 성공
+  - [x] `GET /api/analyses` 성공
+  - [x] `GET /api/analyses/:id` 성공
+- **검증 요약**
+  - [x] `API Key` 발급/조회 흐름 검증 완료
+  - [x] `Metric Analysis` 실행/목록/상세 조회 흐름 검증 완료
+  - [x] 현재 MVP 범위(`codex_10`~`codex_14`) 수동 검증 완료
 
 ## 5. 회고 및 공유 사항 (Retrospective)
 - **발생한 문제**
@@ -53,10 +57,10 @@
   - JWT는 Swagger 응답에서 복사해 `curl`로 직접 전달하여 테스트했다.
 - **주의 사항**
   - 현재 `POST /api/analyses`는 `teamProjectId`와 `astData`가 필요하다.
-  - 분석 API 검증을 위해서는 테스트용 `team_project`와 사용자 연결 데이터가 먼저 필요하다.
+  - Swagger에서 전역 `Authorize` 버튼은 아직 없어서 JWT/API Key 보호 API는 `curl`로 검증했다.
+  - 현재 테스트는 최소 AST payload(`type: "program", children: []`) 기준으로 수행했다.
 
 ## 6. 다음 단계
-- 테스트용 `team_project` 및 연결 사용자 데이터 생성
-- `POST /api/analyses` 실행 검증
-- `GET /api/analyses`, `GET /api/analyses/:id` 조회 검증
 - 필요 시 Swagger `Authorize` 버튼이 보이도록 전역 보안 스키마 추가
+- `sourceCode -> parser -> astData` 자동 연결 여부 결정
+- 에이전트 사용을 위한 MCP 래퍼 또는 API 호출 어댑터 설계
