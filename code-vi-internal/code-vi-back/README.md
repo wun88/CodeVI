@@ -71,6 +71,7 @@ CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합�
 | 명령어 | 설명 | 기본 포트 |
 | :--- | :--- | :--- |
 | `npm run start` | 표준 백엔드 서버 실행 | `13000` |
+| `npm run start:mcp` | Metrics API MCP Wrapper 실행 | stdio |
 | `npm run start:relational` | 관계형 AST 저장소 서버 실행 | `13001` |
 | `npm run start:json` | JSON AST 저장소 서버 실행 | `13002` |
 | **`npm run start:both`** | **Relational & JSON 서버 동시 실행** | `13001, 13002` |
@@ -84,6 +85,52 @@ CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합�
 - **Standard**: `http://localhost:13000/api`
 - **Relational Mode**: `http://localhost:13001/api-docs`
 - **JSON Mode**: `http://localhost:13002/api-docs`
+
+---
+
+## 🤖 MCP Wrapper
+
+Metrics API를 에이전트 tool 형태로 감싸는 최소 MCP Wrapper를 제공합니다.
+
+### 필요한 환경 변수
+```env
+CODEVI_METRICS_BASE_URL=http://localhost:13000/api
+CODEVI_METRICS_API_KEY=cv_live_...
+CODEVI_METRICS_DEFAULT_TEAM_PROJECT_ID=1
+CODEVI_METRICS_REQUEST_TIMEOUT_MS=15000
+```
+
+### 실행
+```bash
+$ npm run build
+$ npm run start:mcp
+```
+
+### 제공 Tool
+- `run_metric_analysis`
+- `list_metric_analyses`
+- `get_metric_analysis`
+
+### 설정 예시
+```json
+{
+  "mcpServers": {
+    "codevi-metrics": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/code-vi-internal/code-vi-back/dist/mcp/codevi-metrics-server.js"
+      ],
+      "env": {
+        "CODEVI_METRICS_BASE_URL": "http://localhost:13000/api",
+        "CODEVI_METRICS_API_KEY": "cv_live_example",
+        "CODEVI_METRICS_DEFAULT_TEAM_PROJECT_ID": "1"
+      }
+    }
+  }
+}
+```
+
+자세한 호출 예시는 `docs/specs/codex_17_metrics_mcp_config_examples.md`를 참고합니다.
 
 ---
 

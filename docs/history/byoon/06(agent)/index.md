@@ -17,13 +17,18 @@
 5. [codex_12_metric_analysis_execution_api.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/specs/codex_12_metric_analysis_execution_api.md)
 6. [codex_13_metric_analysis_query_api.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/specs/codex_13_metric_analysis_query_api.md)
 7. [codex_14_metrics_api_test_samples.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/specs/codex_14_metrics_api_test_samples.md)
+8. [codex_15_metrics_api_agent_usage_guide.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/specs/codex_15_metrics_api_agent_usage_guide.md)
+9. [codex_16_metrics_api_mcp_wrapper.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/specs/codex_16_metrics_api_mcp_wrapper.md)
+10. [codex_17_metrics_mcp_config_examples.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/specs/codex_17_metrics_mcp_config_examples.md)
 
 ## 4. 현재 구현 범위
 - `API Key` 엔티티, 서비스, 컨트롤러, 인증 Guard 구현
 - `MetricAnalysisJob`, `MetricAnalysisResult` 엔티티 구현
 - `POST /api/analyses` 실행 API 구현
 - `GET /api/analyses`, `GET /api/analyses/:id` 조회 API 구현
-- 테스트용 요청/응답 샘플 문서 작성
+- `sourceType=source_code` parser 연동 구현
+- 에이전트 호출 가이드 및 MCP 래퍼 명세 작성
+- stdio 기반 Metrics MCP Wrapper 구현 및 최소 기능 검증 완료
 
 ## 5. 비고
 - `docs/specs`를 단일 원본으로 유지하고, 이 폴더는 작업 흐름 인덱스와 기록 요약만 담당한다.
