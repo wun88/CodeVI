@@ -30,6 +30,15 @@ export class CreateMetricAnalysisRequestDto {
   @MaxLength(500)
   filePath?: string;
 
+  @ApiPropertyOptional({
+    description: 'source_code 분석 시 parser에 전달할 언어 식별자',
+    example: 'java',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  language?: string;
+
   @ApiPropertyOptional({ description: '메트릭 계산용 AST 데이터', type: Object })
   @IsOptional()
   @IsObject()

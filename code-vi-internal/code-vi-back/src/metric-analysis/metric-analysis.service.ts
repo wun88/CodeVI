@@ -1,12 +1,15 @@
 import {
   BadRequestException,
+  BadGatewayException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import axios, { AxiosError } from 'axios';
 import { ApiKey } from '../api-key/entities/api-key.entity';
 import { MetricService } from '../metric/metric.service';
 import { TeamProject } from '../team-project/entities/team-project.entity';
@@ -35,6 +38,7 @@ export class MetricAnalysisService {
     private readonly metricAnalysisResultRepository: Repository<MetricAnalysisResult>,
     @InjectRepository(TeamProject)
     private readonly teamProjectRepository: Repository<TeamProject>,
+    private readonly configService: ConfigService,
     private readonly metricService: MetricService,
   ) {}
 
@@ -69,7 +73,7 @@ export class MetricAnalysisService {
     );
 
     try {
-      const astData = dto.astData as any;
+      const astData = await this.resolveAstData(dto);
       const normalizedResult = this.runMetricAnalysis(
         dto.analysisType,
         astData,
@@ -171,9 +175,9 @@ export class MetricAnalysisService {
    * 현재 MVP는 AST 기반 계산만 지원하므로 입력을 명시적으로 제한합니다.
    */
   private validateRequestPayload(dto: CreateMetricAnalysisRequestDto): void {
-    if (!dto.astData) {
+    if (dto.sourceType === MetricSourceType.AST_JSON && !dto.astData) {
       throw new BadRequestException(
-        'astData is required for metric analysis in the current MVP',
+        'astData is required when sourceType is ast_json',
       );
     }
 
@@ -182,6 +186,27 @@ export class MetricAnalysisService {
         'sourceCode is required when sourceType is source_code',
       );
     }
+
+    if (
+      dto.sourceType === MetricSourceType.SOURCE_CODE &&
+      !dto.language &&
+      !dto.filePath
+    ) {
+      throw new BadRequestException(
+        'language or filePath is required when sourceType is source_code',
+      );
+    }
+  }
+
+  /**
+   * sourceType에 따라 직접 전달된 AST를 사용하거나 parser를 통해 AST를 생성합니다.
+   */
+  private async resolveAstData(dto: CreateMetricAnalysisRequestDto): Promise<any> {
+    if (dto.sourceType === MetricSourceType.AST_JSON) {
+      return dto.astData as any;
+    }
+
+    return await this.parseSourceCode(dto);
   }
 
   /**
@@ -334,6 +359,83 @@ export class MetricAnalysisService {
       oo: null,
       smells,
     };
+  }
+
+  /**
+   * sourceCode 기반 요청을 parser 단건 분석 API로 변환합니다.
+   */
+  private async parseSourceCode(
+    dto: CreateMetricAnalysisRequestDto,
+  ): Promise<any> {
+    const parserSourceUrl = this.getParserSourceUrl();
+
+    try {
+      const response = await axios.post(
+        parserSourceUrl,
+        {
+          language: dto.language,
+          sourceCode: dto.sourceCode,
+          fileName: dto.filePath,
+        },
+        {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          validateStatus: () => true,
+        },
+      );
+
+      if (response.status < 200 || response.status >= 300) {
+        const errorMessage =
+          response.data?.error?.message ??
+          `Parser returned status ${response.status}`;
+        throw new BadGatewayException(errorMessage);
+      }
+
+      const ast = response.data?.nodes?.[0]?.ast;
+
+      if (!ast) {
+        throw new BadGatewayException(
+          'Parser response does not include nodes[0].ast',
+        );
+      }
+
+      return ast;
+    } catch (error) {
+      if (error instanceof BadGatewayException) {
+        throw error;
+      }
+
+      if (error instanceof AxiosError) {
+        this.logger.error(
+          `Parser source analysis failed: ${error.message} / status=${error.response?.status} / data=${JSON.stringify(error.response?.data)}`,
+        );
+      } else {
+        const message =
+          error instanceof Error ? error.message : 'Unknown parser source error';
+        this.logger.error(`Parser source analysis failed: ${message}`);
+      }
+
+      throw new BadGatewayException('Failed to reach parser source API.');
+    }
+  }
+
+  /**
+   * 단건 소스 분석용 parser 엔드포인트를 계산합니다.
+   */
+  private getParserSourceUrl(): string {
+    const explicitUrl = this.configService.get<string>('PARSER_SOURCE_URL');
+    if (explicitUrl) {
+      return explicitUrl;
+    }
+
+    const parserUrl = this.configService.get<string>('PARSER_URL');
+    if (!parserUrl) {
+      throw new BadGatewayException('PARSER_URL is not configured.');
+    }
+
+    return parserUrl.replace(/\/analyze$/, '/analyze-source');
   }
 
   /**

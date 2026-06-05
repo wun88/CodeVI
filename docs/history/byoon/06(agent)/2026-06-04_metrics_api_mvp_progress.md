@@ -22,10 +22,12 @@
 - **주요 코드 변경**
   - `src/api-key/`: `ApiKey` 엔티티, 서비스, 컨트롤러, Guard, DTO 구현
   - `src/metric-analysis/`: `MetricAnalysisJob`, `MetricAnalysisResult`, 실행/조회 API, 복합 인증 Guard 구현
+  - `src/metric-analysis/metric-analysis.service.ts`: `sourceType=source_code` 요청 시 parser `/analyze-source` 호출 후 `nodes[0].ast`를 기존 메트릭 엔진으로 전달하는 흐름 추가
+  - `src/metric-analysis/dto/create-metric-analysis-request.dto.ts`: `language` 필드 추가 및 source code 요청 입력 모델 보강
   - [app.module.ts](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/code-vi-internal/code-vi-back/src/app.module.ts): `.env.local` 우선 로딩 및 모듈 등록
   - [metric.module.ts](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/code-vi-internal/code-vi-back/src/metric/metric.module.ts): `MetricService` export
   - [README.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/code-vi-internal/code-vi-back/README.md): 로컬 테스트용 env 설명 추가
-  - [.env.local.example](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/code-vi-internal/code-vi-back/.env.local.example): 로컬 테스트용 예시 파일 추가
+  - [.env.local.example](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/code-vi-internal/code-vi-back/.env.local.example): 로컬 테스트용 예시 파일 및 `PARSER_SOURCE_URL` 안내 추가
 
 ## 4. 검증 결과 (Validation)
 - **빌드 검증**
@@ -44,10 +46,13 @@
   - [x] API Key 기준 `POST /api/analyses` 성공
   - [x] API Key 기준 `GET /api/analyses` 성공
   - [x] API Key 기준 `GET /api/analyses/:id` 성공
+  - [x] parser `/analyze-source` 단건 호출 성공
+  - [x] `sourceType=source_code` 기준 `POST /api/analyses` 성공
 - **검증 요약**
   - [x] `API Key` 발급/조회 흐름 검증 완료
   - [x] JWT 경로 `Metric Analysis` 실행/목록/상세 조회 흐름 검증 완료
   - [x] API Key 경로 `Metric Analysis` 실행/목록/상세 조회 흐름 검증 완료
+  - [x] `sourceCode -> parser -> astData -> metric analysis` 자동 연결 경로 검증 완료
   - [x] 현재 MVP 범위(`codex_10`~`codex_14`) 수동 검증 완료
 
 ## 5. 회고 및 공유 사항 (Retrospective)
@@ -55,16 +60,21 @@
   - 기존 `.env`가 도커 네트워크 기준이라 로컬에서 `codevi-db`를 찾지 못했다.
   - 로컬 MySQL은 `127.0.0.1:3306`에서 동작했지만 초기 `.env.local` 값이 `13306`, `refactory` 기준으로 남아 있었다.
   - Swagger 전역 보안 스키마가 없어 `Authorize` 버튼이 보이지 않았다.
+  - `sourceType=source_code` 경로 구현 중 메인 parser의 단건 API 계약이 없어 먼저 parser 쪽 `POST /analyze-source` 지원이 필요했다.
+  - parser와 백엔드 포트가 혼동되어 초기에는 `localhost:3000`, `13000`으로 잘못 호출했다.
 - **해결 방법**
   - `ConfigModule`이 `.env.local`을 우선 읽도록 변경했다.
   - 로컬 MySQL 접속을 직접 확인하고 `codevi` DB를 생성했다.
   - JWT는 Swagger 응답에서 복사해 `curl`로 직접 전달하여 테스트했다.
+  - parser 쪽 공용 단건 API 추가 후, 백엔드에서 `PARSER_SOURCE_URL` 또는 `PARSER_URL -> /analyze-source` 변환 규칙으로 연결했다.
+  - 실제 parser 포트를 `3001`로 확인한 뒤 `.env.local`의 parser 관련 값을 수정해 재검증했다.
 - **주의 사항**
-  - 현재 `POST /api/analyses`는 `teamProjectId`와 `astData`가 필요하다.
+  - `sourceType=ast_json` 경로는 여전히 `astData`가 필요하다.
+  - `sourceType=source_code` 경로는 `sourceCode`와 `language` 또는 `filePath`가 필요하다.
   - Swagger에서 전역 `Authorize` 버튼은 아직 없어서 JWT/API Key 보호 API는 `curl`로 검증했다.
-  - 현재 테스트는 최소 AST payload(`type: "program", children: []`) 기준으로 수행했다.
+  - `source_code` 테스트는 Java 단건 예시(`Hello.java`) 기준으로 수행했다.
 
 ## 6. 다음 단계
 - Swagger `Authorize` 버튼 추가분 서버 재기동 후 UI 확인
-- `sourceCode -> parser -> astData` 자동 연결 여부 결정
 - 에이전트 사용을 위한 MCP 래퍼 또는 API 호출 어댑터 설계
+- parser 단건 API를 기준으로 언어별 테스트 케이스 확장
