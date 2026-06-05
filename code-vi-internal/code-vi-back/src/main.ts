@@ -44,6 +44,16 @@ async function bootstrap() {
     .setTitle('MP Project API')
     .setDescription('MP Project 백엔드 API 문서입니다.')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description:
+          'JWT 또는 API Key를 Bearer 토큰 형식으로 입력합니다. 예: Bearer eyJ... 또는 Bearer cv_live_...',
+      },
+      'bearer',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
