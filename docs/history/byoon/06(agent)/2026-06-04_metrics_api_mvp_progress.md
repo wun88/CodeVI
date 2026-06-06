@@ -59,12 +59,16 @@
   - [x] MCP `run_metric_analysis` 성공
   - [x] MCP `get_metric_analysis` 성공
   - [x] MCP `list_metric_analyses` 성공
+  - [x] 실제 Codex MCP 클라이언트에서 `list_metric_analyses` 성공
+  - [x] 실제 Codex MCP 클라이언트에서 `get_metric_analysis(jobId=6)` 성공
+  - [x] 실제 Codex MCP 클라이언트에서 `run_metric_analysis(source_code)` 성공
 - **검증 요약**
   - [x] `API Key` 발급/조회 흐름 검증 완료
   - [x] JWT 경로 `Metric Analysis` 실행/목록/상세 조회 흐름 검증 완료
   - [x] API Key 경로 `Metric Analysis` 실행/목록/상세 조회 흐름 검증 완료
   - [x] `sourceCode -> parser -> astData -> metric analysis` 자동 연결 경로 검증 완료
   - [x] MCP Wrapper 최소 기능(`run_metric_analysis`, `list_metric_analyses`, `get_metric_analysis`) 검증 완료
+  - [x] 실제 Codex 세션에서 `codevi_metrics` MCP 서버 로드 및 tool 호출 검증 완료
   - [x] 현재 범위(`codex_10`~`codex_17`) 수동 검증 완료
 
 ## 5. 회고 및 공유 사항 (Retrospective)
@@ -76,6 +80,7 @@
   - parser와 백엔드 포트가 혼동되어 초기에는 `localhost:3000`, `13000`으로 잘못 호출했다.
   - MCP `list_metric_analyses`에 `teamProjectId` 필터를 줄 때 쿼리 문자열과 숫자 비교가 어긋나 권한 오류가 발생했다.
   - MCP 설계 초안에는 `list_api_keys`를 넣었지만, 실제 백엔드는 `GET /api/api-keys`가 JWT 보호라 API Key 기반 MCP 흐름과 맞지 않았다.
+  - Codex 설정 반영 직후 새 스레드만 열었을 때는 MCP 서버가 바로 로드되지 않았고, `Developer: Reload Window`까지 필요했다.
 - **해결 방법**
   - `ConfigModule`이 `.env.local`을 우선 읽도록 변경했다.
   - 로컬 MySQL 접속을 직접 확인하고 `codevi` DB를 생성했다.
@@ -84,14 +89,16 @@
   - 실제 parser 포트를 `3001`로 확인한 뒤 `.env.local`의 parser 관련 값을 수정해 재검증했다.
   - 전역 `ValidationPipe({ transform: true })`를 추가해 쿼리 DTO 숫자 변환을 활성화했다.
   - API Key 전용 MCP 흐름에 맞게 `list_api_keys` tool은 래퍼와 문서에서 제거했다.
+  - `~/.codex/config.toml`에 `mcp_servers.codevi_metrics` 블록을 추가하고, `Developer: Reload Window` 후 새 Codex 스레드에서 실제 MCP 호출을 검증했다.
 - **주의 사항**
   - `sourceType=ast_json` 경로는 여전히 `astData`가 필요하다.
   - `sourceType=source_code` 경로는 `sourceCode`와 `language` 또는 `filePath`가 필요하다.
   - Swagger 설정 코드는 반영했지만 UI 버튼 확인은 서버 재기동 환경에서 한 번 더 보는 것이 안전하다.
   - `source_code` 테스트는 Java 단건 예시(`Hello.java`) 기준으로 수행했다.
   - MCP Wrapper는 현재 `API Key` 기반 사용을 전제로 하며, tool은 `run_metric_analysis`, `list_metric_analyses`, `get_metric_analysis` 세 개만 유지한다.
+  - 실제 Codex MCP 검증에서는 `list_metric_analyses`, `get_metric_analysis(jobId=6)`, `run_metric_analysis(source_code -> jobId=7)` 순서로 확인했다.
 
 ## 6. 다음 단계
 - Swagger `Authorize` 버튼 UI 최종 확인
-- MCP 클라이언트 실제 설정(JSON) 연결 테스트
+- MCP 클라이언트 설정 예시 다듬기 및 팀 공유
 - parser 단건 API를 기준으로 언어별 테스트 케이스 확장
