@@ -18,12 +18,12 @@ export default function InternalHome({ onLoginClick }: Props) {
 
     const q = gsap.utils.selector(root);
 
-    const xTo = gsap.quickTo(root, '--x', { duration: 0.45, ease: 'expo.out', units: 'px' });
-    const yTo = gsap.quickTo(root, '--y', { duration: 0.45, ease: 'expo.out', units: 'px' });
-    const pxTo = gsap.quickTo(root, '--px', { duration: 0.65, ease: 'expo.out', units: 'px' });
-    const pyTo = gsap.quickTo(root, '--py', { duration: 0.65, ease: 'expo.out', units: 'px' });
-    const srTo = gsap.quickTo(root, '--sr', { duration: 0.55, ease: 'expo.out', units: 'px' });
-    const trTo = gsap.quickTo(root, '--tr', { duration: 0.55, ease: 'expo.out', units: 'px' });
+    const xTo = gsap.quickTo(root, '--x', { duration: 0.45, ease: 'expo.out', unit: 'px' });
+    const yTo = gsap.quickTo(root, '--y', { duration: 0.45, ease: 'expo.out', unit: 'px' });
+    const pxTo = gsap.quickTo(root, '--px', { duration: 0.65, ease: 'expo.out', unit: 'px' });
+    const pyTo = gsap.quickTo(root, '--py', { duration: 0.65, ease: 'expo.out', unit: 'px' });
+    const srTo = gsap.quickTo(root, '--sr', { duration: 0.55, ease: 'expo.out', unit: 'px' });
+    const trTo = gsap.quickTo(root, '--tr', { duration: 0.55, ease: 'expo.out', unit: 'px' });
 
     const onMove = (e: MouseEvent) => {
       xTo(e.clientX);

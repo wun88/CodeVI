@@ -1,15 +1,30 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../../components/Header';
+import { ReactFlow, Controls, Background, BackgroundVariant, type NodeTypes, type Node, type Edge } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import AstNode from '../../../components/flow/AstNode';
+import { applyDagreLayout } from '../../../utils/layoutEngine';
 import '../CodeInsight.css';
+
+const nodeTypes: NodeTypes = {
+  astNode: AstNode,
+};
 
 type Lang = 'TypeScript' | 'JavaScript' | 'Python' | 'Java' | 'C++';
 
-const mockResult = {
-  qualityScore: 82,
-  complexity: 'Medium',
-  dependency: 'Low',
-};
+interface AnalysisResult {
+  metrics: {
+    cyclomaticComplexity: number;
+    couplingCount: number;
+    parameterCount: number;
+    totalLines: number;
+  };
+  ast: {
+    nodes: any[];
+    edges: any[];
+  };
+}
 
 function escapeHtml(input: string) {
   return input
@@ -60,9 +75,13 @@ export default function InstantInsight() {
   const [lang, setLang] = useState<Lang>('TypeScript');
   const [snippet, setSnippet] = useState('');
   const [hasResult, setHasResult] = useState(false);
-  const canAnalyze = snippet.trim().length > 0;
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const canAnalyze = snippet.trim().length > 0 && !isAnalyzing;
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
+  const [rfNodes, setRfNodes] = useState<Node[]>([]);
+  const [rfEdges, setRfEdges] = useState<Edge[]>([]);
 
   const snippetStats = useMemo(() => {
     const lines = snippet.length ? snippet.split('\n').length : 0;
@@ -76,9 +95,68 @@ export default function InstantInsight() {
     return highlightToHtml(raw);
   }, [lang, snippet]);
 
-  const onAnalyze = () => {
-    // TODO: connect real Instant Insight API here.
-    setHasResult(true);
+  const onAnalyze = async () => {
+    setIsAnalyzing(true);
+    try {
+      const langMap: Record<string, string> = {
+        'TypeScript': 'typescript',
+        'JavaScript': 'javascript',
+        'Python': 'python',
+        'Java': 'java',
+        'C++': 'c'
+      };
+      const res = await fetch('http://127.0.0.1:13005/api/code-analysis/snippet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: snippet, language: langMap[lang] || 'typescript' })
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        alert('분석 실패: ' + errText);
+        return;
+      }
+      const json = await res.json();
+      setAnalysisResult(json.data);
+
+      if (json.data && json.data.ast) {
+        const flowNodes: Node[] = json.data.ast.nodes.map((n: any) => {
+          let type = 'file';
+          if (n.data.label.includes('function')) type = 'function';
+          else if (n.data.label.includes('class')) type = 'class';
+          else if (n.data.label === 'program' || n.data.label === 'module') type = 'directory';
+          
+          return {
+            id: n.id,
+            type: 'astNode',
+            position: { x: 0, y: 0 },
+            data: {
+              label: n.data.text.replace('...', ''),
+              nodeType: type,
+              meta: { fileName: n.data.label }
+            }
+          };
+        });
+
+        const flowEdges: Edge[] = json.data.ast.edges.map((e: any) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          type: 'smoothstep',
+          animated: false,
+          style: { stroke: '#4a5568', strokeWidth: 1.5 }
+        }));
+
+        const { nodes: lNodes, edges: lEdges } = applyDagreLayout(flowNodes as any, flowEdges as any, 'TB');
+        setRfNodes(lNodes);
+        setRfEdges(lEdges);
+      }
+
+      setHasResult(true);
+    } catch (err: any) {
+      alert('네트워크 오류: ' + err.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const syncScroll = () => {
@@ -138,7 +216,7 @@ export default function InstantInsight() {
 
               <button className="instant-cta" type="button" onClick={onAnalyze} disabled={!canAnalyze}>
                 <span className="ctaDot" aria-hidden />
-                <span className="ctaText">Analyze</span>
+                <span className="ctaText">{isAnalyzing ? 'Analyzing...' : 'Analyze'}</span>
                 <span className="ctaArrow" aria-hidden>
                   →
                 </span>
@@ -188,44 +266,58 @@ export default function InstantInsight() {
             <div className="instant-preview">
               <div className="preview-block">
                 <div className="preview-title">Structure Diagram</div>
-                <div className={['preview-box', hasResult ? 'hasResult' : 'isIdle'].join(' ')}>
+                <div className={['preview-box', hasResult ? 'hasResult' : 'isIdle'].join(' ')} style={{ padding: 0 }}>
                   <div className="diagramMesh" aria-hidden />
                   <div className="diagramScan" aria-hidden />
-                  <div className="diagramNodes" aria-hidden>
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <div className="diagramCaption">
-                    {hasResult
-                      ? 'Structure preview'
-                      : canAnalyze
-                        ? 'Awaiting analysis — run Analyze'
-                        : 'Structure preview will appear here'}
-                  </div>
+                  {!hasResult ? (
+                    <div className="diagramCaption">
+                      {canAnalyze ? 'Awaiting analysis — run Analyze' : 'Structure preview will appear here'}
+                    </div>
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}>
+                      <ReactFlow
+                        nodes={rfNodes}
+                        edges={rfEdges}
+                        nodeTypes={nodeTypes}
+                        fitView
+                        fitViewOptions={{ padding: 0.2 }}
+                        minZoom={0.1}
+                        maxZoom={2}
+                        proOptions={{ hideAttribution: true }}
+                      >
+                        <Controls
+                          style={{
+                            background: 'rgba(255,255,255,0.62)',
+                            border: '1px solid rgba(255,255,255,0.28)',
+                            borderRadius: 12,
+                            boxShadow: '0 4px 14px rgba(34,34,34,0.05)',
+                          }}
+                        />
+                        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(148, 163, 184, 0.4)" />
+                      </ReactFlow>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="preview-row">
                 <div className="preview-stat">
                   <div className="preview-title">Quality Score</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    {hasResult ? mockResult.qualityScore : '—'}
+                    —
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
                 <div className="preview-stat">
                   <div className="preview-title">Complexity</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    {hasResult ? mockResult.complexity : '—'}
+                    —
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
                 <div className="preview-stat">
                   <div className="preview-title">Dependency</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    {hasResult ? mockResult.dependency : '—'}
+                    —
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
