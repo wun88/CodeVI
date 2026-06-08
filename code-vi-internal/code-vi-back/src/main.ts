@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import * as fs from 'fs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -34,6 +34,13 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
 
   app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false,
+    }),
+  );
   // 최대 요청 크기 설정 (예: 1000MB)
   app.use(bodyParser.json({ limit: '1000mb' }));
   app.use(bodyParser.urlencoded({ limit: '1000mb', extended: true }));
@@ -44,6 +51,16 @@ async function bootstrap() {
     .setTitle('MP Project API')
     .setDescription('MP Project 백엔드 API 문서입니다.')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description:
+          'JWT 또는 API Key를 Bearer 토큰 형식으로 입력합니다. 예: Bearer eyJ... 또는 Bearer cv_live_...',
+      },
+      'bearer',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

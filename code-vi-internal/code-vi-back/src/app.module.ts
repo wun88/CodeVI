@@ -9,11 +9,15 @@ import { CodeAnalysisModule } from './code-analysis/code-analysis.module';
 import { MetricModule } from './metric/metric.module';
 import { AstRelationalModule } from './ast-relational/ast-relational.module';
 import { OnboardingModule } from './github-analysis/onboarding/onboarding.module';
+import { ZipAnalysisModule } from './zip-analysis/zip-analysis.module';
+import { ApiKeyModule } from './api-key/api-key.module';
+import { MetricAnalysisModule } from './metric-analysis/metric-analysis.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
     }),
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfig,
@@ -25,6 +29,9 @@ import { OnboardingModule } from './github-analysis/onboarding/onboarding.module
     MetricModule,
     AstRelationalModule,
     OnboardingModule,
+    ZipAnalysisModule,
+    ApiKeyModule,
+    MetricAnalysisModule,
   ],
 })
 export class AppModule { }

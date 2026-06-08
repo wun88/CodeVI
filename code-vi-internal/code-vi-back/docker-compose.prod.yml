@@ -52,6 +52,7 @@ x-common-env: &common-env
   NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
   NAVER_REDIRECT_URI: ${NAVER_REDIRECT_URI}
   FRONTEND_REDIRECT_URI: ${FRONTEND_REDIRECT_URI}
+  PARSER_URL: ${PARSER_URL}
 
 services:
   # 통합 백엔드 (포트 13000) - Relational AST (Directory→File→Class→Function) 저장

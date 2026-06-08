@@ -55,6 +55,15 @@ $ npm install
 ### 환경 변수 설정
 `.env` 파일을 생성하고 필요한 설정(DB 연결 정보, 포트, SSL 경로 등)을 입력합니다.
 
+#### 로컬 테스트 권장 방식
+도커 네트워크용 `.env`와 분리해서, 로컬 실행 시에는 `.env.local`을 사용하는 것을 권장합니다.
+
+1. `.env.local.example`을 복사해 `.env.local` 생성
+2. 로컬 MySQL 또는 테스트 DB 기준으로 값 수정
+3. `npm run start` 실행
+
+`ConfigModule`은 `.env.local`을 우선 읽고, 없으면 `.env`를 사용합니다.
+
 ### 서버 실행 (Mode별)
 
 CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합니다.
@@ -62,6 +71,7 @@ CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합�
 | 명령어 | 설명 | 기본 포트 |
 | :--- | :--- | :--- |
 | `npm run start` | 표준 백엔드 서버 실행 | `13000` |
+| `npm run start:mcp` | Metrics API MCP Wrapper 실행 | stdio |
 | `npm run start:relational` | 관계형 AST 저장소 서버 실행 | `13001` |
 | `npm run start:json` | JSON AST 저장소 서버 실행 | `13002` |
 | **`npm run start:both`** | **Relational & JSON 서버 동시 실행** | `13001, 13002` |
@@ -75,6 +85,52 @@ CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합�
 - **Standard**: `http://localhost:13000/api`
 - **Relational Mode**: `http://localhost:13001/api-docs`
 - **JSON Mode**: `http://localhost:13002/api-docs`
+
+---
+
+## 🤖 MCP Wrapper
+
+Metrics API를 에이전트 tool 형태로 감싸는 최소 MCP Wrapper를 제공합니다.
+
+### 필요한 환경 변수
+```env
+CODEVI_METRICS_BASE_URL=http://localhost:13000/api
+CODEVI_METRICS_API_KEY=cv_live_...
+CODEVI_METRICS_DEFAULT_TEAM_PROJECT_ID=1
+CODEVI_METRICS_REQUEST_TIMEOUT_MS=15000
+```
+
+### 실행
+```bash
+$ npm run build
+$ npm run start:mcp
+```
+
+### 제공 Tool
+- `run_metric_analysis`
+- `list_metric_analyses`
+- `get_metric_analysis`
+
+### 설정 예시
+```json
+{
+  "mcpServers": {
+    "codevi-metrics": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/code-vi-internal/code-vi-back/dist/mcp/codevi-metrics-server.js"
+      ],
+      "env": {
+        "CODEVI_METRICS_BASE_URL": "http://localhost:13000/api",
+        "CODEVI_METRICS_API_KEY": "cv_live_example",
+        "CODEVI_METRICS_DEFAULT_TEAM_PROJECT_ID": "1"
+      }
+    }
+  }
+}
+```
+
+자세한 호출 예시는 `docs/specs/codex_17_metrics_mcp_config_examples.md`를 참고합니다.
 
 ---
 
