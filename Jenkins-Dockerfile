@@ -2,14 +2,14 @@ FROM jenkins/jenkins:lts-jdk21
 USER root
 RUN apt-get update && \
     apt-get install -y \
-	python3 \
-	python3-pip \
-	python3-venv \
-	git \
-	curl \
-	unzip \
-	lsb-release \
-	gnupg \
+    python3 \
+    python3-pip \
+    python3-venv \
+    git \
+    curl \
+    unzip \
+    lsb-release \
+    gnupg \
     && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
@@ -29,3 +29,10 @@ RUN git clone https://github.com/yjmd2222/pyexamine && \
     ./jenkinstestvenv/bin/pip install -e .
 RUN chown -R jenkins:jenkins /usr/src/pyexamine_project
 USER jenkins
+
+# 플러그인 사전 설치 (compose up 이후 수동 설치 불필요)
+COPY --chown=jenkins:jenkins jenkins/plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
+
+# 초기 설정 위저드 비활성화
+ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"

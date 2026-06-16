@@ -1,0 +1,31 @@
+jenkins:
+  systemMessage: "CodeVi Local Dev Jenkins - Configured via JCasC"
+  numExecutors: 4
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_USER:-admin}"
+          name: "Admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-credentials"
+              username: "${GITHUB_USERNAME:-}"
+              password: "${GITHUB_TOKEN:-}"
+              description: "GitHub PAT - used when Jenkins accesses user repos"
+
+unclassified:
+  location:
+    url: "http://localhost:9002/"
+    adminAddress: "noreply@localhost"

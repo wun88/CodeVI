@@ -1,0 +1,64 @@
+version: "3.8"
+
+# 로컬 dev용 Jenkins 스택
+# 사용법:
+#   1. cp .env.local.example .env.local
+#   2. .env.local 에 값 채우기
+#   3. docker compose -f jenkins-docker-compose.local.yml up -d --build
+#
+# 주의 (Linux만):
+#   Docker 소켓 접근을 위해 DOCKER_GID 환경변수가 필요할 수 있음
+#   export DOCKER_GID=$(stat -c %g /var/run/docker.sock)
+#   Windows Docker Desktop은 설정 불필요
+
+networks:
+  jenkins-net:
+    driver: bridge
+  shared-net:
+    driver: bridge
+    name: shared-net
+
+volumes:
+  jenkins-data: {}
+  mysql-data: {}
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: codevi-db
+    restart: unless-stopped
+    env_file:
+      - ./.env.local
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - "13306:3306"
+    networks:
+      - shared-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+  jenkins:
+    build:
+      context: .
+      dockerfile: Jenkins-Dockerfile
+    container_name: jenkins
+    env_file:
+      - ./.env.local
+    environment:
+      - TZ=Asia/Seoul
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml
+    restart: unless-stopped
+    networks:
+      - jenkins-net
+      - shared-net
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins/casc.yaml:/var/jenkins_home/casc.yaml:ro
+    ports:
+      - "9002:8080"
+      - "50000:50000"
