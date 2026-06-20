@@ -1,0 +1,43 @@
+networks:
+  jenkins-net:
+    driver: bridge
+  shared-net:
+    driver: bridge
+    name: shared-net
+
+volumes:
+  jenkins-data: {}
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Jenkins-Dockerfile
+    container_name: jenkins
+    env_file:
+      - ./.env.prod
+    environment:
+      - TZ=Asia/Seoul
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml
+    restart: always
+    networks:
+      - jenkins-net
+      - shared-net
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins/casc.yaml:/var/jenkins_home/casc.yaml:ro
+    ports:
+      - "9002:8080"
+      - "50000:50000"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: always
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - jenkins-net
+      - shared-net

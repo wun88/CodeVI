@@ -27,5 +27,5 @@ credentials:
 
 unclassified:
   location:
-    url: "http://localhost:9002/"
+    url: "${JENKINS_EXTERNAL_URL:-http://localhost:9002/}"
     adminAddress: "noreply@localhost"

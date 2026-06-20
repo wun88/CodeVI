@@ -51,7 +51,7 @@ pipeline {
 
         stage('Post-Deployment Cleanup') {
             when {
-                branch 'deploy'
+                branch 'Deploy'
             }
             steps {
                 echo "🧹 Cleaning up unused Docker images..."
