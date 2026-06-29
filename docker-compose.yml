@@ -1,0 +1,51 @@
+networks:
+  jenkins-net:
+    driver: bridge
+  shared-net:
+    driver: bridge
+    name: shared-net
+
+volumes:
+  jenkins-data: {}
+  mysql-data: {}
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: codevi-db
+    restart: unless-stopped
+    env_file:
+      - ./.env.local
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - "13306:3306"
+    networks:
+      - shared-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+  jenkins:
+    build:
+      context: .
+      dockerfile: Jenkins-Dockerfile
+    container_name: jenkins
+    env_file:
+      - ./.env.local
+    environment:
+      - TZ=Asia/Seoul
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml
+    restart: unless-stopped
+    networks:
+      - jenkins-net
+      - shared-net
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins/casc.yaml:/var/jenkins_home/casc.yaml:ro
+    ports:
+      - "9002:8080"
+      - "50000:50000"
