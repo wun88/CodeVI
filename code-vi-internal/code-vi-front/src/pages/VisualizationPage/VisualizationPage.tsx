@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { astDataService } from '../../services/test_astDataService';
+import { astDataService } from '../../services/astDataService';
 import type { AstSnapshot } from '../../interface/ast.interface';
 import type { FlowNodeData } from '../../interface/flow.interface';
 import AstFlowCanvas, { type SearchAction, type SearchActionType, type SearchStatus } from '../../components/flow/AstFlowCanvas';

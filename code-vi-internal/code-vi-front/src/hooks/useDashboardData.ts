@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AstSnapshotSummary } from '../interface/ast.interface';
 import type { SnapshotOverview } from '../interface/dashboardOverview.interface';
-import { astDataService } from '../services/test_astDataService';
+import { astDataService } from '../services/astDataService';
 import { buildSnapshotOverview } from '../utils/buildSnapshotOverview';
 
 export function useDashboardData() {
