@@ -29,7 +29,9 @@ pipeline {
                             // .env 는 gitignore 라 체크아웃에 없으므로 Jenkins Secret file 로 주입한다.
                             // (Manage Jenkins > Credentials > Secret file, ID: codevi-back-env)
                             withCredentials([file(credentialsId: 'codevi-back-env', variable: 'BACK_ENV')]) {
-                                sh 'cp "$BACK_ENV" .env'
+                                // Secret file 이 0400(읽기전용)이라 그대로 cp 하면 다음 빌드에서 덮어쓰기 불가.
+                                // 매번 기존 .env 를 지우고 새로 복사한다. (gitignore라 checkout이 안 지움)
+                                sh 'rm -f .env && cp "$BACK_ENV" .env'
                             }
                             sh "docker compose -f docker-compose.prod.yml up -d --build"
                         }
