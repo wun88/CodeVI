@@ -36,11 +36,12 @@ security:
   globalJobDslSecurityConfiguration:
     useScriptSecurity: false
 
-# CodeVi-CD 파이프라인 잡을 코드로 자동 생성 (Jenkins 켜질 때마다 보장).
-# 수동 New Item(Part 1-9) 불필요.
+# 파이프라인 잡들을 코드로 자동 생성 (Jenkins 켜질 때마다 보장). 수동 New Item 불필요.
+# 유지 대상: CodeVi(CD), stable-baselines3-analysis(나이틀리). 나머지(SLF4J·requests)는 재현 안 함 = 폐기.
 jobs:
+  # ── CodeVi: master→Deploy 머지 시 자동 배포 (GitHub webhook 트리거)
   - script: |
-      pipelineJob('CodeVi-CD') {
+      pipelineJob('CodeVi') {
         description('master→Deploy 머지 시 자동 배포. JCasC(job-dsl)로 생성됨.')
         definition {
           cpsScm {
@@ -59,5 +60,32 @@ jobs:
         }
         triggers {
           githubPush()
+        }
+      }
+  # ── stable-baselines3-analysis: 매일 22시경 나이틀리 분석 (cron)
+  - script: |
+      pipelineJob('stable-baselines3-analysis') {
+        description('stable-baselines3 나이틀리 분석 (매일 22시경). JCasC(job-dsl)로 생성됨.')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/rlawogh1005/stable-baselines3.git')
+                  credentials('github-credentials')
+                }
+                branch('*/master')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+        triggers {
+          cron('H 22 * * *')
+        }
+        // 155G 재발 방지: 최근 10개 빌드만 보관
+        logRotator {
+          numToKeep(10)
         }
       }

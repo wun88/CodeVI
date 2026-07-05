@@ -2,7 +2,8 @@ networks:
   jenkins-net:
     driver: bridge
   shared-net:
-    driver: bridge
+    # codevi 스택이 이미 만든 네트워크를 재사용 (새로 만들지 않음)
+    external: true
     name: shared-net
 
 volumes:
@@ -14,6 +15,9 @@ services:
       context: .
       dockerfile: Jenkins-Dockerfile
     container_name: jenkins
+    # 호스트 docker.sock(gid 137) 접근용. 없으면 파이프라인의 docker 명령이 권한거부로 실패.
+    group_add:
+      - "137"
     env_file:
       - ./.env.prod
     environment:

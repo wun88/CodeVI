@@ -1,8 +1,11 @@
 version: '3.8'
+# 두 프론트 폴더명이 모두 code-vi-front 라 프로젝트명이 겹치므로 명시적으로 분리.
+name: codevi-external-front
 services:
   front:
     build: .
-    image: code-vi-front
+    image: code-vi-external-front
+    container_name: codevi-external-frontend
     ports:
-      - "3000:80"
+      - "8080:80"
     restart: always
