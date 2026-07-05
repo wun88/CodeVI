@@ -155,3 +155,13 @@ lerna-debug.log*
 *.map
 
 scratch/
+.env
+.env.prod
+code-vi-external/.env
+code-vi-internal/.env
+code-vi-external/code-vi-back/.env
+code-vi-external/code-vi-front/.env
+code-vi-internal/code-vi-back/.env
+code-vi-internal/code-vi-back/.env.prod
+code-vi-internal/code-vi-front/.env
+

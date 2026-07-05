@@ -17,14 +17,21 @@ pipeline {
 
         stage('Build & Deploy (In Parallel)') {
             when {
-                branch 'Deploy'
+                // 단일 Pipeline-from-SCM 잡에선 BRANCH_NAME 이 없어 `branch` 조건이 안 먹는다.
+                // GitSCM 이 항상 채우는 env.GIT_BRANCH(예: origin/Deploy)로 판별한다. (Multibranch에서도 동작)
+                expression { return env.GIT_BRANCH != null && env.GIT_BRANCH.endsWith('Deploy') }
             }
             parallel {
                 stage('Backend CD') {
                     steps {
                         dir("${BACK_DIR}") {
                             echo "🚀 Starting Backend Deployment..."
-                            sh "docker-compose -f docker-compose.prod.yml up -d --build"
+                            // .env 는 gitignore 라 체크아웃에 없으므로 Jenkins Secret file 로 주입한다.
+                            // (Manage Jenkins > Credentials > Secret file, ID: codevi-back-env)
+                            withCredentials([file(credentialsId: 'codevi-back-env', variable: 'BACK_ENV')]) {
+                                sh 'cp "$BACK_ENV" .env'
+                            }
+                            sh "docker compose -f docker-compose.prod.yml up -d --build"
                         }
                     }
                 }
@@ -33,7 +40,7 @@ pipeline {
                     steps {
                         dir("${INTERNAL_FRONT_DIR}") {
                             echo "🎨 Starting Internal (CodeVi) Frontend Deployment..."
-                            sh "docker-compose -f docker-compose.prod.yml up -d --build"
+                            sh "docker compose -f docker-compose.prod.yml up -d --build"
                         }
                     }
                 }
@@ -42,7 +49,7 @@ pipeline {
                     steps {
                         dir("${EXTERNAL_FRONT_DIR}") {
                             echo "🎨 Starting External (Marketing) Frontend Deployment..."
-                            sh "docker-compose -f docker-compose.prod.yml up -d --build"
+                            sh "docker compose -f docker-compose.prod.yml up -d --build"
                         }
                     }
                 }
@@ -51,7 +58,9 @@ pipeline {
 
         stage('Post-Deployment Cleanup') {
             when {
-                branch 'Deploy'
+                // 단일 Pipeline-from-SCM 잡에선 BRANCH_NAME 이 없어 `branch` 조건이 안 먹는다.
+                // GitSCM 이 항상 채우는 env.GIT_BRANCH(예: origin/Deploy)로 판별한다. (Multibranch에서도 동작)
+                expression { return env.GIT_BRANCH != null && env.GIT_BRANCH.endsWith('Deploy') }
             }
             steps {
                 echo "🧹 Cleaning up unused Docker images..."

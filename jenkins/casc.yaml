@@ -29,3 +29,35 @@ unclassified:
   location:
     url: "${JENKINS_EXTERNAL_URL:-http://localhost:9002/}"
     adminAddress: "noreply@localhost"
+
+# JCasC 로 job-dsl 시드를 돌릴 때 스크립트 보안(승인 대기)을 끈다.
+# (JCasC 는 신뢰된 SYSTEM 컨텍스트라 아래처럼 꺼야 아래 jobs 가 자동 생성됨)
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+
+# CodeVi-CD 파이프라인 잡을 코드로 자동 생성 (Jenkins 켜질 때마다 보장).
+# 수동 New Item(Part 1-9) 불필요.
+jobs:
+  - script: |
+      pipelineJob('CodeVi-CD') {
+        description('master→Deploy 머지 시 자동 배포. JCasC(job-dsl)로 생성됨.')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/rlawogh1005/CodeVi.git')
+                  credentials('github-credentials')
+                }
+                branch('*/Deploy')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+        triggers {
+          githubPush()
+        }
+      }
