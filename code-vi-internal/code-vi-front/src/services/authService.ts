@@ -18,19 +18,19 @@ export const authService = {
   },
 
   redirectToGoogleSignIn: (): void => {
-    window.location.href = 'http://localhost:13000/api/auth/google/signin';
+    window.location.href = '/api/auth/google/signin';
   },
 
   redirectToGithubSignIn: (): void => {
-    window.location.href = 'http://localhost:13000/api/auth/github/signin';
+    window.location.href = '/api/auth/github/signin';
   },
 
   redirectToKakaoSignIn: (): void => {
-    window.location.href = 'http://localhost:13000/api/auth/kakao/signin';
+    window.location.href = '/api/auth/kakao/signin';
   },
 
   redirectToNaverSignIn: (): void => {
-    window.location.href = 'http://localhost:13000/api/auth/naver/signin';
+    window.location.href = '/api/auth/naver/signin';
   },
 
   getRsaPublicKey: async (): Promise<string> => {

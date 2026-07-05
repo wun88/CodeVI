@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:13000';
+// 같은 origin으로 호출 → 프론트 nginx가 /api 를 codevi-backend 컨테이너로 프록시.
+// 백엔드 IP/포트가 브라우저에 노출되지 않고, IP·도메인 어디로 접속하든 API가 붙는다.
+const BASE_URL = '';
 
 const api = axios.create({
   baseURL: BASE_URL,

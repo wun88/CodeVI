@@ -9,3 +9,11 @@ services:
     ports:
       - "18080:80"
     restart: always
+    # 백엔드와 같은 네트워크에 두어야 nginx 가 codevi-backend 컨테이너명을 해석한다.
+    networks:
+      - shared-net
+
+networks:
+  shared-net:
+    external: true
+    name: shared-net
