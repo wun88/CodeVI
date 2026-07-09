@@ -63,8 +63,8 @@ services:
     environment:
       <<: *common-env
       SERVER_PORT: "13000"
-    ports:
-      - "13000:13000"
+    # 호스트 포트 미공개(보안): 프론트 nginx(/api)·cloudflared 가 shared-net 으로
+    # codevi-backend:13000 에 직접 접근. 외부 노출은 backend.refactory.store 터널로만.
 
   # ======================================================================
   # [LEGACY] 아래 서비스들은 비활성화됨.
@@ -108,7 +108,8 @@ services:
       - MYSQL_PASSWORD=${USER_DB_PASSWORD}
       - TZ=Asia/Seoul
     ports:
-      - "13306:3306"
+      # 외부(LAN/공개) 차단, 로컬 DB툴만 접근하도록 localhost 바인딩
+      - "127.0.0.1:13306:3306"
     networks:
       - codevi-backend-net
       - shared-net
