@@ -8,7 +8,7 @@ import Community from './pages/Community';
 import ContactUs from './pages/ContactUs';
 
 const INTERNAL_PLATFORM_URL =
-  import.meta.env.VITE_INTERNAL_URL ?? 'http://localhost:5174';
+  import.meta.env.VITE_INTERNAL_URL ?? 'https://platform.refactory.store';
 
 const goToPlatform = () => {
   window.location.href = INTERNAL_PLATFORM_URL;

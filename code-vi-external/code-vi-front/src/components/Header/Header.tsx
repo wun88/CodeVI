@@ -4,7 +4,7 @@ import logo from '../../assets/main-page/logo.png';
 import './Header.css';
 
 const INTERNAL_PLATFORM_URL =
-  import.meta.env.VITE_INTERNAL_URL ?? 'http://localhost:5174';
+  import.meta.env.VITE_INTERNAL_URL ?? 'https://platform.refactory.store';
 
 interface HeaderProps {
   onLoginClick?: () => void;
