@@ -16,6 +16,8 @@ import { UserRole } from './entities/user-role.enum';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
 import { AstSnapshot } from 'src/ast-relational/entity/ast-snapshot.entity';
 import { AstRelationalService } from 'src/ast-relational/ast-relational.service';
+import { CodeAnalysis } from 'src/code-analysis/entities/code-analysis.entity';
+import { CodeGraphService } from 'src/code-graph/code-graph.service';
 
 @Injectable()
 export class UsersService {
@@ -25,6 +27,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private readonly astRelationalService: AstRelationalService,
+    private readonly codeGraphService: CodeGraphService,
     private readonly dataSource: DataSource,
   ) { }
 
@@ -407,8 +410,8 @@ export class UsersService {
   // BUILD REPORT HANDLING
   async createBuildReport(dto: CreateUserWithAstAndBuildDto): Promise<any> {
     const { username, email, role, password, ProjectDto } = dto;
-    const { teamName, jenkinsJobName, analysis, astNodes = [] } = ProjectDto;
-    const { buildNumber, buildUrl } = analysis;
+    const { teamName, jenkinsJobName, analysis, astNodes = [], classMetrics = [], codeGraph } = ProjectDto as any;
+    const { buildNumber, buildUrl, jobName, status, commitHash, pyExamineResult } = analysis as any;
 
     let savedSnapshotId: number = 0;
 
@@ -485,10 +488,43 @@ export class UsersService {
       const savedSnapshot = await manager.save(newSnapshot);
       savedSnapshotId = savedSnapshot.id;
 
-      const ckCtx = this.astRelationalService.buildCkContext(astNodes);
       for (const node of astNodes) {
-        await this.astRelationalService.processNode(manager, node, savedSnapshotId, null, null, null, null, ckCtx);
+        await this.astRelationalService.processNode(manager, node, savedSnapshotId, null);
       }
+
+      // 4-b. examine이 계산한 클래스별 CK/OO 메트릭을 AstClass.metrics에 매핑 저장
+      await this.astRelationalService.applyClassMetrics(manager, savedSnapshotId, classMetrics as any);
+
+      // 4-c. 언어 무관 캐노니컬 코드그래프 병행 적재 (있을 때만) — strangler
+      if (codeGraph?.units?.length) {
+        await this.codeGraphService.ingest(manager, savedSnapshotId, codeGraph as any);
+      }
+
+      // 5. CodeAnalysis(빌드/품질) 행 생성 — 빌드 메타 + 스멜.
+      //    pyExamineResult가 없으면(캐노니컬 단일 경로) codeGraph.findings에서 파생.
+      let smells: any[] = Array.isArray(pyExamineResult) ? pyExamineResult : [];
+      if (smells.length === 0 && Array.isArray(codeGraph?.findings)) {
+        smells = (codeGraph!.findings as any[]).map((f) => ({
+          type: f.category,
+          name: f.detector,
+          description: f.message ?? '',
+          file: f.location?.file ?? '',
+          'Module/Class': f.entityId ?? '',
+          lineNumber: f.location?.line ?? 0,
+          severity: f.severity ?? 'medium',
+        }));
+      }
+      const codeAnalysis = manager.create(CodeAnalysis, {
+        jobName: jobName ?? jenkinsJobName,
+        buildNumber,
+        status: status ?? 'SUCCESS',
+        buildUrl,
+        commitHash: commitHash ?? 'UNKNOWN',
+        code_smells: smells.length,
+        pyExamineResult: smells,
+        teamProjectId: project.id,
+      } as any);
+      await manager.save(codeAnalysis);
     });
 
     return { status: 'success', snapshotId: savedSnapshotId };

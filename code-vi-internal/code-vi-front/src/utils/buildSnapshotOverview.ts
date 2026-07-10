@@ -174,11 +174,14 @@ export function buildSnapshotOverview(snapshot: AstSnapshot): SnapshotOverview {
   const avgWmc = avg(wmcs);
   const avgLcom = avg(lcoms);
 
+  // 실측 metrics가 하나라도 있으면 실값(0 포함)을 쓰고, 전혀 없을 때만 기본값 폴백.
+  // (avgX || default 는 정당한 0을 폴백으로 오인하므로 hasMetrics 로 분기)
+  const hasMetrics = classesWithMetrics.length > 0;
   const mi = heuristicMI(avgCbo, avgWmc, avgLcom);
-  const scComplexity = complexityScore(avgWmc || 3);
-  const scVar = variableCohesionScore(avgLcom || 30);
-  const scDep = dependencyStabilityScore(avgCbo || 2);
-  const scMaintain = mi;
+  const scComplexity = complexityScore(hasMetrics ? avgWmc : 3);
+  const scVar = variableCohesionScore(hasMetrics ? avgLcom : 30);
+  const scDep = dependencyStabilityScore(hasMetrics ? avgCbo : 2);
+  const scMaintain = hasMetrics ? mi : heuristicMI(2, 3, 30);
 
   const qualityScore = Math.round((scComplexity + scVar + scDep + scMaintain) / 4);
 

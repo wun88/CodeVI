@@ -11,6 +11,10 @@ export class AstClass extends CommonEntity {
   @Column()
   fileId: number;
 
+  // pyexamine이 계산한 CK/OO 메트릭 (cbo/rfc/lcom/wmc/dit/noc/nom). 없으면 null.
+  @Column({ type: 'json', nullable: true })
+  metrics: Record<string, number> | null;
+
   @Column({ type: 'int' })
   startLine: number;
 
@@ -22,10 +26,6 @@ export class AstClass extends CommonEntity {
 
   @Column({ type: 'int' })
   endCol: number;
-
-  // CK 메트릭 (cbo/wmc/lcom/dit/noc/rfc) — 스냅샷 저장 시 계산해 저장
-  @Column({ type: 'json', nullable: true })
-  metrics: Record<string, number> | null;
 
   @ManyToOne(() => AstFile, (file) => file.classes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'fileId' })

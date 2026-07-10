@@ -9,43 +9,14 @@ import { AstFile } from './entity/ast-file.entity';
 import { AstClass } from './entity/ast-class.entity';
 import { AstFunction } from './entity/ast-function.entity';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
+import { CodeAnalysis } from 'src/code-analysis/entities/code-analysis.entity';
 
 // DTOs
 import { CreateRelationalAstDto, AstNodeInputDto } from './dto/create-relational-ast.dto';
 
-// CK 메트릭 계산
-import { calculateCKMetrics, buildProjectContext } from 'src/metric/logic/class/ck-metric';
-import type { ProjectContext } from 'src/metric/types/types';
-
 @Injectable()
 export class AstRelationalService {
   private readonly logger = new Logger(AstRelationalService.name);
-
-  /** 파서 트리(.children + .ast)를 순회해 모든 클래스 노드를 수집 → CK context 구축 */
-  private collectClassNodes(node: any, out: any[] = []): any[] {
-    if (!node || typeof node !== 'object') return out;
-    const t = String(node.type ?? '').toLowerCase();
-    if (t.includes('class') || t.includes('interface')) out.push(node);
-    if (Array.isArray(node.children)) for (const c of node.children) this.collectClassNodes(c, out);
-    if (node.ast) this.collectClassNodes(node.ast, out);
-    return out;
-  }
-
-  public buildCkContext(nodes: AstNodeInputDto[]): ProjectContext {
-    const classNodes: any[] = [];
-    for (const n of nodes) this.collectClassNodes(n, classNodes);
-    return buildProjectContext(classNodes);
-  }
-
-  /** 클래스 노드의 CK 메트릭 계산 (실패해도 스냅샷 저장은 계속) */
-  private computeMetrics(node: any, ctx: ProjectContext | null): Record<string, number> | null {
-    try {
-      return calculateCKMetrics(node, ctx ?? undefined) as unknown as Record<string, number>;
-    } catch (e) {
-      this.logger.warn(`CK metric calc failed for "${node?.name}": ${(e as Error).message}`);
-      return null;
-    }
-  }
 
   constructor(
     @InjectRepository(AstSnapshot)
@@ -115,9 +86,8 @@ export class AstRelationalService {
       // 2) 재귀적으로 노드들을 저장 (초기 호출 시 부모 컨텍스트는 모두 null)
       const startRelMem = process.memoryUsage().heapUsed;
       const startRelationalSave = performance.now();
-      const ctx = this.buildCkContext(nodes);
       for (const node of nodes) {
-        await this.processNode(manager, node, savedSnapshot.id, null, null, null, null, ctx);
+        await this.processNode(manager, node, savedSnapshot.id, null);
       }
       resultStats.relationalSaveMs = performance.now() - startRelationalSave;
       resultStats.relationalSaveMem = Math.max(0, process.memoryUsage().heapUsed - startRelMem);
@@ -145,7 +115,6 @@ export class AstRelationalService {
     fileId: number | null = null,
     currentClassId: number | null = null,
     currentFunctionId: number | null = null,
-    ctx: ProjectContext | null = null,
   ): Promise<void> {
     const nodeType = node.type ? node.type.toUpperCase() : '';
     const nodeName = this.extractNodeName(node);
@@ -165,7 +134,7 @@ export class AstRelationalService {
 
         if (node.children) {
           for (const child of node.children) {
-            await this.processNode(manager, child, snapshotId, savedDir.id, null, null, null, ctx);
+            await this.processNode(manager, child, snapshotId, savedDir.id);
           }
         }
         break;
@@ -185,13 +154,18 @@ export class AstRelationalService {
 
         if (node.ast) {
           // 파일 내부 진입: classId, functionId 컨텍스트 초기화
-          await this.processNode(manager, node.ast, snapshotId, parentDirectoryId, savedFile.id, null, null, ctx);
+          await this.processNode(manager, node.ast, snapshotId, parentDirectoryId, savedFile.id, null, null);
         }
         break;
       }
 
       case 'CLASS_DEFINITION':
       case 'CLASS': {
+        // tree-sitter는 'class' 키워드 토큰도 type='class'로 내보낸다 → 자식이 없으면
+        // 정의가 아니라 키워드 토큰이므로 클래스 엔티티를 만들지 않고 스킵.
+        if (!node.children || node.children.length === 0) {
+          break;
+        }
         if (!fileId) {
           this.logger.warn(`CLASS node "${nodeName}" has no parent file, skipping`);
           break;
@@ -204,7 +178,6 @@ export class AstRelationalService {
           startCol: node.range?.start?.col ?? 0,
           endLine: node.range?.end?.line ?? 0,
           endCol: node.range?.end?.col ?? 0,
-          metrics: this.computeMetrics(node, ctx),
           // 현재 위치가 함수 안이라면 parentFunctionId, 기존 클래스 안이라면 parentClassId
           parentClassId: currentFunctionId ? null : currentClassId,
           parentFunctionId: currentFunctionId,
@@ -214,7 +187,7 @@ export class AstRelationalService {
         if (node.children) {
           for (const child of node.children) {
             // 클래스 내부 진입: currentClassId 갱신, currentFunctionId 리셋
-            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, savedClass.id, null, ctx);
+            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, savedClass.id, null);
           }
         }
         break;
@@ -243,7 +216,7 @@ export class AstRelationalService {
         if (node.children) {
           for (const child of node.children) {
             // 함수 내부 진입: currentFunctionId 갱신 (currentClassId는 유지하여 내부 클래스가 소속 파일을 알 수 있게 함)
-            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, currentClassId, savedFn.id, ctx);
+            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, currentClassId, savedFn.id);
           }
         }
         break;
@@ -253,11 +226,49 @@ export class AstRelationalService {
         // 관심 없는 구문(if, for, block 등)이더라도 그 안의 함수/클래스를 찾기 위해 현재 컨텍스트를 그대로 유지하고 하위 탐색
         if (node.children) {
           for (const child of node.children) {
-            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, currentClassId, currentFunctionId, ctx);
+            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, currentClassId, currentFunctionId);
           }
         }
         break;
     }
+  }
+
+  /**
+   * pyexamine이 계산한 클래스별 CK/OO 메트릭을 AstClass.metrics에 매핑 저장한다.
+   * 매칭 키: (파일 basename, 클래스 이름). 같은 트랜잭션(manager) 안에서 호출.
+   */
+  async applyClassMetrics(
+    manager: any,
+    snapshotId: number,
+    classMetrics: Array<{ file: string; name: string; metrics: Record<string, number> }> = [],
+  ): Promise<number> {
+    if (!classMetrics?.length) return 0;
+    const base = (p: string) => (p || '').split(/[\\/]/).pop() ?? '';
+    const map = new Map<string, Record<string, number>>();
+    for (const cm of classMetrics) {
+      if (cm?.name && cm?.metrics) map.set(`${base(cm.file)}::${cm.name}`, cm.metrics);
+    }
+
+    const dirs = await manager.find(AstDirectory, {
+      where: { snapshotId },
+      relations: ['files', 'files.classes'],
+    });
+
+    let applied = 0;
+    for (const d of dirs) {
+      for (const f of d.files ?? []) {
+        for (const cl of f.classes ?? []) {
+          const m = map.get(`${base(f.name)}::${cl.name}`);
+          if (m) {
+            cl.metrics = m;
+            await manager.save(cl);
+            applied += 1;
+          }
+        }
+      }
+    }
+    this.logger.log(`Applied CK metrics to ${applied} classes (snapshot ${snapshotId})`);
+    return applied;
   }
 
   /**
@@ -281,6 +292,15 @@ export class AstRelationalService {
     if (!snapshot) {
       throw new NotFoundException(`Snapshot not found: ${snapshotId}`);
     }
+
+    // 같은 teamProject + build 의 CodeAnalysis 에서 pyexamine 스멜을 첨부 (시각화에서 노드별 매핑).
+    const analysis = snapshot.buildNumber != null
+      ? await this.dataSource.getRepository(CodeAnalysis).findOne({
+          where: { teamProjectId: snapshot.teamProjectId, buildNumber: snapshot.buildNumber },
+          order: { id: 'DESC' },
+        })
+      : null;
+    (snapshot as any).smells = analysis?.pyExamineResult ?? [];
 
     return snapshot;
   }
