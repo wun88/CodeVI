@@ -6,6 +6,7 @@ export const onboardingService = {
     const publicKey = await authService.getRsaPublicKey();
     const encryptedPat = await authService.encryptPat(pat, publicKey);
     const res = await api.post('/api/onboarding', { repoUrl, encryptedPat });
-    return res.data;
+    // 백엔드 { success, data:{ jobName, ... } } 래핑 해제 → result.jobName 이 실제 값이 되도록
+    return res.data?.data ?? res.data;
   },
 };
