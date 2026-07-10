@@ -54,6 +54,7 @@ export class JenkinsService {
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
           <url>${repoUrl}</url>
+          <credentialsId>github-credentials</credentialsId>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
       <branches>
