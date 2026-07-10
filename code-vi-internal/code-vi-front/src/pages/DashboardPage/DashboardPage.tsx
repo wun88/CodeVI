@@ -115,7 +115,24 @@ export default function DashboardPage() {
                       gap: 8,
                     }}
                   >
-                    <span aria-hidden>📁</span>
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 6,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: 0.2,
+                        background: active ? '#6366f1' : 'rgba(148,163,184,0.18)',
+                        color: active ? '#fff' : '#94a3b8',
+                      }}
+                    >
+                      P
+                    </span>
                     {p.name}
                     <span
                       style={{
