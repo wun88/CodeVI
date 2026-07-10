@@ -95,6 +95,15 @@ export interface AstTreeDirectory extends AstDirectory {
 export interface AstSnapshotSummary {
   id: number;
   buildNumber?: number;
+  buildUrl?: string;
   createdAt: string;
   teamProjectId: number;
+}
+
+/** 대시보드: 프로젝트(teamProjectId) 단위 그룹 */
+export interface DashboardProject {
+  teamProjectId: number;
+  name: string;
+  snapshots: AstSnapshotSummary[];
+  latestAt: string;
 }

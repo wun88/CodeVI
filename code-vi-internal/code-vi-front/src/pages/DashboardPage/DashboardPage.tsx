@@ -21,6 +21,9 @@ function readStored(key: string): string | null {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const {
+    projects,
+    selectedProjectId,
+    selectProject,
     snapshots,
     selectedId,
     selectSnapshot,
@@ -31,12 +34,10 @@ export default function DashboardPage() {
   } = useDashboardData();
 
   const teamName = useMemo(() => readStored('cv_teamName') ?? '분석 워크스페이스', []);
-  const projectName = useMemo(() => {
-    const job = readStored('cv_jobName');
-    if (job) return job;
-    const tid = overview?.teamProjectId ?? snapshots[0]?.teamProjectId;
-    return tid != null ? `프로젝트 #${tid}` : '프로젝트';
-  }, [overview?.teamProjectId, snapshots]);
+  const projectName = useMemo(
+    () => projects.find((p) => p.teamProjectId === selectedProjectId)?.name ?? '프로젝트',
+    [projects, selectedProjectId]
+  );
 
   const analyzedAtLabel = overview
     ? new Date(overview.analyzedAt).toLocaleString('ko-KR')
@@ -80,7 +81,7 @@ export default function DashboardPage() {
 
         {error && <div className={styles.errorBanner}>{error}</div>}
 
-        {!listLoading && !error && snapshots.length === 0 && (
+        {!listLoading && !error && projects.length === 0 && (
           <div className={styles.emptyCard}>
             <span className={styles.emptyIcon} aria-hidden>
               📭
@@ -90,8 +91,47 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {!listLoading && snapshots.length > 0 && (
+        {!listLoading && projects.length > 0 && (
           <>
+            {/* 프로젝트 선택 — 프로젝트 단위로 분류 후, 아래에서 해당 프로젝트의 빌드 스냅샷 선택 */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '2px 0' }}>
+              {projects.map((p) => {
+                const active = p.teamProjectId === selectedProjectId;
+                return (
+                  <button
+                    key={p.teamProjectId}
+                    type="button"
+                    onClick={() => selectProject(p.teamProjectId)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 10,
+                      cursor: 'pointer',
+                      border: `1px solid ${active ? '#6366f1' : '#2d3150'}`,
+                      background: active ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+                      color: active ? '#c7d2fe' : '#94a3b8',
+                      fontWeight: active ? 700 : 500,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <span aria-hidden>📁</span>
+                    {p.name}
+                    <span
+                      style={{
+                        fontSize: 12,
+                        background: 'rgba(255,255,255,0.08)',
+                        padding: '1px 8px',
+                        borderRadius: 999,
+                      }}
+                    >
+                      {p.snapshots.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
             <SnapshotStrip
               snapshots={snapshots}
               selectedId={selectedId}
