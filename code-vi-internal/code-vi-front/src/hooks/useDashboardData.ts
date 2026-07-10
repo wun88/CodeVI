@@ -15,7 +15,7 @@ export function useDashboardData() {
 
   const sortedSnapshots = useMemo(
     () =>
-      [...snapshots].sort(
+      [...(Array.isArray(snapshots) ? snapshots : [])].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
     [snapshots]
