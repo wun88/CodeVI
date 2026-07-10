@@ -59,6 +59,7 @@ export class JenkinsService {
       </userRemoteConfigs>
       <branches>
         <hudson.plugins.git.BranchSpec><name>*/main</name></hudson.plugins.git.BranchSpec>
+        <hudson.plugins.git.BranchSpec><name>*/master</name></hudson.plugins.git.BranchSpec>
       </branches>
     </scm>
     <scriptPath>Jenkinsfile</scriptPath>
