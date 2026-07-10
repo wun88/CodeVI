@@ -115,9 +115,13 @@ payload = {
     "ProjectDto": {
         "teamName": "$REPO_NAME",
         "jenkinsJobName": os.environ["JOB_NAME"],
+        "sonarProjectKey": os.environ["JOB_NAME"],
         "analysis": {
+            "jobName": os.environ["JOB_NAME"],
             "buildNumber": int(os.environ.get("BUILD_NUMBER", "0")),
+            "status": "SUCCESS",
             "buildUrl": os.environ.get("BUILD_URL", "UNKNOWN"),
+            "commitHash": os.environ.get("GIT_COMMIT", "unknown"),
         },
         "astNodes": nodes,
     },
