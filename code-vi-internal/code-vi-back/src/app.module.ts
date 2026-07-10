@@ -13,6 +13,7 @@ import { ZipAnalysisModule } from './zip-analysis/zip-analysis.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { MetricAnalysisModule } from './metric-analysis/metric-analysis.module';
 import { CodeGraphModule } from './code-graph/code-graph.module';
+import { SmellAnalysisModule } from './smell-analysis/smell-analysis.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CodeGraphModule } from './code-graph/code-graph.module';
     ApiKeyModule,
     MetricAnalysisModule,
     CodeGraphModule,
+    SmellAnalysisModule,
   ],
 })
 export class AppModule { }

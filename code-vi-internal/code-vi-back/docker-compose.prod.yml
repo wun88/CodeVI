@@ -53,6 +53,8 @@ x-common-env: &common-env
   NAVER_REDIRECT_URI: ${NAVER_REDIRECT_URI}
   FRONTEND_REDIRECT_URI: ${FRONTEND_REDIRECT_URI}
   PARSER_URL: ${PARSER_URL}
+  # smell-analysis 도메인: MCP가 POST /api/smell-analyses 하면 백엔드가 이 서비스의 /analyze 호출
+  ADVANCED_PYEXAMINE_SERVICE_URL: ${ADVANCED_PYEXAMINE_SERVICE_URL:-http://advanced-pyexamine-service:18080}
 
 services:
   # 통합 백엔드 (포트 13000) - Relational AST (Directory→File→Class→Function) 저장
