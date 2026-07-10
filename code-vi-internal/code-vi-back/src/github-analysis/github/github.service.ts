@@ -96,7 +96,11 @@ for root, dirs, files in os.walk("."):
         p = os.path.join(root, f)
         if p.endswith("code_package.zip"):
             continue
-        z.write(p)
+        try:
+            if os.path.isfile(p):  # 깨진 심볼릭 링크/특수파일 건너뜀
+                z.write(p)
+        except OSError:
+            pass
 z.close()
 ZP
 

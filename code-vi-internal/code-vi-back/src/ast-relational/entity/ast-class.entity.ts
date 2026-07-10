@@ -23,6 +23,10 @@ export class AstClass extends CommonEntity {
   @Column({ type: 'int' })
   endCol: number;
 
+  // CK 메트릭 (cbo/wmc/lcom/dit/noc/rfc) — 스냅샷 저장 시 계산해 저장
+  @Column({ type: 'json', nullable: true })
+  metrics: Record<string, number> | null;
+
   @ManyToOne(() => AstFile, (file) => file.classes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'fileId' })
   file: AstFile;

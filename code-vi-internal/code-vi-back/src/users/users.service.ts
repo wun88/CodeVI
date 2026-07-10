@@ -485,8 +485,9 @@ export class UsersService {
       const savedSnapshot = await manager.save(newSnapshot);
       savedSnapshotId = savedSnapshot.id;
 
+      const ckCtx = this.astRelationalService.buildCkContext(astNodes);
       for (const node of astNodes) {
-        await this.astRelationalService.processNode(manager, node, savedSnapshotId, null);
+        await this.astRelationalService.processNode(manager, node, savedSnapshotId, null, null, null, null, ckCtx);
       }
     });
 
