@@ -212,41 +212,97 @@ export class CodeAnalysisService {
 
     calculateMetrics(tree.rootNode);
 
+    // ── 시각화 그래프: DB 4계층(디렉토리→파일→클래스→메서드)과 동일한 구조 단위만 노드로 만든다.
+    //    스니펫에는 디렉토리가 없으므로 파일(root)→클래스→메서드/함수 계층으로 내려간다.
+    const CLASS_NODE_TYPES = new Set([
+      'class_definition', // python
+      'class_declaration', // ts/js/java
+      'abstract_class_declaration', // ts
+      'interface_declaration', // ts/java
+      'enum_declaration', // ts/java
+      'struct_specifier', // c (body 있는 정의만)
+    ]);
+    const FUNCTION_NODE_TYPES = new Set([
+      'function_definition', // python/c
+      'function_declaration', // ts/js
+      'generator_function_declaration', // js
+      'method_definition', // ts/js
+      'method_declaration', // java
+      'constructor_declaration', // java
+      'arrow_function', // ts/js: const f = () => {}
+      'function_expression', // js: const f = function () {}
+    ]);
+
+    const extractName = (node: any): string | null => {
+      const nameNode = node.childForFieldName?.('name');
+      if (nameNode) return nameNode.text;
+      // c: function_definition은 declarator 체인 안에 식별자가 있다
+      let cur = node.childForFieldName?.('declarator');
+      for (let depth = 0; cur && depth < 10; depth++) {
+        if (cur.type === 'identifier' || cur.type === 'field_identifier') return cur.text;
+        cur = cur.childForFieldName?.('declarator') ?? cur.namedChild?.(0) ?? null;
+      }
+      // 익명 함수/화살표 함수: const f = () => {} 형태면 변수명 사용
+      if (node.parent?.type === 'variable_declarator') {
+        return node.parent.childForFieldName?.('name')?.text ?? null;
+      }
+      return null;
+    };
+
     const nodes: any[] = [];
     const edges: any[] = [];
     let nodeIdCounter = 0;
 
-    const buildGraph = (node: any, parentId: string | null = null) => {
+    const pushNode = (
+      kind: 'file' | 'class' | 'method' | 'function',
+      name: string,
+      node: any,
+      parentId: string | null,
+    ): string => {
       const currentId = `node_${nodeIdCounter++}`;
-
       nodes.push({
         id: currentId,
         type: 'astNode',
         data: {
+          kind,
+          name,
           label: node.type,
-          text:
-            node.text.length > 20
-              ? node.text.substring(0, 20) + '...'
-              : node.text,
+          text: name,
           startPosition: node.startPosition,
           endPosition: node.endPosition,
         },
       });
-
       if (parentId) {
-        edges.push({
-          id: `edge_${parentId}_${currentId}`,
-          source: parentId,
-          target: currentId,
-        });
+        edges.push({ id: `edge_${parentId}_${currentId}`, source: parentId, target: currentId });
       }
-
-      for (let i = 0; i < node.childCount; i++) {
-        buildGraph(node.child(i), currentId);
-      }
+      return currentId;
     };
 
-    buildGraph(tree.rootNode);
+    const EXT: Record<string, string> = { typescript: 'ts', javascript: 'js', python: 'py', java: 'java', c: 'c' };
+    const rootId = pushNode('file', `snippet.${EXT[language] ?? language}`, tree.rootNode, null);
+
+    const walkStructure = (node: any, parentId: string, insideClass: boolean) => {
+      for (let i = 0; i < node.childCount; i++) {
+        const child = node.child(i);
+        if (CLASS_NODE_TYPES.has(child.type) && child.childForFieldName?.('body')) {
+          const classId = pushNode('class', extractName(child) ?? child.type, child, parentId);
+          walkStructure(child, classId, true);
+        } else if (FUNCTION_NODE_TYPES.has(child.type)) {
+          const name = extractName(child);
+          // 이름을 못 찾는 인라인 콜백(익명 화살표 등)은 노드로 만들지 않고 통과
+          if (name === null && (child.type === 'arrow_function' || child.type === 'function_expression')) {
+            walkStructure(child, parentId, insideClass);
+            continue;
+          }
+          const fnId = pushNode(insideClass ? 'method' : 'function', name ?? child.type, child, parentId);
+          // 함수 내부로 들어가면 클래스 컨텍스트를 벗어난다(중첩 함수는 function)
+          walkStructure(child, fnId, false);
+        } else {
+          walkStructure(child, parentId, insideClass);
+        }
+      }
+    };
+    walkStructure(tree.rootNode, rootId, false);
 
     return {
       metrics: {
@@ -259,6 +315,10 @@ export class CodeAnalysisService {
         nodes,
         edges,
       },
+      // TODO(examine): 스니펫을 zip으로 감싸 ExamineService.getCodeGraphFromZip(언어별
+      //   EXAMINE_*_URL)로 보내고, examine 컨테이너 응답(units/relations/findings)을
+      //   가공 없이 그대로 이 필드에 담아 프론트로 전달한다. 연동 전까지는 null.
+      examine: null,
     };
   }
 

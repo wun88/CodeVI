@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../../components/Header';
 import { ReactFlow, Controls, Background, BackgroundVariant, type NodeTypes, type Node, type Edge } from '@xyflow/react';
@@ -25,6 +25,8 @@ const LANG_MAP: Record<Lang, SnippetLanguage> = {
   Java: 'java',
   'C++': 'c',
 };
+
+const LANGS = Object.keys(LANG_MAP) as Lang[];
 
 // 단순 휴리스틱 품질 점수(0~100): 복잡도·결합도가 높을수록 감점
 function qualityScore(m: SnippetAnalysisResult['metrics']): number {
@@ -87,6 +89,17 @@ export default function InstantInsight() {
   const highlightRef = useRef<HTMLPreElement | null>(null);
   const [rfNodes, setRfNodes] = useState<Node[]>([]);
   const [rfEdges, setRfEdges] = useState<Edge[]>([]);
+
+  // 커스텀 언어 드롭다운 (native select는 OS 팝업이라 인터널 UI 톤과 안 맞음)
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const onPointerDown = (e: MouseEvent) => {
+      if (!langRef.current?.contains(e.target as globalThis.Node)) setLangOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
 
   const snippetStats = useMemo(() => {
     const lines = snippet.length ? snippet.split('\n').length : 0;
@@ -177,16 +190,44 @@ export default function InstantInsight() {
             </div>
 
             <div className="instant-controls">
-              <label className="instant-field">
+              <div className="instant-field">
                 <span>언어</span>
-                <select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
-                  <option>TypeScript</option>
-                  <option>JavaScript</option>
-                  <option>Python</option>
-                  <option>Java</option>
-                  <option>C++</option>
-                </select>
-              </label>
+                <div className="langSelect" ref={langRef}>
+                  <button
+                    type="button"
+                    className={['langSelectTrigger', langOpen ? 'open' : ''].join(' ')}
+                    onClick={() => setLangOpen((v) => !v)}
+                    aria-haspopup="listbox"
+                    aria-expanded={langOpen}
+                  >
+                    <span className="langDot" aria-hidden />
+                    <span className="langValue">{lang}</span>
+                    <span className={['langChevron', langOpen ? 'open' : ''].join(' ')} aria-hidden>
+                      ▾
+                    </span>
+                  </button>
+                  {langOpen && (
+                    <ul className="langSelectList" role="listbox" aria-label="언어 선택">
+                      {LANGS.map((l) => (
+                        <li key={l}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={l === lang}
+                            className={['langOption', l === lang ? 'active' : ''].join(' ')}
+                            onClick={() => {
+                              setLang(l);
+                              setLangOpen(false);
+                            }}
+                          >
+                            {l}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
               <button className="instant-cta" type="button" onClick={onAnalyze} disabled={!canAnalyze}>
                 <span className="ctaDot" aria-hidden />
