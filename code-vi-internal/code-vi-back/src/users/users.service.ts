@@ -106,6 +106,10 @@ export class UsersService {
     });
   }
 
+  // DEAD CODE (2026-07-11): 아래 getAllUsers / getAllUsersPagenated / getUserById 3개 메서드의
+  // relations['classRegistrations', 'classRegistrations.class', 'productions']는 User 엔티티에서
+  // 이미 제거된 관계 참조(출결/클래스 기능 잔재) → 호출 시 TypeORM이 무조건 500을 던짐.
+  // 프론트 호출자도 없음(usersService.ts 미사용). 살리려면 relations 배열을 제거해야 함.
   // READ - All users
   async getAllUsers(): Promise<User[]> {
     this.logger.verbose('Retrieving all Users');

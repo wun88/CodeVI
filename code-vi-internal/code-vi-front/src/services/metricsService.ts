@@ -1,3 +1,6 @@
+// DEAD CODE (2026-07-11): 어떤 컴포넌트/훅에서도 import되지 않음.
+// 게다가 대상 백엔드 /api/metrics/* 8종은 ValidationPipe(whitelist)+데코레이터 없는
+// AnalyzeAstRequestDto 때문에 body가 통째로 strip되어 현재 전부 500 반환 — 연결해도 동작 불가.
 import api from './api';
 
 export const metricsService = {

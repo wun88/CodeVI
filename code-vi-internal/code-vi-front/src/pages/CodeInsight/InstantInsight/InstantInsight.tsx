@@ -4,7 +4,12 @@ import Header from '../../../components/Header';
 import { ReactFlow, Controls, Background, BackgroundVariant, type NodeTypes, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import AstNode from '../../../components/flow/AstNode';
-import { applyDagreLayout } from '../../../utils/layoutEngine';
+import { snippetAstToFlow } from '../../../utils/snippetFlow';
+import {
+  codeAnalysisService,
+  type SnippetAnalysisResult,
+  type SnippetLanguage,
+} from '../../../services/codeAnalysisService';
 import '../CodeInsight.css';
 
 const nodeTypes: NodeTypes = {
@@ -13,17 +18,17 @@ const nodeTypes: NodeTypes = {
 
 type Lang = 'TypeScript' | 'JavaScript' | 'Python' | 'Java' | 'C++';
 
-interface AnalysisResult {
-  metrics: {
-    cyclomaticComplexity: number;
-    couplingCount: number;
-    parameterCount: number;
-    totalLines: number;
-  };
-  ast: {
-    nodes: any[];
-    edges: any[];
-  };
+const LANG_MAP: Record<Lang, SnippetLanguage> = {
+  TypeScript: 'typescript',
+  JavaScript: 'javascript',
+  Python: 'python',
+  Java: 'java',
+  'C++': 'c',
+};
+
+// 단순 휴리스틱 품질 점수(0~100): 복잡도·결합도가 높을수록 감점
+function qualityScore(m: SnippetAnalysisResult['metrics']): number {
+  return Math.max(0, Math.min(100, 100 - m.cyclomaticComplexity * 4 - m.couplingCount * 3));
 }
 
 function escapeHtml(input: string) {
@@ -75,7 +80,7 @@ export default function InstantInsight() {
   const [lang, setLang] = useState<Lang>('TypeScript');
   const [snippet, setSnippet] = useState('');
   const [hasResult, setHasResult] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<SnippetAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const canAnalyze = snippet.trim().length > 0 && !isAnalyzing;
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -96,64 +101,33 @@ export default function InstantInsight() {
   }, [lang, snippet]);
 
   const onAnalyze = async () => {
+    // 백엔드 검증 규칙(PartialAnalysisDto ≥50자, 서비스 3~1000줄)과 동일한 사전 검증
+    const lineCount = snippet.split('\n').length;
+    if (snippet.length < 50 || lineCount < 3) {
+      alert('스니펫은 최소 3줄, 50자 이상이어야 분석할 수 있습니다.');
+      return;
+    }
+    if (lineCount > 1000) {
+      alert('스니펫은 1000줄 이하만 지원합니다. 프로젝트 단위 분석(ZIP 업로드)을 이용해주세요.');
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
-      const langMap: Record<string, string> = {
-        'TypeScript': 'typescript',
-        'JavaScript': 'javascript',
-        'Python': 'python',
-        'Java': 'java',
-        'C++': 'c'
-      };
-      const res = await fetch('http://127.0.0.1:13005/api/code-analysis/snippet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: snippet, language: langMap[lang] || 'typescript' })
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        alert('분석 실패: ' + errText);
-        return;
-      }
-      const json = await res.json();
-      setAnalysisResult(json.data);
+      const data = await codeAnalysisService.analyzeSnippet(snippet, LANG_MAP[lang] ?? 'typescript');
+      setAnalysisResult(data);
 
-      if (json.data && json.data.ast) {
-        const flowNodes: Node[] = json.data.ast.nodes.map((n: any) => {
-          let type = 'file';
-          if (n.data.label.includes('function')) type = 'function';
-          else if (n.data.label.includes('class')) type = 'class';
-          else if (n.data.label === 'program' || n.data.label === 'module') type = 'directory';
-          
-          return {
-            id: n.id,
-            type: 'astNode',
-            position: { x: 0, y: 0 },
-            data: {
-              label: n.data.text.replace('...', ''),
-              nodeType: type,
-              meta: { fileName: n.data.label }
-            }
-          };
-        });
-
-        const flowEdges: Edge[] = json.data.ast.edges.map((e: any) => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          type: 'smoothstep',
-          animated: false,
-          style: { stroke: '#4a5568', strokeWidth: 1.5 }
-        }));
-
-        const { nodes: lNodes, edges: lEdges } = applyDagreLayout(flowNodes as any, flowEdges as any, 'TB');
+      if (data?.ast) {
+        const { nodes: lNodes, edges: lEdges } = snippetAstToFlow(data.ast);
         setRfNodes(lNodes);
         setRfEdges(lEdges);
       }
 
       setHasResult(true);
     } catch (err: any) {
-      alert('네트워크 오류: ' + err.message);
+      // NestJS ValidationPipe는 message를 배열로 반환할 수 있음
+      const msg = err.response?.data?.message;
+      alert('분석 실패: ' + (Array.isArray(msg) ? msg.join('\n') : (msg ?? err.message)));
     } finally {
       setIsAnalyzing(false);
     }
@@ -260,7 +234,7 @@ export default function InstantInsight() {
               <div className="instant-card">
             <div className="instant-card-head">
               <div className="instant-label">PREVIEW</div>
-              <div className="instant-meta">{hasResult ? 'Mock result' : 'Waiting for input'}</div>
+              <div className="instant-meta">{hasResult ? 'Analysis result' : 'Waiting for input'}</div>
             </div>
 
             <div className="instant-preview">
@@ -303,21 +277,21 @@ export default function InstantInsight() {
                 <div className="preview-stat">
                   <div className="preview-title">Quality Score</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    —
+                    {analysisResult ? qualityScore(analysisResult.metrics) : '—'}
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
                 <div className="preview-stat">
                   <div className="preview-title">Complexity</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    —
+                    {analysisResult ? analysisResult.metrics.cyclomaticComplexity : '—'}
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>
                 <div className="preview-stat">
                   <div className="preview-title">Dependency</div>
                   <div className={['preview-val', hasResult ? '' : 'skeleton'].join(' ')}>
-                    —
+                    {analysisResult ? analysisResult.metrics.couplingCount : '—'}
                   </div>
                   <div className={['miniSpark', hasResult ? '' : 'isIdle'].join(' ')} aria-hidden />
                 </div>

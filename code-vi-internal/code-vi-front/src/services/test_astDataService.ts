@@ -1,3 +1,5 @@
+// DEAD CODE (2026-07-11): 어디서도 import되지 않는 더미 테스트 서비스.
+// 실제 훅/페이지는 services/astDataService.ts(실 API)를 사용 중.
 import type { AstSnapshot, AstSnapshotSummary } from '../interface/ast.interface';
 import { dummySnapshots, dummySnapshotDetail } from '../dummy/astDummyData';
 

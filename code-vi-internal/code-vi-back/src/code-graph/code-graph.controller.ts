@@ -1,3 +1,6 @@
+// DEAD CODE (2026-07-11): 현재 호출자 없음 — 프론트·MCP 어디서도 GET /api/code-graph/:id 를
+// 부르지 않고, code_graph 적재 파이프라인도 미가동이라 존재하는 스냅샷(4)에도 404 반환.
+// (PR37 examine 통합에서 활성화 예정이면 이 주석 제거)
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { CodeGraphService } from './code-graph.service';
 

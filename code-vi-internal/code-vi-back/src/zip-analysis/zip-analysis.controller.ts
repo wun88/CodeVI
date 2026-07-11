@@ -16,6 +16,8 @@ import { ZipAnalysisResponseDto } from './dto/zip-analysis-response.dto';
 import type { UploadedZipFile } from './interfaces/uploaded-zip-file.interface';
 import { ZipAnalysisService } from './zip-analysis.service';
 
+// 1회성(비영속) ZIP 분석 — 프론트 ZipUpload(code-insight/upload)의 zipAnalysisService가 호출.
+// zip → parser(tree-sitter) → AST 트리 반환, DB 저장 없음. (2026-07-11 프론트 배선 완료)
 @ApiTags('zip-analysis')
 @Controller('zip-analysis')
 export class ZipAnalysisController {

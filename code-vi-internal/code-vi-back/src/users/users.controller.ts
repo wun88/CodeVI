@@ -16,6 +16,9 @@ export class UsersController {
 
     constructor(private readonly usersService: UsersService) { }
 
+    // DEAD CODE (2026-07-11): 프론트 호출자 없음(usersService.ts가 어디서도 import되지 않음).
+    // 또한 users.service의 getAllUsersPagenated가 User 엔티티에 없는 classRegistrations
+    // 관계를 조회해 호출 시 무조건 500 — 현재 도달 불가능한 기능.
     @Get('/')
     @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN)
@@ -47,6 +50,8 @@ export class UsersController {
         );
     }
 
+    // DEAD CODE (2026-07-11): 프론트 호출자 없음 + getUserById의 classRegistrations
+    // 관계 조회로 무조건 500 (운영에서 실측 확인: "Property classRegistrations was not found in User").
     @Get(':id')
     @UseGuards(AuthGuard(), RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.USER)

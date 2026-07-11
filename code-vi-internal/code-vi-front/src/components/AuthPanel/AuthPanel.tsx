@@ -38,6 +38,9 @@ function AuthPanel({ step, onClose, onGoSignup, onGoLogin }: AuthPanelProps) {
     setSignupForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // DEAD CODE (2026-07-11): 정책상 로컬 이메일 로그인/회원가입은 사용하지 않음 —
+  // 인증은 GitHub·Google OAuth만 사용(Kakao/Naver도 미사용).
+  // 아래 두 핸들러는 console.log만 수행하며 API 배선도 없음. 폼 UI 정리 시 함께 제거 대상.
   const handleLoginSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log('Login submit:', loginForm);

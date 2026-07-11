@@ -25,6 +25,8 @@ export class AuthController {
         this.frontendUrl = process.env.FRONTEND_REDIRECT_URI || '';
     }
 
+    // DEAD CODE (2026-07-11): 정책상 로컬 이메일 회원가입 미사용 — 인증은 GitHub·Google OAuth만 사용.
+    // (엔드포인트 자체는 role 포함 시 정상 동작 확인됨. 프론트 호출자 없음)
     // Sign-Up
     @Post('/signup')
     async createUser(
@@ -47,6 +49,8 @@ export class AuthController {
         }
     }
 
+    // DEAD CODE (2026-07-11): 정책상 로컬 이메일 로그인 미사용 — 인증은 GitHub·Google OAuth만 사용.
+    // (엔드포인트 자체는 정상 동작 확인됨. 프론트 호출자 없음)
     // Sign-In
     @Post('/signin')
     async signIn(
@@ -166,6 +170,7 @@ export class AuthController {
         }
     }
 
+    // DEAD CODE (2026-07-11): 정책상 GitHub·Google 로그인만 사용 — Kakao OAuth 미사용.
     @Get('/kakao/signin')
     @UseGuards(KakaoAuthGuard)
     async kakaoAuth(): Promise<void> {
@@ -204,6 +209,7 @@ export class AuthController {
         }
     }
 
+    // DEAD CODE (2026-07-11): 정책상 GitHub·Google 로그인만 사용 — Naver OAuth 미사용.
     @Get('/naver/signin')
     @UseGuards(NaverAuthGuard)
     async naverAuth(): Promise<void> {
@@ -242,6 +248,9 @@ export class AuthController {
         }
     }
 
+    // DEAD CODE (2026-07-11): 출결/클래스 기능 잔재 — 현 프론트(react)·Jenkins·MCP 어디에서도
+    // 호출하지 않음(legacy Angular 프론트만 관련 UI 존재). User 엔티티의 classRegistrations
+    // 관계도 이미 제거되어 관련 users.service 조회는 500을 냄.
     @Get('/attendance/:classId/:sessionId')
     @Roles(UserRole.ADMIN)
     async getAttendanceJwt(

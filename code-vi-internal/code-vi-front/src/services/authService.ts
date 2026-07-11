@@ -2,11 +2,15 @@ import api from './api';
 import type { SignupRequest, SigninRequest, AuthResponse } from '../interface/auth.interface';
 
 export const authService = {
+  // DEAD CODE (2026-07-11): 정책상 로컬 회원가입 미사용(인증은 GitHub·Google OAuth만 사용).
+  // 호출자도 없고, SignupRequest(teamName/jenkinsJobName)가 백엔드 CreateUserDto와 불일치.
   signup: async (data: SignupRequest): Promise<AuthResponse> => {
     const res = await api.post('/api/auth/signup', data);
     return res.data;
   },
 
+  // DEAD CODE (2026-07-11): 정책상 로컬 로그인 미사용(인증은 GitHub·Google OAuth만 사용).
+  // 호출자도 없고, SigninRequest(teamName)가 백엔드 SignInRequestDto(email/password)와 불일치.
   signin: async (data: SigninRequest): Promise<AuthResponse> => {
     const res = await api.post('/api/auth/signin', data);
     return res.data;
@@ -25,10 +29,12 @@ export const authService = {
     window.location.href = '/api/auth/github/signin';
   },
 
+  // DEAD CODE (2026-07-11): 정책상 GitHub·Google 로그인만 사용 — Kakao 리다이렉트 미사용(버튼 정리 시 제거).
   redirectToKakaoSignIn: (): void => {
     window.location.href = '/api/auth/kakao/signin';
   },
 
+  // DEAD CODE (2026-07-11): 정책상 GitHub·Google 로그인만 사용 — Naver 리다이렉트 미사용(버튼 정리 시 제거).
   redirectToNaverSignIn: (): void => {
     window.location.href = '/api/auth/naver/signin';
   },

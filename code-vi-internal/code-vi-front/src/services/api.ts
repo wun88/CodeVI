@@ -30,7 +30,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken');
-      window.location.href = '/login';
+      // '/login' 라우트는 존재하지 않음 — 랜딩('/')으로 보내면 비로그인 상태에서
+      // AuthPanel(GitHub·Google 로그인) 진입이 가능하다.
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }

@@ -1,3 +1,6 @@
+// DEAD CODE (2026-07-11): 메트릭 계산은 외부 examine 서비스/MCP(/api/analyses)로 이전 —
+// 이 컨트롤러의 /api/metrics/* 8종은 전부 미사용. 게다가 ValidationPipe(whitelist) +
+// 데코레이터 없는 AnalyzeAstRequestDto로 body가 strip되어 현재 무조건 500 (운영 실측 확인).
 import { Controller, Post, Body, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MetricService } from './metric.service';

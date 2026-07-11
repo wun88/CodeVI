@@ -33,6 +33,8 @@ export class AstRelationalController {
     return await this.astRelationalService.getSnapshotById(snapshotId);
   }
 
+  // DEAD CODE (2026-07-11): 아래 benchmark 3종 엔드포인트는 성능 실험용으로,
+  // 프론트·Jenkins·MCP 어디에서도 호출하지 않음.
   @Get('benchmark/natural-join/:snapshotId')
   @ApiOperation({ summary: '벤치마크: Natural JOIN 방식으로 AST 스냅샷 조회' })
   async benchmarkNaturalJoin(@Param('snapshotId', ParseIntPipe) snapshotId: number) {
