@@ -164,25 +164,38 @@ export class ZipAnalysisService {
     requestedRepoName?: string,
   ): ParserAstNode[] {
     if (!Array.isArray(node.children) || node.children.length === 0) {
-      return [this.normalizeAstNodePaths(node, '')];
+      return [this.normalizeAstNodePaths(node, '', requestedRepoName)];
     }
 
-    const preferredRepoNode = this.pickRepositoryRootNode(node.children, requestedRepoName);
-    const repoRootName = this.extractNodeName(preferredRepoNode.name);
+    // 래퍼 디렉토리 승격은 안전한 경우에만:
+    // (1) repoName과 이름이 일치하는 자식(GitHub zip: repo-name/...) 또는
+    // (2) 최상위가 단일 디렉토리 하나뿐인 경우.
+    // 그 외(최상위에 src/·lib/ 등 여러 항목)에는 temp 루트를 유지해야 형제 디렉토리가 유실되지 않는다.
+    const promoted = this.pickWrapperNode(node.children, requestedRepoName);
+
+    if (promoted) {
+      return [
+        this.normalizeAstNodePaths(
+          promoted,
+          '',
+          requestedRepoName || this.extractNodeName(promoted.name),
+        ),
+      ];
+    }
 
     return [
       this.normalizeAstNodePaths(
-        preferredRepoNode,
+        node,
         '',
-        requestedRepoName || repoRootName,
+        requestedRepoName || this.extractNodeName(node.name),
       ),
     ];
   }
 
-  private pickRepositoryRootNode(
+  private pickWrapperNode(
     nodes: ParserAstNode[],
     requestedRepoName?: string,
-  ): ParserAstNode {
+  ): ParserAstNode | undefined {
     if (requestedRepoName) {
       const matchedNode = nodes.find(
         (node) => this.extractNodeName(node.name) === requestedRepoName,
@@ -193,7 +206,15 @@ export class ZipAnalysisService {
       }
     }
 
-    return nodes[0];
+    if (nodes.length === 1 && this.isDirectoryNode(nodes[0])) {
+      return nodes[0];
+    }
+
+    return undefined;
+  }
+
+  private isDirectoryNode(node: ParserAstNode): boolean {
+    return String(node.type ?? '').toLowerCase() === 'directory';
   }
 
   private normalizeAstNodePaths(
@@ -233,7 +254,8 @@ export class ZipAnalysisService {
           .filter((child): child is ParserAstNode => child !== null)
       : undefined;
 
-    if (node.type === 'DIRECTORY' && filteredChildren && filteredChildren.length === 0) {
+    // 파서는 type을 'directory'(소문자)로 내려준다 — 대소문자 무시 비교
+    if (this.isDirectoryNode(node) && filteredChildren && filteredChildren.length === 0) {
       return null;
     }
 
@@ -252,7 +274,7 @@ export class ZipAnalysisService {
       return true;
     }
 
-    if (nodeType === 'DIRECTORY') {
+    if (String(nodeType ?? '').toLowerCase() === 'directory') {
       return this.excludedDirectoryNames.has(nodeName);
     }
 

@@ -54,7 +54,7 @@ function ZipUpload() {
       // 1회성(비영속) 분석: zip → parser AST. DB 저장 없음.
       const result = await zipAnalysisService.analyzeZip(uploadedFile, repoName, setUploadProgress);
 
-      // 결과를 세션에 담아 대시보드로 전달 (대형 결과는 quota 초과 가능 → 실패해도 이동은 계속)
+      // 결과를 세션에 담아 결과 뷰로 전달 (대형 결과는 quota 초과 가능 → 결과 뷰가 빈 상태 안내)
       try {
         sessionStorage.setItem(
           'zipAnalysisResult',
@@ -63,7 +63,7 @@ function ZipUpload() {
       } catch {
         console.warn('zipAnalysisResult가 sessionStorage 용량을 초과해 저장을 건너뜀');
       }
-      navigate('/code-insight/dashboard');
+      navigate('/code-insight/upload/result');
     } catch (err: any) {
       alert('분석 실패: ' + (err.response?.data?.message ?? err.message));
       setIsUploading(false);

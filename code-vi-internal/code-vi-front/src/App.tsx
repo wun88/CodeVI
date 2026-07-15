@@ -6,6 +6,7 @@ import CodeInsight from './pages/CodeInsight';
 import InstantInsight from './pages/CodeInsight/InstantInsight';
 import ProjectAnalysis from './pages/CodeInsight/ProjectAnalysis';
 import ZipUpload from './pages/CodeInsight/ZipUpload';
+import ZipResult from './pages/CodeInsight/ZipResult';
 import GitHubConnect from './pages/CodeInsight/GitHubConnect';
 import Dashboard from './pages/CodeInsight/Dashboard';
 import OnboardingPage from './pages/CodeInsight/Onboarding/OnboardingPage';
@@ -81,6 +82,7 @@ export default function App() {
             <Route path="/code-insight/instant" element={<InstantInsight />} />
             <Route path="/code-insight/project" element={<ProjectAnalysis />} />
             <Route path="/code-insight/upload" element={<ZipUpload />} />
+            <Route path="/code-insight/upload/result" element={<ZipResult />} />
             <Route path="/code-insight/github" element={<GitHubConnect />} />
             <Route path="/code-insight/onboarding" element={<OnboardingPage />} />
             <Route path="/code-insight/dashboard" element={<Dashboard />} />
