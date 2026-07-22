@@ -2,6 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-github2';
 import { AuthService } from '../auth.service';
+import { User } from '../../users/entities/user.entity';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
@@ -43,6 +44,11 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       if (!user) {
         return done(null, false);
       }
+
+      // repo scope 연동(GET /api/github/connect) 콜백에서만 사용 — 로그인 전용 흐름은 이 값을 무시한다.
+      // DB에는 저장하지 않고 이번 요청(req.user)에만 임시로 실어 보낸다.
+      (user as User & { _githubAccessToken?: string })._githubAccessToken = accessToken;
+      (user as User & { _githubUsername?: string })._githubUsername = username;
 
       return done(null, user);
     } catch (error) {

@@ -15,7 +15,7 @@ networks:
   jenkins-net:
     driver: bridge
   shared-net:
-    driver: bridge
+    external: true
     name: shared-net
 
 volumes:

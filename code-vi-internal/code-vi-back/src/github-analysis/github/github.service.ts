@@ -15,8 +15,16 @@ export class GithubService {
    */
   async injectJenkinsfile(encryptedPat: string, repoUrl: string): Promise<void> {
     const pat = this.authService.decryptText(encryptedPat);
+    return this.injectJenkinsfileWithToken(pat, repoUrl);
+  }
+
+  /**
+   * PAT onboarding과 GitHub 연동(OAuth repo scope) 두 경로가 공유하는 실제 주입 로직.
+   * OAuth 연동 쪽은 이미 평문 access token을 들고 있어 RSA 복호화 단계가 필요 없다.
+   */
+  async injectJenkinsfileWithToken(token: string, repoUrl: string): Promise<void> {
     const { owner, repo } = this.parseRepoUrl(repoUrl);
-    const octokit = new Octokit({ auth: pat });
+    const octokit = new Octokit({ auth: token });
 
     try {
       // 기존 Jenkinsfile 의 sha 조회 (있으면 업데이트=덮어쓰기, 없으면 새로 생성)

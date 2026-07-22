@@ -151,6 +151,39 @@ export class AuthController {
                 `${this.frontendUrl}/auth/sign-in?error=github_auth_failed`,
             );
         }
+
+        // Project Analysis > GitHub 연동(repo scope)에서 시작된 콜백인지 state로 구분한다.
+        // GitHub OAuth App은 콜백 URL을 하나만 등록할 수 있어 로그인과 같은 콜백을 공유하고,
+        // state(서명된 JWT)만으로 두 흐름을 분기한다.
+        const connectState = req.query.state
+            ? this.authService.verifyGithubConnectState(req.query.state as string)
+            : null;
+        if (connectState) {
+            const authenticatedUser = req.user as User & {
+                _githubAccessToken?: string;
+                _githubUsername?: string;
+            };
+            const accessToken = authenticatedUser._githubAccessToken;
+            if (!accessToken) {
+                this.logger.error('GitHub connect callback: access token missing on req.user');
+                return res.redirect(`${this.frontendUrl}/code-insight/github?error=github_token_missing`);
+            }
+            try {
+                await this.authService.saveGithubConnection(
+                    connectState.userId,
+                    accessToken,
+                    'repo,read:user',
+                    authenticatedUser._githubUsername ?? authenticatedUser.username,
+                );
+                return res.redirect(`${this.frontendUrl}/code-insight/github?connected=true`);
+            } catch (error) {
+                this.logger.error(
+                    `Failed to save GitHub connection: ${error instanceof Error ? error.message : error}`,
+                );
+                return res.redirect(`${this.frontendUrl}/code-insight/github?error=github_connect_failed`);
+            }
+        }
+
         try {
             const jwtToken = await this.authService.generateJwt(req.user as User);
             this.logger.verbose(

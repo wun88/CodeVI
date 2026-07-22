@@ -17,6 +17,12 @@ export class TeamProject extends CommonEntity {
   @Column({ nullable: true })
   sonarProjectKey: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  githubRepoFullName: string | null;
+
+  @Column({ type: 'varchar', nullable: true, default: 'main' })
+  githubDefaultBranch: string | null;
+
   @OneToMany(() => CodeAnalysis, (codeAnalysis) => codeAnalysis.teamProject, {
     cascade: true,
   })

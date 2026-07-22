@@ -1,6 +1,8 @@
-import { Injectable, Logger, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, InternalServerErrorException, ConflictException, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { SignInRequestDto } from './dto/sign-in-request.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
@@ -10,6 +12,9 @@ import { CreateGithubUserRequestDto } from '../users/dto/create-github-user-requ
 import { CreateKakaoUserRequestDto } from '../users/dto/create-kakao-user-request.dto';
 import { CreateNaverUserRequestDto } from '../users/dto/create-naver-user-request.dto';
 import { User } from '../users/entities/user.entity';
+import { GithubConnection } from '../github-connect/entities/github-connection.entity';
+
+const GITHUB_CONNECT_STATE_PURPOSE = 'github-connect';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +26,8 @@ export class AuthService {
     constructor(
         private jwtService: JwtService,
         private userService: UsersService,
+        @InjectRepository(GithubConnection)
+        private githubConnectionRepository: Repository<GithubConnection>,
     ) {
         this.googleClientId = process.env.GOOGLE_CLIENT_ID || '';
         this.generateRsaKeyPair();
@@ -235,5 +242,113 @@ export class AuthService {
     async generateAttendanceJwt(classId: number, sessionId: number): Promise<string> {
         const payload = { classId, sessionId };
         return this.jwtService.sign(payload);
+    }
+
+    // ===== GitHub Repository 연동 (repo scope 토큰 저장/조회) =====
+    // AuthService의 RSA 키 쌍(generateRsaKeyPair)은 프로세스 시작마다 재생성되어 영속 저장에 부적합하므로,
+    // 장기 보관이 필요한 GitHub access token은 별도의 AES-256-GCM(env 고정 키)으로 암복호화한다.
+    private githubTokenEncKey(): Buffer {
+        const raw = process.env.GITHUB_TOKEN_ENC_KEY;
+        if (!raw) {
+            throw new InternalServerErrorException(
+                'GITHUB_TOKEN_ENC_KEY가 설정되지 않았습니다. .env에 32byte(base64) 키를 추가해주세요.',
+            );
+        }
+        const key = Buffer.from(raw, 'base64');
+        if (key.length !== 32) {
+            throw new InternalServerErrorException('GITHUB_TOKEN_ENC_KEY는 base64로 인코딩된 32byte 키여야 합니다.');
+        }
+        return key;
+    }
+
+    private encryptGithubToken(token: string): string {
+        const key = this.githubTokenEncKey();
+        const iv = crypto.randomBytes(12);
+        const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+        const ciphertext = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
+        const authTag = cipher.getAuthTag();
+        return [iv.toString('base64'), authTag.toString('base64'), ciphertext.toString('base64')].join('.');
+    }
+
+    private decryptGithubToken(stored: string): string {
+        const key = this.githubTokenEncKey();
+        const [ivB64, tagB64, dataB64] = stored.split('.');
+        if (!ivB64 || !tagB64 || !dataB64) {
+            throw new InternalServerErrorException('저장된 GitHub 토큰 형식이 올바르지 않습니다.');
+        }
+        const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivB64, 'base64'));
+        decipher.setAuthTag(Buffer.from(tagB64, 'base64'));
+        const decrypted = Buffer.concat([
+            decipher.update(Buffer.from(dataB64, 'base64')),
+            decipher.final(),
+        ]);
+        return decrypted.toString('utf8');
+    }
+
+    /** repo scope OAuth 인가 시작 시 브라우저 풀 리다이렉트에 실어 보낼 signed state (10분 만료). */
+    signGithubConnectState(userId: number): string {
+        return this.jwtService.sign(
+            { purpose: GITHUB_CONNECT_STATE_PURPOSE, userId },
+            { expiresIn: '10m' },
+        );
+    }
+
+    /** GitHub 콜백에서 돌아온 state를 검증한다. 로그인 전용 콜백(state 없음)과의 구분에 사용. */
+    verifyGithubConnectState(state: string): { userId: number } | null {
+        try {
+            const payload = this.jwtService.verify<{ purpose?: string; userId?: number }>(state);
+            if (payload?.purpose !== GITHUB_CONNECT_STATE_PURPOSE || !payload.userId) return null;
+            return { userId: payload.userId };
+        } catch {
+            return null;
+        }
+    }
+
+    async saveGithubConnection(
+        userId: number,
+        accessToken: string,
+        scope: string,
+        githubUsername?: string | null,
+    ): Promise<void> {
+        const encryptedAccessToken = this.encryptGithubToken(accessToken);
+        const existing = await this.githubConnectionRepository.findOne({ where: { userId } });
+        if (existing) {
+            await this.githubConnectionRepository.save({
+                ...existing,
+                encryptedAccessToken,
+                scope,
+                githubUsername: githubUsername ?? existing.githubUsername,
+            });
+            return;
+        }
+        await this.githubConnectionRepository.save(
+            this.githubConnectionRepository.create({
+                userId,
+                encryptedAccessToken,
+                scope,
+                githubUsername: githubUsername ?? null,
+            }),
+        );
+    }
+
+    async getGithubConnection(userId: number): Promise<GithubConnection | null> {
+        return this.githubConnectionRepository.findOne({ where: { userId } });
+    }
+
+    /** 저장된 GitHub access token을 복호화해 반환한다. 미연결 시 409. */
+    async getDecryptedGithubToken(userId: number): Promise<string> {
+        const connection = await this.githubConnectionRepository.findOne({ where: { userId } });
+        if (!connection) {
+            throw new ConflictException('GitHub 계정이 연결되어 있지 않습니다.');
+        }
+        return this.decryptGithubToken(connection.encryptedAccessToken);
+    }
+
+    async deleteGithubConnection(userId: number): Promise<void> {
+        const existing = await this.githubConnectionRepository.findOne({ where: { userId } });
+        if (!existing) {
+            throw new ConflictException('GitHub 계정이 연결되어 있지 않습니다.');
+        }
+        await this.githubConnectionRepository.remove(existing);
     }
 }

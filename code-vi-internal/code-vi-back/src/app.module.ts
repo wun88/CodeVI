@@ -14,6 +14,7 @@ import { ApiKeyModule } from './api-key/api-key.module';
 import { MetricAnalysisModule } from './metric-analysis/metric-analysis.module';
 import { CodeGraphModule } from './code-graph/code-graph.module';
 import { SmellAnalysisModule } from './smell-analysis/smell-analysis.module';
+import { GithubConnectModule } from './github-connect/github-connect.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SmellAnalysisModule } from './smell-analysis/smell-analysis.module';
     MetricAnalysisModule,
     CodeGraphModule,
     SmellAnalysisModule,
+    GithubConnectModule,
   ],
 })
 export class AppModule { }
