@@ -12,8 +12,11 @@ jest.mock('../team-project/entities/team-project.entity', () => ({
   TeamProject: class TeamProject {},
 }));
 
-type MockRepository<T extends object> = Partial<Record<keyof Repository<T>, jest.Mock>>;
-type TeamProject = Record<string, unknown>;
+type MockRepository<T extends object> = Partial<
+  Record<keyof Repository<T>, jest.Mock>
+>;
+type TeamProject =
+  import('../team-project/entities/team-project.entity').TeamProject;
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -73,9 +76,9 @@ describe('SmellAnalysisService', () => {
     };
 
     service = new SmellAnalysisService(
-      jobRepository as Repository<SmellAnalysisJob>,
-      findingRepository as Repository<SmellAnalysisFinding>,
-      teamProjectRepository as Repository<TeamProject>,
+      jobRepository as unknown as Repository<SmellAnalysisJob>,
+      findingRepository as unknown as Repository<SmellAnalysisFinding>,
+      teamProjectRepository as unknown as Repository<TeamProject>,
       configService as ConfigService,
     );
   });
@@ -97,7 +100,11 @@ describe('SmellAnalysisService', () => {
               category: 'size_metric',
               severity: 'high',
               entity: 'service.run',
-              location: { file: 'src/service.py', line_start: 10, line_end: 80 },
+              location: {
+                file: 'src/service.py',
+                line_start: 10,
+                line_end: 80,
+              },
               metrics: { loc: 71 },
               message: 'Extract Method',
             },
@@ -120,7 +127,11 @@ describe('SmellAnalysisService', () => {
         language: 'python',
         analyzer: 'advanced_pyexamine',
         projectPath: '/opt/advanced-pyexamine-source/sample_project',
-        options: { only: 'long_method,data_clumps', summaryOnly: false, limitPerGroup: 5 },
+        options: {
+          only: 'long_method,data_clumps',
+          summaryOnly: false,
+          limitPerGroup: 5,
+        },
       },
       user,
     );
@@ -192,7 +203,9 @@ describe('SmellAnalysisService', () => {
 
   it('lists only accessible smell analyses with query filters and pagination', async () => {
     const accessibleProjectsQb = createAccessibleProjectsQueryBuilder([1]);
-    teamProjectRepository.createQueryBuilder!.mockReturnValueOnce(accessibleProjectsQb);
+    teamProjectRepository.createQueryBuilder!.mockReturnValueOnce(
+      accessibleProjectsQb,
+    );
     jobRepository.findAndCount!.mockResolvedValueOnce([
       [
         {
@@ -248,9 +261,9 @@ describe('SmellAnalysisService', () => {
       createAccessibleProjectsQueryBuilder([2]),
     );
 
-    await expect(service.getSmellAnalyses({ teamProjectId: 1 }, user)).rejects.toBeInstanceOf(
-      ForbiddenException,
-    );
+    await expect(
+      service.getSmellAnalyses({ teamProjectId: 1 }, user),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it('filters smell findings by job, rule metadata, file path, and pagination', async () => {
@@ -272,7 +285,7 @@ describe('SmellAnalysisService', () => {
         message: 'Extract Method',
         metrics: { loc: 71 },
       },
-    ] as SmellAnalysisFinding[]);
+    ] as unknown as SmellAnalysisFinding[]);
     findingRepository.createQueryBuilder!.mockReturnValueOnce(findingsQb);
 
     const result = await service.getSmellFindings(
@@ -288,21 +301,33 @@ describe('SmellAnalysisService', () => {
       user,
     );
 
-    expect(findingsQb.where).toHaveBeenCalledWith('finding.smellAnalysisJobId = :jobId', {
-      jobId: 3,
-    });
-    expect(findingsQb.andWhere).toHaveBeenCalledWith('finding.severity = :severity', {
-      severity: 'high',
-    });
+    expect(findingsQb.where).toHaveBeenCalledWith(
+      'finding.smellAnalysisJobId = :jobId',
+      {
+        jobId: 3,
+      },
+    );
+    expect(findingsQb.andWhere).toHaveBeenCalledWith(
+      'finding.severity = :severity',
+      {
+        severity: 'high',
+      },
+    );
     expect(findingsQb.andWhere).toHaveBeenCalledWith('finding.name = :name', {
       name: 'long_method',
     });
-    expect(findingsQb.andWhere).toHaveBeenCalledWith('finding.category = :category', {
-      category: 'size_metric',
-    });
-    expect(findingsQb.andWhere).toHaveBeenCalledWith('finding.filePath LIKE :filePath', {
-      filePath: 'src/%',
-    });
+    expect(findingsQb.andWhere).toHaveBeenCalledWith(
+      'finding.category = :category',
+      {
+        category: 'size_metric',
+      },
+    );
+    expect(findingsQb.andWhere).toHaveBeenCalledWith(
+      'finding.filePath LIKE :filePath',
+      {
+        filePath: 'src/%',
+      },
+    );
     expect(findingsQb.skip).toHaveBeenCalledWith(0);
     expect(findingsQb.take).toHaveBeenCalledWith(5);
     expect(result).toMatchObject({ total: 1, limit: 5, offset: 0 });

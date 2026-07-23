@@ -9,9 +9,8 @@ import * as fs from 'fs';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
-
 async function bootstrap() {
-  let httpsOptions: any = undefined;
+  let httpsOptions: { key: Buffer; cert: Buffer } | undefined = undefined;
   if (process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH) {
     try {
       httpsOptions = {
@@ -20,10 +19,12 @@ async function bootstrap() {
       };
     } catch (error) {
       Logger.error('SSL 키/인증서 파일 로딩 오류:', error);
-      // 파일 로딩 실패 시 HTTPS를 비활성화하거나 다른 처리 수행 (현재는 undefined 유지) 
+      // 파일 로딩 실패 시 HTTPS를 비활성화하거나 다른 처리 수행 (현재는 undefined 유지)
     }
   } else {
-    Logger.warn('SSL 키 또는 인증서 경로가 정의되지 않았습니다. HTTP로 실행합니다.');
+    Logger.warn(
+      'SSL 키 또는 인증서 경로가 정의되지 않았습니다. HTTP로 실행합니다.',
+    );
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -45,7 +46,7 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '1000mb' }));
   app.use(bodyParser.urlencoded({ limit: '1000mb', extended: true }));
 
-  app.setGlobalPrefix('api')
+  app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
     .setTitle('MP Project API')
@@ -94,7 +95,9 @@ async function bootstrap() {
   const port = process.env.SERVER_PORT || 13000;
   await app.listen(port, process.env.SERVER_HOST || '0.0.0.0');
   Logger.log(`🔗 [CodeVi Unified Server] Running on port ${port}`);
-  Logger.log(`📦 Primary storage: Relational AST (Directory→File→Class→Function)`);
+  Logger.log(
+    `📦 Primary storage: Relational AST (Directory→File→Class→Function)`,
+  );
   Logger.log(`📄 Swagger: http://localhost:${port}/api`);
   // Legacy: JSON AST 저장은 비활성화됨. 추후 HDD 아키텍처로 분리 예정.
 }
