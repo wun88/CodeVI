@@ -1,7 +1,8 @@
-// DEAD CODE (2026-07-11): 메트릭 계산은 외부 examine 서비스(pyexamine 등, EXAMINE_*_URL)와
-// MCP 경유 /api/analyses 로 이전됨 — 이 내장 metric 모듈은 전부 미사용.
-// 컨트롤러(/api/metrics/*)도 ValidationPipe(whitelist) + 데코레이터 없는 DTO 때문에
-// body가 strip되어 현재 전 엔드포인트 500. 프론트 호출자 없음(metricsService.ts도 dead).
+// (정정 2026-07-23) 이 서비스는 살아있다 — metric-analysis(/api/analyses, MCP 경로)가
+// analyzeFile/calculateClassicMetrics/calculateAllCKMetrics 등으로 호출하고,
+// metric/logic 하위는 ast-relational의 CK 저장(Deploy)에서도 사용한다.
+// DEAD인 것은 metric.controller(/api/metrics/* 8종)뿐: whitelist로 body가 strip되어
+// 전 엔드포인트 500 + 프론트 호출자 없음. 장기적으로 examine 이전 대상이긴 하다.
 import { Injectable, Logger } from '@nestjs/common';
 import {
     AstNode,
