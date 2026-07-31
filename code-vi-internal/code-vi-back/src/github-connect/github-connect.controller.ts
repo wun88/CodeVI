@@ -16,6 +16,8 @@ import { GetUser } from '../auth/custom-guards-decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { GithubConnectService } from './github-connect.service';
 import { RegisterProjectRequestDto } from './dto/register-project-request.dto';
+import { ProjectMember } from '../auth/custom-guards-decorators/project-member.decorator';
+import { ProjectMemberGuard } from '../auth/custom-guards-decorators/project-member.guard';
 
 // GitHub Repository 연동(Code Insight > Project Analysis > GitHub 연동) — OAuth App의 repo scope를
 // 사용해 사용자의 레포 목록을 조회하고, 선택한 레포를 분석 대상 프로젝트로 등록한다.
@@ -25,8 +27,15 @@ export class GithubConnectController {
   constructor(private readonly githubConnectService: GithubConnectService) {}
 
   @Get('connect')
-  connectStart(@Query('token') token: string, @Res() res: Response) {
-    const url = this.githubConnectService.buildAuthorizeRedirectUrl(token);
+  connectStart(
+    @Query('token') token: string,
+    @Query('teamProjectId') teamProjectId: string | undefined,
+    @Res() res: Response,
+  ) {
+    const url = this.githubConnectService.buildAuthorizeRedirectUrl(
+      token,
+      teamProjectId ? Number(teamProjectId) : undefined,
+    );
     return res.redirect(url);
   }
 
@@ -43,9 +52,13 @@ export class GithubConnectController {
   }
 
   @Post('projects')
-  @UseGuards(AuthGuard())
+  @UseGuards(AuthGuard(), ProjectMemberGuard)
+  @ProjectMember({ source: 'body', field: 'teamProjectId', optional: true })
   @HttpCode(HttpStatus.CREATED)
-  async registerProject(@GetUser() user: User, @Body() dto: RegisterProjectRequestDto) {
+  async registerProject(
+    @GetUser() user: User,
+    @Body() dto: RegisterProjectRequestDto,
+  ) {
     return this.githubConnectService.registerProject(user.id, dto);
   }
 

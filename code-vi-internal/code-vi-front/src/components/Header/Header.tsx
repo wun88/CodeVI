@@ -89,6 +89,14 @@ function Header({ onLoginClick, variant = 'default' }: HeaderProps) {
 
             {isLoggedIn && (
               <li className="nav-item">
+                <Link to="/projects" className="nav-link" onClick={closeMobileMenu}>
+                  My Projects
+                </Link>
+              </li>
+            )}
+
+            {isLoggedIn && (
+              <li className="nav-item">
                 <Link to="/dashboard" className="nav-link" onClick={closeMobileMenu}>
                   Dashboard
                 </Link>

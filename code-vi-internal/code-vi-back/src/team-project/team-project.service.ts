@@ -6,8 +6,10 @@ import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { TeamProject } from './entities/team-project.entity';
 import { CodeAnalysis } from '../code-analysis/entities/code-analysis.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateTeamProjectAnalysisDto } from './dto/create-team-project.dto';
 import { TeamProjectResponseDto } from './dto/team-project-response.dto';
+import { RequirementsService } from '../requirements/requirements.service';
 
 @Injectable()
 export class TeamProjectService {
@@ -17,9 +19,36 @@ export class TeamProjectService {
     private readonly dataSource: DataSource,
     @InjectRepository(TeamProject)
     private readonly teamProjectRepository: Repository<TeamProject>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
-  ) { }
+    private readonly requirementsService: RequirementsService,
+  ) {}
+
+  /**
+   * "새 프로젝트 시작하기"(요구사항 우선) — Jenkins/GitHub 연동 없이 TeamProject만 생성한다.
+   * jej_20 Phase 1.
+   */
+  async createRequirementsOnlyProject(
+    userId: number,
+    teamName: string,
+  ): Promise<TeamProjectResponseDto> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
+
+    const project = await this.dataSource.transaction(async (manager) => {
+      const project = manager.create(TeamProject, {
+        teamName,
+        JenkinsJobName: null,
+        sonarProjectKey: null,
+        users: [user],
+      });
+      return manager.save(project);
+    });
+
+    return new TeamProjectResponseDto(project, 0);
+  }
 
   async createJenkinsNotification(dto: CreateTeamProjectAnalysisDto) {
     // 1단계: 핵심 데이터 저장 및 트랜잭션 종료 (최대한 빠르게)
@@ -53,7 +82,8 @@ export class TeamProjectService {
     const targetSonarKey = dto.sonarProjectKey;
 
     this.fetchAndUpdateSonarMetrics(savedAnalysis.id, targetSonarKey).catch(
-      (err) => this.logger.error(`Enrichment Background Error: ${err.message}`),
+      (err: Error) =>
+        this.logger.error(`Enrichment Background Error: ${err.message}`),
     );
 
     return savedAnalysis; // Jenkins에게는 201 Created를 즉시 반환
@@ -63,7 +93,7 @@ export class TeamProjectService {
     analysisId: number,
     projectKey: string,
   ) {
-    const sonarToken = this.configService.get('SONAR_TOKEN');
+    const sonarToken = this.configService.get<string>('SONAR_TOKEN');
     const metricKeys = [
       'bugs',
       'vulnerabilities',
@@ -88,9 +118,11 @@ export class TeamProjectService {
       }),
     );
 
-    const measures = response.data.component.measures;
-    const metricsUpdate = {};
-    measures.forEach((m) => {
+    const sonarResponse = response.data as {
+      component: { measures: { metric: string; value: string }[] };
+    };
+    const metricsUpdate: Record<string, string> = {};
+    sonarResponse.component.measures.forEach((m) => {
       metricsUpdate[m.metric] = m.value;
     });
 
@@ -124,19 +156,18 @@ export class TeamProjectService {
       .orderBy('analysis.createdAt', 'DESC')
       .getRawAndEntities();
 
-    return history.entities.map((analysis, index) => {
-      const project = analysis.teamProject;
+    return history.entities.map((analysis) => {
+      const project = analysis.teamProject as TeamProject & {
+        latestAnalysis?: CodeAnalysis;
+      };
       // DTO 매핑을 위해 project 객체에 latestAnalysis 속성 추가
-      (project as any).latestAnalysis = analysis;
+      project.latestAnalysis = analysis;
 
       return new TeamProjectResponseDto(project);
     });
   }
 
-  async getTeamDataWithAstData(
-    projectId: number,
-    astId: number,
-  ): Promise<TeamProject | null> {
+  async getTeamDataWithAstData(projectId: number): Promise<TeamProject | null> {
     return await this.teamProjectRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.users', 'user') // 팀원 정보 포함
@@ -148,5 +179,58 @@ export class TeamProjectService {
       )
       .where('project.id = :id', { id: projectId })
       .getOne();
+  }
+
+  /**
+   * "내 프로젝트" 목록 — 로그인 사용자가 속한 모든 TeamProject를 코드/요구사항 여부와 무관하게
+   * 한 목록으로 반환한다 (jej_20 Phase 3).
+   */
+  async getMyProjects(userId: number): Promise<TeamProjectResponseDto[]> {
+    const projects = await this.teamProjectRepository
+      .createQueryBuilder('project')
+      .innerJoin('project.users', 'membership', 'membership.id = :userId', {
+        userId,
+      })
+      .leftJoinAndSelect('project.users', 'user')
+      .leftJoinAndMapOne(
+        'project.latestAnalysis',
+        'CodeAnalysis',
+        'analysis',
+        'analysis.teamProjectId = project.id AND analysis.id = (SELECT MAX(ca.id) FROM code_analysis ca WHERE ca.teamProjectId = project.id)',
+      )
+      .orderBy('project.updatedAt', 'DESC')
+      .getMany();
+
+    const requirementsCounts =
+      await this.requirementsService.countByTeamProjectIds(
+        projects.map((project) => project.id),
+      );
+
+    return projects.map(
+      (project) =>
+        new TeamProjectResponseDto(
+          project,
+          requirementsCounts.get(project.id) ?? 0,
+        ),
+    );
+  }
+
+  /**
+   * 프로젝트 상세 — 멤버십 검증은 ProjectMemberGuard(jej_22 인가 가드 통합,
+   * team-project.controller.ts에 적용)가 컨트롤러 진입 시점에 이미 수행한다.
+   */
+  async getProjectDetail(
+    teamProjectId: number,
+  ): Promise<TeamProjectResponseDto> {
+    const project = await this.getTeamDataWithAstData(teamProjectId);
+    if (!project) throw new NotFoundException('프로젝트를 찾을 수 없습니다.');
+
+    const requirementsCounts =
+      await this.requirementsService.countByTeamProjectIds([teamProjectId]);
+
+    return new TeamProjectResponseDto(
+      project,
+      requirementsCounts.get(teamProjectId) ?? 0,
+    );
   }
 }

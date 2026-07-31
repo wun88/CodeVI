@@ -76,6 +76,34 @@ function CodeInsight() {
               </li>
             </ul>
           </div>
+
+          <div
+            className="upload-card mode-card"
+            onClick={() => navigate('/code-insight/new')}
+          >
+            <div className="upload-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7492B7" strokeWidth="2">
+                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+              </svg>
+            </div>
+            <div className="mode-card-title-row">
+              <h3>새 프로젝트 시작하기</h3>
+              <span className="new-badge">NEW</span>
+            </div>
+            <p className="upload-card-desc">
+              코드 없이 요구사항부터 — AI와 함께 기획을 정리하고, 나중에 코드를 연결
+            </p>
+            <ul className="upload-features">
+              <li>
+                <span className="check-icon">✓</span>
+                자연어로 요구사항 입력
+              </li>
+              <li>
+                <span className="check-icon">✓</span>
+                추후 코드 연결 시 자동 매핑
+              </li>
+            </ul>
+          </div>
         </div>
       </main>
     </div>

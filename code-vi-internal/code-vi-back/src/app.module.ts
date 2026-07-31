@@ -15,6 +15,7 @@ import { MetricAnalysisModule } from './metric-analysis/metric-analysis.module';
 import { CodeGraphModule } from './code-graph/code-graph.module';
 import { SmellAnalysisModule } from './smell-analysis/smell-analysis.module';
 import { GithubConnectModule } from './github-connect/github-connect.module';
+import { RequirementsModule } from './requirements/requirements.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { GithubConnectModule } from './github-connect/github-connect.module';
     CodeGraphModule,
     SmellAnalysisModule,
     GithubConnectModule,
+    RequirementsModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

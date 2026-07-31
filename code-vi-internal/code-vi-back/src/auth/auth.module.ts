@@ -4,9 +4,12 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User } from '../users/entities/user.entity';
 import { GithubConnection } from '../github-connect/entities/github-connection.entity';
+import { TeamProject } from '../team-project/entities/team-project.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
+import type { StringValue } from 'ms';
 import { RolesGuard } from './custom-guards-decorators/roles.guard';
+import { ProjectMemberGuard } from './custom-guards-decorators/project-member.guard';
 import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { GoogleAuthGuard } from './custom-guards-decorators/google-auth.guard';
@@ -24,16 +27,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   imports: [
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([User, GithubConnection]),
+    TypeOrmModule.forFeature([User, GithubConnection, TeamProject]),
     ConfigModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService): Promise<JwtModuleOptions> => ({
+      useFactory: (configService: ConfigService): JwtModuleOptions => ({
         secret: configService.get<string>('JWT_SECRET') || 'default-secret-key', // 기본값 제공
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION') || '1h' as any,
+          expiresIn: (configService.get<string>('JWT_EXPIRATION') ||
+            '1h') as StringValue,
         },
       }),
     }),
@@ -42,6 +46,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     AuthService,
     JwtStrategy,
     RolesGuard,
+    ProjectMemberGuard,
     GoogleAuthGuard,
     GoogleStrategy,
     GithubAuthGuard,
@@ -52,6 +57,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     NaverStrategy,
   ],
   controllers: [AuthController],
-  exports: [AuthService, PassportModule, RolesGuard, JwtModule],
+  exports: [
+    AuthService,
+    PassportModule,
+    RolesGuard,
+    ProjectMemberGuard,
+    JwtModule,
+  ],
 })
-export class AuthModule { }
+export class AuthModule {}

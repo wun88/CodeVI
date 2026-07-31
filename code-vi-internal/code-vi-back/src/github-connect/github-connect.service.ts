@@ -26,6 +26,19 @@ import { RegisterProjectRequestDto } from './dto/register-project-request.dto';
 // user:email을 빼면 "Failed to fetch user emails"로 콜백이 500 난다.
 const GITHUB_CONNECT_SCOPE = 'repo read:user user:email';
 
+/** Octokit 에러는 타입 선언이 없어 catch에서 `unknown`으로 받고 필요한 필드만 안전하게 꺼낸다. */
+interface OctokitLikeError {
+  status?: number;
+  message?: string;
+  response?: { headers?: Record<string, string> };
+}
+
+function asOctokitError(error: unknown): OctokitLikeError {
+  return typeof error === 'object' && error !== null
+    ? (error as OctokitLikeError)
+    : {};
+}
+
 @Injectable()
 export class GithubConnectService {
   private readonly logger = new Logger(GithubConnectService.name);
@@ -47,7 +60,10 @@ export class GithubConnectService {
    * 프론트가 로그인 JWT를 쿼리스트링(`?token=`)으로 전달한다 — 기존 로그인 콜백이
    * `?jwtToken=...`을 쿼리스트링으로 넘기는 것과 동일한 관례.
    */
-  buildAuthorizeRedirectUrl(rawLoginToken: string): string {
+  buildAuthorizeRedirectUrl(
+    rawLoginToken: string,
+    teamProjectId?: number,
+  ): string {
     let userId: number;
     try {
       const payload = this.jwtService.verify<{ id?: number }>(rawLoginToken);
@@ -66,7 +82,10 @@ export class GithubConnectService {
       );
     }
 
-    const state = this.authService.signGithubConnectState(userId);
+    const state = this.authService.signGithubConnectState(
+      userId,
+      teamProjectId,
+    );
     const url = new URL('https://github.com/login/oauth/authorize');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('redirect_uri', redirectUri);
@@ -75,7 +94,9 @@ export class GithubConnectService {
     return url.toString();
   }
 
-  async getConnectionStatus(userId: number): Promise<{ connected: boolean; githubUsername: string | null }> {
+  async getConnectionStatus(
+    userId: number,
+  ): Promise<{ connected: boolean; githubUsername: string | null }> {
     const connection = await this.authService.getGithubConnection(userId);
     return {
       connected: !!connection,
@@ -88,10 +109,13 @@ export class GithubConnectService {
     const octokit = new Octokit({ auth: token });
 
     try {
-      const repos = await octokit.paginate(octokit.repos.listForAuthenticatedUser, {
-        per_page: 100,
-        sort: 'updated',
-      });
+      const repos = await octokit.paginate(
+        octokit.repos.listForAuthenticatedUser,
+        {
+          per_page: 100,
+          sort: 'updated',
+        },
+      );
       return repos.map((repo) => ({
         id: repo.id,
         name: repo.name,
@@ -104,25 +128,57 @@ export class GithubConnectService {
         htmlUrl: repo.html_url,
         stargazersCount: repo.stargazers_count ?? 0,
       }));
-    } catch (error: any) {
-      if (error?.status === 401) {
+    } catch (rawError: unknown) {
+      const error = asOctokitError(rawError);
+      if (error.status === 401) {
         throw new HttpException(
           'GitHub 인증이 만료되었습니다. 다시 연결해주세요.',
           HttpStatus.FAILED_DEPENDENCY,
         );
       }
-      if (error?.status === 403 && error?.response?.headers?.['x-ratelimit-remaining'] === '0') {
-        throw new HttpException('GitHub API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.', HttpStatus.TOO_MANY_REQUESTS);
+      if (
+        error.status === 403 &&
+        error.response?.headers?.['x-ratelimit-remaining'] === '0'
+      ) {
+        throw new HttpException(
+          'GitHub API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
       }
-      this.logger.error(`Failed to list GitHub repositories: ${error?.message}`);
-      throw new HttpException('GitHub 저장소 목록을 가져오지 못했습니다.', HttpStatus.FAILED_DEPENDENCY);
+      this.logger.error(`Failed to list GitHub repositories: ${error.message}`);
+      throw new HttpException(
+        'GitHub 저장소 목록을 가져오지 못했습니다.',
+        HttpStatus.FAILED_DEPENDENCY,
+      );
     }
   }
 
   async registerProject(
     userId: number,
     dto: RegisterProjectRequestDto,
-  ): Promise<{ teamProjectId: number; jenkinsJobName: string; githubRepoFullName: string }> {
+  ): Promise<{
+    teamProjectId: number;
+    jenkinsJobName: string;
+    githubRepoFullName: string;
+  }> {
+    // "코드 연결"(jej_20 Phase 5) — teamProjectId가 있으면 신규 생성 대신 기존 프로젝트에 붙인다.
+    // 멤버십 검증은 ProjectMemberGuard(jej_22 인가 가드 통합, github-connect.controller.ts에
+    // @ProjectMember({ source: 'body', field: 'teamProjectId', optional: true })로 적용)가
+    // 컨트롤러 진입 시점에 이미 수행한다 — teamProjectId가 없는(신규 프로젝트 생성) 경우는
+    // optional로 건너뛴다.
+    let projectToAttach: TeamProject | null = null;
+    if (dto.teamProjectId) {
+      projectToAttach = await this.teamProjectRepository.findOne({
+        where: { id: dto.teamProjectId },
+        relations: ['users'],
+      });
+      if (!projectToAttach)
+        throw new NotFoundException('프로젝트를 찾을 수 없습니다.');
+      if (projectToAttach.githubRepoFullName) {
+        throw new ConflictException('이미 코드가 연결된 프로젝트입니다.');
+      }
+    }
+
     const token = await this.authService.getDecryptedGithubToken(userId);
     const octokit = new Octokit({ auth: token });
     const { owner, repo } = dto;
@@ -131,45 +187,73 @@ export class GithubConnectService {
     try {
       const { data } = await octokit.repos.get({ owner, repo });
       defaultBranch = data.default_branch;
-    } catch (error: any) {
-      if (error?.status === 404) throw new NotFoundException('해당 저장소를 찾을 수 없습니다.');
-      if (error?.status === 403) throw new ForbiddenException('선택한 저장소에 접근할 수 없습니다.');
-      throw new HttpException('GitHub 저장소 확인에 실패했습니다.', HttpStatus.FAILED_DEPENDENCY);
+    } catch (rawError: unknown) {
+      const error = asOctokitError(rawError);
+      if (error.status === 404)
+        throw new NotFoundException('해당 저장소를 찾을 수 없습니다.');
+      if (error.status === 403)
+        throw new ForbiddenException('선택한 저장소에 접근할 수 없습니다.');
+      throw new HttpException(
+        'GitHub 저장소 확인에 실패했습니다.',
+        HttpStatus.FAILED_DEPENDENCY,
+      );
     }
 
     const jenkinsJobName = `${owner}-${repo}`.toLowerCase();
     const githubRepoFullName = `${owner}/${repo}`;
 
-    const existing = await this.teamProjectRepository.findOne({ where: { JenkinsJobName: jenkinsJobName } });
-    if (existing) {
+    const existing = await this.teamProjectRepository.findOne({
+      where: { JenkinsJobName: jenkinsJobName },
+    });
+    if (existing && existing.id !== dto.teamProjectId) {
       throw new ConflictException({
         message: '이미 등록된 프로젝트입니다.',
         teamProjectId: existing.id,
       });
     }
 
-    const repoUrl = `https://github.com/${owner}/${repo}`;
-    // Jenkinsfile 주입 + Jenkins Job 생성이 실패하면 TeamProject를 남기지 않는다(부분 등록 방지).
-    await this.githubService.injectJenkinsfileWithToken(token, repoUrl);
-    await this.jenkinsService.createPipelineJob(jenkinsJobName, repoUrl);
-
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
-
-    const saved = await this.dataSource.transaction(async (manager) => {
-      const project = manager.create(TeamProject, {
-        teamName: dto.teamName || repo,
+    // DB 갱신을 Jenkins 호출보다 먼저 수행한다 — Jenkins Job 생성은 즉시 빌드를 트리거하고
+    // (jenkins.service.ts createPipelineJob), 그 빌드 완료 콜백(POST /api/team-projects)은
+    // JenkinsJobName으로 프로젝트를 찾아 매칭한다(team-project.service.ts
+    // createJenkinsNotification). Jenkins 호출을 먼저 하면 이 콜백이 DB 갱신보다 먼저 도착할 경우
+    // 매칭에 실패해 users/요구사항이 비어있는 고아 TeamProject가 새로 생성된다 — 순서를 뒤집어 이
+    // 레이스를 없앤다. (트레이드오프: 이 시점 이후 Jenkins 호출이 실패하면 TeamProject는 갱신됐지만
+    // 실제 Job은 없는 상태로 남는다 — 코드 연결을 다시 시도하면 복구된다.)
+    let teamProjectId: number;
+    if (projectToAttach) {
+      await this.teamProjectRepository.update(projectToAttach.id, {
         JenkinsJobName: jenkinsJobName,
         sonarProjectKey: jenkinsJobName,
         githubRepoFullName,
         githubDefaultBranch: defaultBranch,
-        users: [user],
       });
-      return manager.save(project);
-    });
+      teamProjectId = projectToAttach.id;
+    } else {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+      if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
+
+      const saved = await this.dataSource.transaction(async (manager) => {
+        const project = manager.create(TeamProject, {
+          teamName: dto.teamName || repo,
+          JenkinsJobName: jenkinsJobName,
+          sonarProjectKey: jenkinsJobName,
+          githubRepoFullName,
+          githubDefaultBranch: defaultBranch,
+          users: [user],
+        });
+        return manager.save(project);
+      });
+      teamProjectId = saved.id;
+    }
+
+    const repoUrl = `https://github.com/${owner}/${repo}`;
+    await this.githubService.injectJenkinsfileWithToken(token, repoUrl);
+    await this.jenkinsService.createPipelineJob(jenkinsJobName, repoUrl);
 
     return {
-      teamProjectId: saved.id,
+      teamProjectId,
       jenkinsJobName,
       githubRepoFullName,
     };
@@ -186,14 +270,19 @@ export class GithubConnectService {
     if (clientId && clientSecret) {
       try {
         const token = await this.authService.getDecryptedGithubToken(userId);
-        await axios.delete(`https://api.github.com/applications/${clientId}/grant`, {
-          auth: { username: clientId, password: clientSecret },
-          data: { access_token: token },
-          headers: { Accept: 'application/vnd.github+json' },
-        });
-      } catch (error: any) {
+        await axios.delete(
+          `https://api.github.com/applications/${clientId}/grant`,
+          {
+            auth: { username: clientId, password: clientSecret },
+            data: { access_token: token },
+            headers: { Accept: 'application/vnd.github+json' },
+          },
+        );
+      } catch (rawError: unknown) {
         // 로컬 연결 해제는 GitHub 측 revoke 실패와 무관하게 진행한다(사용자 경험상 "연결 안 됨"이 우선).
-        this.logger.warn(`GitHub grant revoke failed (continuing local disconnect): ${error?.message}`);
+        this.logger.warn(
+          `GitHub grant revoke failed (continuing local disconnect): ${asOctokitError(rawError).message}`,
+        );
       }
     }
 

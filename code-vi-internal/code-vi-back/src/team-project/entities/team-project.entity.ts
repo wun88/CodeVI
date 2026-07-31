@@ -11,11 +11,17 @@ export class TeamProject extends CommonEntity {
   @Column({ type: 'varchar' })
   teamName: string;
 
-  @Column()
-  JenkinsJobName: string;
+  // nullable: "새 프로젝트 시작하기"(요구사항 우선) 플로우로 생성된 프로젝트는
+  // GitHub/Jenkins 연동 전까지 Jenkins Job이 없다 (jej_20 Phase 1).
+  // unique: JenkinsJobName으로 TeamProject를 find-or-create하는 경로가 2곳(Jenkins 웹훅
+  // createJenkinsNotification, 코드 연결 registerProject)이라 같은 job name으로 행이 중복
+  // 생성될 수 있다 — DB 제약으로 원천 차단한다. MySQL 유니크 인덱스는 NULL을 여러 개 허용하므로
+  // "새 프로젝트 시작하기"로 만든 JenkinsJobName=null 프로젝트 다건과는 무관하다.
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  JenkinsJobName: string | null;
 
-  @Column({ nullable: true })
-  sonarProjectKey: string;
+  @Column({ type: 'varchar', nullable: true })
+  sonarProjectKey: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   githubRepoFullName: string | null;

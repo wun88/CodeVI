@@ -1,0 +1,341 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--internal-bg);
+  color: var(--internal-text);
+}
+
+.content {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 110px 40px 60px;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--internal-text-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+  transition: color 0.2s ease;
+}
+
+.backBtn:hover {
+  color: var(--internal-text);
+}
+
+.statusText {
+  color: var(--internal-text-2);
+  font-size: 14px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.badge-code_analyzed {
+  color: var(--internal-success);
+  background: rgba(120, 255, 180, 0.10);
+  border: 1px solid rgba(120, 255, 180, 0.24);
+}
+
+.badge-code_analyzed .badgeDot {
+  background: var(--internal-success);
+}
+
+.badge-requirements_only {
+  color: #e8c07a;
+  background: rgba(232, 192, 122, 0.10);
+  border: 1px solid rgba(232, 192, 122, 0.28);
+}
+
+.badge-requirements_only .badgeDot {
+  background: #e8c07a;
+}
+
+.badge-empty {
+  color: var(--internal-text-2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--internal-border);
+}
+
+.badge-empty .badgeDot {
+  background: var(--internal-muted);
+}
+
+.connectCard,
+.noticeCard {
+  border-radius: 14px;
+  border: 1px solid var(--internal-border);
+  background: var(--internal-surface);
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.connectDesc {
+  margin: 0 0 14px 0;
+  font-size: 13px;
+  color: var(--internal-text-2);
+  line-height: 1.5;
+}
+
+.connectBtn {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(235, 245, 251, 0.22);
+  background: var(--internal-accent);
+  color: #0a0e14;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.connectBtn:hover {
+  opacity: 0.88;
+}
+
+.noticeCard {
+  font-size: 13px;
+  color: var(--internal-text-2);
+  line-height: 1.5;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: var(--internal-text);
+}
+
+.reqList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reqItem {
+  border: 1px solid var(--internal-border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--internal-surface);
+}
+
+.reqHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reqTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.reqPriority {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--internal-text-2);
+  border: 1px solid var(--internal-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.reqDesc {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: var(--internal-text-2);
+  line-height: 1.5;
+}
+
+/* KPI 카드 로우 (jej_20 Phase 6) */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.kpiCard {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 16px;
+}
+
+.kpiValue {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--internal-text);
+}
+
+.kpiLabel {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--internal-text-2);
+}
+
+.kpiSub {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: var(--internal-muted);
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.card {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 20px;
+}
+
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cardHeaderRow .sectionTitle {
+  margin: 0;
+}
+
+.smallBtn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(235, 245, 251, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--internal-text);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.smallBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(235, 245, 251, 0.24);
+}
+
+.smallBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.findingList,
+.alertList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.findingItem {
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.findingType {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #e8c07a;
+  background: rgba(232, 192, 122, 0.10);
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-bottom: 6px;
+}
+
+.findingDesc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--internal-text-2);
+  line-height: 1.5;
+}
+
+.alertItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.alertTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--internal-text);
+}
+
+.alertBadge {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.alertOverdue {
+  color: var(--internal-danger);
+  background: rgba(255, 120, 120, 0.10);
+}
+
+.alertDueSoon {
+  color: #e8c07a;
+  background: rgba(232, 192, 122, 0.10);
+}
+
+@media (max-width: 720px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}

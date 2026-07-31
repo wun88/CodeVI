@@ -1,8 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../../../components/Header';
 import { githubConnectService, type GithubRepositorySummary } from '../../../services/githubConnectService';
 import './GitHubConnect.css';
+
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const message = (err.response?.data as { message?: string } | undefined)?.message;
+    if (message) return message;
+  }
+  return fallback;
+}
+
+function getResponseStatus(err: unknown): number | undefined {
+  return axios.isAxiosError(err) ? err.response?.status : undefined;
+}
+
+/** 409 응답 바디의 teamProjectId(이미 이 job name으로 등록된 실제 프로젝트) 추출 (PR #61 리뷰 #12) */
+function getConflictTeamProjectId(err: unknown): number | undefined {
+  if (!axios.isAxiosError(err)) return undefined;
+  const data = err.response?.data as { teamProjectId?: number } | undefined;
+  return data?.teamProjectId;
+}
 
 type Phase =
   | 'checking'
@@ -35,6 +55,13 @@ function GitHubConnect() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // "기존 프로젝트에 코드 연결"(jej_20 Phase 5) — 최초 렌더 시점에 한 번만 읽어 state로 고정한다.
+  // OAuth 콜백 후 쿼리스트링을 정리하는 navigate(replace)가 실행돼도 이 값은 사라지지 않아야 한다.
+  const [teamProjectId] = useState<number | undefined>(() => {
+    const raw = searchParams.get('teamProjectId');
+    return raw ? Number(raw) : undefined;
+  });
+
   const [phase, setPhase] = useState<Phase>('checking');
   const [githubUsername, setGithubUsername] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
@@ -51,8 +78,8 @@ function GitHubConnect() {
       const repos = await githubConnectService.listRepositories();
       setRepositories(repos);
       setPhase(repos.length === 0 ? 'repos_empty' : 'repos_loaded');
-    } catch (err: any) {
-      setReposError(err.response?.data?.message ?? '레포지토리를 불러오지 못했습니다.');
+    } catch (err) {
+      setReposError(extractErrorMessage(err, '레포지토리를 불러오지 못했습니다.'));
       setPhase('repos_error');
     }
   };
@@ -84,7 +111,7 @@ function GitHubConnect() {
   }, []);
 
   const handleConnect = () => {
-    githubConnectService.redirectToConnect();
+    githubConnectService.redirectToConnect(teamProjectId);
   };
 
   const handleDisconnect = async () => {
@@ -106,16 +133,22 @@ function GitHubConnect() {
     const [owner, repo] = selectedRepo.fullName.split('/');
     setRegistering(true);
     setRegisterError(null);
+    // "기존 프로젝트에 코드 연결"(jej_20 Phase 5) 모드면 등록 후 프로젝트 상세로,
+    // 아니면 기존 흐름대로 대시보드로 이동한다.
+    const destination = teamProjectId ? `/projects/${teamProjectId}` : '/code-insight/dashboard';
     try {
-      await githubConnectService.registerProject(owner, repo);
-      navigate('/code-insight/dashboard');
-    } catch (err: any) {
-      // 이미 등록된 프로젝트면 바로 기존 대시보드로 이동 (중복 등록 방지)
-      if (err.response?.status === 409) {
-        navigate('/code-insight/dashboard');
+      await githubConnectService.registerProject(owner, repo, teamProjectId);
+      navigate(destination);
+    } catch (err) {
+      // 이미 등록/연결된 프로젝트면 그 프로젝트 상세로 이동한다 — 백엔드가 409와 함께 돌려주는
+      // teamProjectId(이 job name으로 이미 연결된 실제 프로젝트)를 무시하면, "새 프로젝트" 흐름에서
+      // destination이 무관한 대시보드라 사용자가 이유 없이 "연결 없음" 화면으로 돌아가 보인다.
+      if (getResponseStatus(err) === 409) {
+        const existingTeamProjectId = getConflictTeamProjectId(err);
+        navigate(existingTeamProjectId ? `/projects/${existingTeamProjectId}` : destination);
         return;
       }
-      setRegisterError(err.response?.data?.message ?? '프로젝트 등록에 실패했습니다.');
+      setRegisterError(extractErrorMessage(err, '프로젝트 등록에 실패했습니다.'));
       setRegistering(false);
     }
   };

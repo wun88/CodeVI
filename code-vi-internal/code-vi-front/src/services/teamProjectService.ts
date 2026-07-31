@@ -1,9 +1,8 @@
-// DEAD CODE (2026-07-11): 어떤 컴포넌트/훅에서도 import되지 않음.
-// (백엔드 /api/team-projects, /api/team-projects/history 자체는 정상 동작 확인됨)
 import api from './api';
+import type { TeamProjectSummary } from '../interface/teamProject.interface';
 
 export const teamProjectService = {
-  createJenkinsNotification: async (data: any) => {
+  createJenkinsNotification: async (data: Record<string, unknown>) => {
     const res = await api.post('/api/team-projects', data);
     return res.data;
   },
@@ -11,5 +10,25 @@ export const teamProjectService = {
   getBuildHistory: async () => {
     const res = await api.get('/api/team-projects/history');
     return res.data;
-  }
+  },
+
+  /** "내 프로젝트" 목록 — 코드 분석 프로젝트/요구사항 전용 프로젝트를 함께 반환 (jej_20 Phase 3) */
+  getMyProjects: async (): Promise<TeamProjectSummary[]> => {
+    const res = await api.get('/api/team-projects/mine');
+    return res.data?.data ?? res.data;
+  },
+
+  /** "새 프로젝트 시작하기" — Jenkins/GitHub 연동 없이 프로젝트만 먼저 생성 (jej_20 Phase 4) */
+  createRequirementsOnlyProject: async (
+    teamName: string,
+  ): Promise<{ id: number; teamName: string }> => {
+    const res = await api.post('/api/team-projects/requirements-only', { teamName });
+    return res.data?.data ?? res.data;
+  },
+
+  /** 프로젝트 상세 — 본인이 속한 프로젝트가 아니면 403 (jej_20 Phase 5) */
+  getProjectDetail: async (teamProjectId: number): Promise<TeamProjectSummary> => {
+    const res = await api.get(`/api/team-projects/${teamProjectId}`);
+    return res.data?.data ?? res.data;
+  },
 };

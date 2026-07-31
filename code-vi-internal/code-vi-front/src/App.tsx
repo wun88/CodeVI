@@ -10,6 +10,8 @@ import ZipResult from './pages/CodeInsight/ZipResult';
 import GitHubConnect from './pages/CodeInsight/GitHubConnect';
 import Dashboard from './pages/CodeInsight/Dashboard';
 import OnboardingPage from './pages/CodeInsight/Onboarding/OnboardingPage';
+import NewProject from './pages/CodeInsight/NewProject/NewProject';
+import NewRequirement from './pages/CodeInsight/NewRequirement/NewRequirement';
 
 import AuthPanel from './components/AuthPanel/AuthPanel';
 
@@ -21,12 +23,13 @@ import GoogleCallback from './pages/GoogleCallback/GoogleCallback';
 import KakaoCallback from './pages/KakaoCallback/KakaoCallback';
 import NaverCallback from './pages/NaverCallback/NaverCallback';
 import InternalHome from './pages/InternalHome/InternalHome';
+import MyProjects from './pages/MyProjects/MyProjects';
+import ProjectDetail from './pages/ProjectDetail/ProjectDetail';
 
 /** 인증 가드 — JWT 토큰이 없으면 /로 리디렉트 */
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  // UI 디자인 테스트를 위해 임시로 인증 체크 비활성화
-  // const token = localStorage.getItem('accessToken');
-  // if (!token) return <Navigate to="/" replace />;
+  const token = localStorage.getItem('accessToken');
+  if (!token) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -86,12 +89,44 @@ export default function App() {
             <Route path="/code-insight/github" element={<GitHubConnect />} />
             <Route path="/code-insight/onboarding" element={<OnboardingPage />} />
             <Route path="/code-insight/dashboard" element={<Dashboard />} />
+            <Route
+              path="/code-insight/new"
+              element={
+                <PrivateRoute>
+                  <NewProject />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/code-insight/new/:teamProjectId/requirements"
+              element={
+                <PrivateRoute>
+                  <NewRequirement />
+                </PrivateRoute>
+              }
+            />
 
             <Route path="/auth/github-callback" element={<GithubCallback />} />
             <Route path="/auth/google-callback" element={<GoogleCallback />} />
             <Route path="/auth/kakao-callback" element={<KakaoCallback />} />
             <Route path="/auth/naver-callback" element={<NaverCallback />} />
 
+            <Route
+              path="/projects"
+              element={
+                <PrivateRoute>
+                  <MyProjects />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/projects/:teamProjectId"
+              element={
+                <PrivateRoute>
+                  <ProjectDetail />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/mypage"
               element={

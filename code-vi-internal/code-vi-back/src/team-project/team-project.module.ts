@@ -7,12 +7,14 @@ import { HttpModule } from '@nestjs/axios';
 import { User } from '../users/entities/user.entity';
 import { TeamProject } from './entities/team-project.entity';
 import { UsersModule } from 'src/users/users.module';
+import { RequirementsModule } from '../requirements/requirements.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, TeamProject, CodeAnalysis]),
     forwardRef(() => UsersModule),
     HttpModule,
+    RequirementsModule,
   ],
   controllers: [TeamProjectController],
   providers: [TeamProjectService],

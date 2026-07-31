@@ -4,6 +4,8 @@
   color: var(--internal-text);
   position: relative;
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
 }
 
 .code-insight-page::before {
@@ -40,7 +42,31 @@
 }
 
 .insight-modes .mode-card {
-  width: 360px;
+  width: 400px;
+  padding: 34px;
+}
+
+.mode-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mode-card-title-row h3 {
+  margin: 0;
+}
+
+.new-badge {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #0a0e14;
+  background: var(--internal-accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  box-shadow: 0 0 12px rgba(159, 231, 240, 0.35);
 }
 
 .insight-modes .mode-card .upload-icon svg {
@@ -587,6 +613,7 @@
   margin-left: auto;
   margin-right: auto;
   min-height: unset;
+  justify-content: flex-start;
 }
 
 .diagramMesh {
@@ -762,17 +789,20 @@
 }
 
 .code-insight-content {
-  max-width: 900px;
+  flex: 1;
+  width: 100%;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 110px 40px 40px;
+  padding: 70px 40px 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
 .code-insight-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .code-insight-header h1 {
@@ -795,7 +825,7 @@
   font-size: 16px;
   font-weight: 600;
   color: rgba(235, 245, 251, 0.72);
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   text-align: center;
 }
 
@@ -819,7 +849,7 @@
 
 .upload-options {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   justify-content: center;
   width: 100%;
 }
@@ -837,7 +867,8 @@
   -webkit-backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
 }
 
 .upload-card:hover {
@@ -850,36 +881,39 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px auto;
+  margin: 0 auto 20px auto;
 }
 
 .upload-card h3 {
   font-family: 'Inter', sans-serif;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--internal-text);
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
 }
 
 .upload-card-desc {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--internal-text-2);
-  line-height: 1.5;
-  margin: 0 0 14px 0;
+  line-height: 1.6;
+  margin: 0 0 18px 0;
 }
 
 .upload-features {
   list-style: none;
   padding: 0;
   margin: 0;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .upload-features li {
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   color: rgba(235, 245, 251, 0.54);
-  padding: 5px 0;
+  padding: 6px 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -888,7 +922,7 @@
 .check-icon {
   color: var(--internal-accent);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* Tablet */
