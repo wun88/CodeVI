@@ -10,6 +10,8 @@ import axios, { AxiosError } from 'axios';
 import { CreateZipAnalysisRequestDto } from './dto/create-zip-analysis-request.dto';
 import { ZipAnalysisResponseDto } from './dto/zip-analysis-response.dto';
 import { UploadedZipFile } from './interfaces/uploaded-zip-file.interface';
+import { ExamineService } from '../examine/examine.service';
+import { CanonicalCodeGraph } from '../examine/code-graph.interface';
 
 interface ParserAstNode {
   type: string;
@@ -40,11 +42,17 @@ export class ZipAnalysisService {
     'coverage',
   ]);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly examineService: ExamineService,
+  ) {}
 
   /**
    * Intent: CI에 등록되지 않은 ZIP 파일을 parser로 프록시해
    * 일회성 분석 결과(JSON)만 반환한다.
+   *
+   * 같은 zip 을 examine(/codegraph)에도 보내 품질 지표(units/relations/findings)를
+   * 함께 실어 준다. examine 은 best-effort — 실패해도 parser 결과는 그대로 반환한다.
    */
   async analyzeZipFile(
     file: UploadedZipFile,
@@ -68,6 +76,12 @@ export class ZipAnalysisService {
     }
 
     try {
+      // parser 와 examine 은 서로를 기다릴 이유가 없다 — 같은 zip 을 동시에 보낸다.
+      const examinePromise = this.examineService.tryGetCodeGraph(
+        { zip: file.buffer, filename: file.originalname },
+        dto.language ?? 'python',
+      );
+
       const parserResponse = await axios.post(parserUrl, formData, {
         headers: {
           Accept: 'application/json',
@@ -83,6 +97,8 @@ export class ZipAnalysisService {
         this.logger.error(
           `Parser returned ${parserResponse.status}: ${JSON.stringify(parserData)}`,
         );
+        // parser 가 실패해도 examine 요청은 완료시켜 unhandled rejection 을 남기지 않는다.
+        await examinePromise;
         throw new BadGatewayException('Parser analysis request failed.');
       }
 
@@ -94,11 +110,22 @@ export class ZipAnalysisService {
         dto.repoName,
       );
 
-      // TODO: 코드품질분석필요
+      const examine: CanonicalCodeGraph | null = await examinePromise;
+      if (examine) {
+        this.logger.log(
+          `examine codegraph attached: units=${examine.units.length} findings=${examine.findings.length}`,
+        );
+      }
+
+      // examine 은 parser 결과의 형제 키로 붙인다 — 프론트는 data.nodes 와 data.examine 을 함께 읽는다.
+      const data: ParserAnalyzeResponse & {
+        examine: CanonicalCodeGraph | null;
+      } = { ...normalizedParserData, examine };
+
       return new ZipAnalysisResponseDto(
         true,
         'ZIP analysis completed successfully.',
-        normalizedParserData,
+        data,
       );
     } catch (error) {
       if (error instanceof HttpException) {

@@ -71,7 +71,6 @@ CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합�
 | 명령어 | 설명 | 기본 포트 |
 | :--- | :--- | :--- |
 | `npm run start` | 표준 백엔드 서버 실행 | `13000` |
-| `npm run start:mcp` | Metrics API MCP Wrapper 실행 | stdio |
 | `npm run start:relational` | 관계형 AST 저장소 서버 실행 | `13001` |
 | `npm run start:json` | JSON AST 저장소 서버 실행 | `13002` |
 | **`npm run start:both`** | **Relational & JSON 서버 동시 실행** | `13001, 13002` |
@@ -88,49 +87,17 @@ CodeVi는 서로 다른 전략의 세 가지 서버 실행 모드를 지원합�
 
 ---
 
-## 🤖 MCP Wrapper
+## 🤖 MCP 서버
 
-Metrics API를 에이전트 tool 형태로 감싸는 최소 MCP Wrapper를 제공합니다.
+MCP 서버는 **별도 저장소** `Jeon-byeong-yoon/code-smell-detection-mcp` 이며,
+**이 백엔드를 거치지 않고** analyzer service(`advanced-pyexamine-service:18080`)를 직접 호출합니다.
+설정·실행법은 해당 저장소의 README 를 참고하십시오.
 
-### 필요한 환경 변수
-```env
-CODEVI_METRICS_BASE_URL=http://localhost:13000/api
-CODEVI_METRICS_API_KEY=cv_live_...
-CODEVI_METRICS_DEFAULT_TEAM_PROJECT_ID=1
-CODEVI_METRICS_REQUEST_TIMEOUT_MS=15000
-```
-
-### 실행
-```bash
-$ npm run build
-$ npm run start:mcp
-```
-
-### 제공 Tool
-- `run_metric_analysis`
-- `list_metric_analyses`
-- `get_metric_analysis`
-
-### 설정 예시
-```json
-{
-  "mcpServers": {
-    "codevi-metrics": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/code-vi-internal/code-vi-back/dist/mcp/codevi-metrics-server.js"
-      ],
-      "env": {
-        "CODEVI_METRICS_BASE_URL": "http://localhost:13000/api",
-        "CODEVI_METRICS_API_KEY": "cv_live_example",
-        "CODEVI_METRICS_DEFAULT_TEAM_PROJECT_ID": "1"
-      }
-    }
-  }
-}
-```
-
-자세한 호출 예시는 `docs/specs/codex_17_metrics_mcp_config_examples.md`를 참고합니다.
+> 2026-08-01 정리: MCP 가 analyzer 를 직접 호출하는 구조로 확정되면서, 백엔드에서
+> `src/mcp/codevi-metrics-server.ts`, metric(`/api/metrics/*`), metric-analysis(`/api/analyses`),
+> smell-analysis(`/api/smell-analyses`) 를 모두 제거했습니다.
+> 이 백엔드가 담당하는 코드 품질 경로는 examine(`/codegraph`) 하나입니다 —
+> 스니펫(`POST /api/code-analysis/snippet`)·ZIP(`POST /api/zip-analysis`)·Jenkins 스냅샷.
 
 ---
 
@@ -140,7 +107,8 @@ $ npm run start:mcp
 src/
 ├── ast-relational/   # Relational AST 저장 모듈 (Port 13001)
 ├── ast-json/         # JSON AST 저장 모듈 (Port 13002)
-├── metric/           # 소프트웨어 품질 지표(Halstead, Size 등) 계산 로직
+├── examine/          # examine 서비스(/codegraph) 어댑터 — 품질 지표·스멜은 여기로 위임
+├── zip-analysis/     # ZIP 1회성 분석 (parser + examine)
 ├── code-analysis/    # 정적 분석 및 파싱 로직
 ├── auth/             # 인증 및 인가 (JWT, Passport)
 ├── users/            # 사용자 관리

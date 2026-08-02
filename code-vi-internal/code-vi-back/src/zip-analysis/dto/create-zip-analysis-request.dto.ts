@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export class CreateZipAnalysisRequestDto {
   @ApiPropertyOptional({
@@ -9,4 +9,15 @@ export class CreateZipAnalysisRequestDto {
   @IsOptional()
   @IsString()
   repoName?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'examine(/codegraph) 라우팅에 쓸 주 언어. 미지정 시 python. 미배포 언어면 examine 은 null.',
+    enum: ['python', 'java', 'c', 'typescript'],
+    example: 'python',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['python', 'java', 'c', 'typescript'])
+  language?: string;
 }

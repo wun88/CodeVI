@@ -46,3 +46,66 @@ describe('ExamineService.baseUrlFor', () => {
     expect(url(svc, 'python')).toBe('http://localhost:3003');
   });
 });
+
+/**
+ * 언어 게이팅 + best-effort 동작.
+ * 배포된 examine 은 python 하나뿐이므로, 나머지는 네트워크를 태우지 않고 null 이어야 한다.
+ */
+describe('ExamineService 언어 게이팅 / best-effort', () => {
+  const make = (env: Record<string, string | undefined> = {}) => {
+    const config = { get: (k: string) => env[k] } as unknown as ConfigService;
+    return new ExamineService(config);
+  };
+
+  it('EXAMINE_LANGUAGES 미설정이면 python 만 허용', () => {
+    const svc = make();
+    expect(svc.isEnabled('python')).toBe(true);
+    expect(svc.isEnabled('java')).toBe(false);
+    expect(svc.isEnabled('c')).toBe(false);
+  });
+
+  it('EXAMINE_LANGUAGES 로 언어를 열 수 있고 "*" 는 전체 허용', () => {
+    expect(make({ EXAMINE_LANGUAGES: 'python, java' }).isEnabled('java')).toBe(
+      true,
+    );
+    expect(make({ EXAMINE_LANGUAGES: 'python, java' }).isEnabled('c')).toBe(
+      false,
+    );
+    expect(make({ EXAMINE_LANGUAGES: '*' }).isEnabled('typescript')).toBe(true);
+  });
+
+  it('미허용 언어는 호출 없이 null', async () => {
+    const svc = make();
+    const spy = jest.spyOn(svc, 'getCodeGraphFromSnippet');
+    await expect(
+      svc.tryGetCodeGraph({ code: 'class A {}' }, 'java'),
+    ).resolves.toBeNull();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('examine 이 실패해도 예외 대신 null (분석 전체를 죽이지 않음)', async () => {
+    const svc = make();
+    jest
+      .spyOn(svc, 'getCodeGraphFromSnippet')
+      .mockRejectedValue(new Error('connect ECONNREFUSED'));
+    await expect(
+      svc.tryGetCodeGraph({ code: 'x = 1' }, 'python'),
+    ).resolves.toBeNull();
+  });
+
+  it('성공하면 examine 응답을 그대로 반환', async () => {
+    const svc = make();
+    const payload = {
+      language: 'python',
+      parser: 'ast',
+      units: [],
+      relations: [],
+      findings: [],
+      catalog: [],
+    };
+    jest.spyOn(svc, 'getCodeGraphFromSnippet').mockResolvedValue(payload);
+    await expect(
+      svc.tryGetCodeGraph({ code: 'x = 1' }, 'python'),
+    ).resolves.toBe(payload);
+  });
+});

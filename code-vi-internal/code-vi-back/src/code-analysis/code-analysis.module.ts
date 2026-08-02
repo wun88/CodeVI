@@ -4,9 +4,14 @@ import { CodeAnalysisController } from './code-analysis.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CodeAnalysis } from './entities/code-analysis.entity';
 import { HttpModule } from '@nestjs/axios';
+import { ExamineModule } from '../examine/examine.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CodeAnalysis]), HttpModule],
+  imports: [
+    TypeOrmModule.forFeature([CodeAnalysis]),
+    HttpModule,
+    ExamineModule,
+  ],
   controllers: [CodeAnalysisController],
   providers: [CodeAnalysisService],
   exports: [CodeAnalysisService], // 다른 모듈에서 사용한다면

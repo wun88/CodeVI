@@ -7,6 +7,16 @@ import { PartialAnalysisDto } from './dto/partial-analysis.dto';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
+import { ExamineService } from '../examine/examine.service';
+
+/** 스니펫을 examine 으로 보낼 때 쓰는 언어별 확장자 (AST 노드 파일명과 공유). */
+const SNIPPET_EXT: Record<string, string> = {
+  typescript: 'ts',
+  javascript: 'js',
+  python: 'py',
+  java: 'java',
+  c: 'c',
+};
 
 @Injectable()
 export class CodeAnalysisService {
@@ -16,6 +26,7 @@ export class CodeAnalysisService {
     private readonly codeAnalysisRepository: Repository<CodeAnalysis>,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly examineService: ExamineService,
   ) {}
 
   async createJenkinsNotification(
@@ -80,7 +91,7 @@ export class CodeAnalysisService {
   }
 
   /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
-  analyzePartialCode(dto: PartialAnalysisDto) {
+  async analyzePartialCode(dto: PartialAnalysisDto) {
     const { code, language } = dto;
     const lines = code.split('\n');
     if (lines.length < 3) {
@@ -123,7 +134,10 @@ export class CodeAnalysisService {
       }
     } catch (e) {
       this.logger.warn('Failed to load tree-sitter or language modules. Using fallback parser.', e);
-      return this.fallbackAnalyze(code, language, lines);
+      return {
+        ...this.fallbackAnalyze(code, language, lines),
+        examine: await this.examineService.tryGetCodeGraph({ code }, language),
+      };
     }
 
     const parser = new Parser();
@@ -278,8 +292,7 @@ export class CodeAnalysisService {
       return currentId;
     };
 
-    const EXT: Record<string, string> = { typescript: 'ts', javascript: 'js', python: 'py', java: 'java', c: 'c' };
-    const rootId = pushNode('file', `snippet.${EXT[language] ?? language}`, tree.rootNode, null);
+    const rootId = pushNode('file', `snippet.${SNIPPET_EXT[language] ?? language}`, tree.rootNode, null);
 
     const walkStructure = (node: any, parentId: string, insideClass: boolean) => {
       for (let i = 0; i < node.childCount; i++) {
@@ -315,10 +328,9 @@ export class CodeAnalysisService {
         nodes,
         edges,
       },
-      // TODO(examine): 스니펫을 zip으로 감싸 ExamineService.getCodeGraphFromZip(언어별
-      //   EXAMINE_*_URL)로 보내고, examine 컨테이너 응답(units/relations/findings)을
-      //   가공 없이 그대로 이 필드에 담아 프론트로 전달한다. 연동 전까지는 null.
-      examine: null,
+      // examine 컨테이너 응답(units/relations/findings/catalog)을 가공 없이 그대로 전달한다.
+      // 미배포 언어(EXAMINE_LANGUAGES)이거나 컨테이너 장애면 null — 스니펫 분석 자체는 성립한다.
+      examine: await this.examineService.tryGetCodeGraph({ code }, language),
     };
   }
 

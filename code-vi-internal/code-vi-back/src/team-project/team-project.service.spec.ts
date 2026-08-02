@@ -6,8 +6,7 @@ import { TeamProjectService } from './team-project.service';
 import { RequirementsService } from '../requirements/requirements.service';
 
 // team-project.entity.ts는 ast-relational 엔티티 체인을 relative import로 끌고 오는데,
-// 그중 일부(`src/...` 절대경로 스타일)가 jest(rootDir: src) 아래서는 해석되지 않는다
-// (smell-analysis.service.spec.ts와 동일한 기존 워크어라운드).
+// 그중 일부(`src/...` 절대경로 스타일)가 jest(rootDir: src) 아래서는 해석되지 않는다.
 jest.mock('./entities/team-project.entity', () => ({
   TeamProject: class TeamProject {},
 }));

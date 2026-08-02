@@ -1,15 +1,7 @@
 import { CommonEntity } from '../../common/entities/common.entity';
-import { MetricAnalysisJob } from '../../metric-analysis/entities/metric-analysis-job.entity';
 import { TeamProject } from '../../team-project/entities/team-project.entity';
 import { User } from '../../users/entities/user.entity';
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class ApiKey extends CommonEntity {
@@ -53,7 +45,4 @@ export class ApiKey extends CommonEntity {
   })
   @JoinColumn({ name: 'teamProjectId' })
   teamProject: TeamProject | null;
-
-  @OneToMany(() => MetricAnalysisJob, (metricAnalysisJob) => metricAnalysisJob.apiKey)
-  metricAnalysisJobs: MetricAnalysisJob[];
 }

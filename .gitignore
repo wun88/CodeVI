@@ -165,3 +165,8 @@ code-vi-internal/code-vi-back/.env
 code-vi-internal/code-vi-back/.env.prod
 code-vi-internal/code-vi-front/.env
 
+# ============================================
+# 로컬 일회성 배포 스크립트 (개인 절대경로·수동 sudo 전제)
+# ============================================
+/deploy-*.sh
+
