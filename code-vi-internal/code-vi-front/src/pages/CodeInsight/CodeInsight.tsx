@@ -49,7 +49,33 @@ function CodeInsight() {
 
           <div
             className="upload-card mode-card"
-            onClick={() => navigate('/code-insight/project')}
+            onClick={() => navigate('/code-insight/upload')}
+          >
+            <div className="upload-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7492B7" strokeWidth="2">
+                <path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4" />
+              </svg>
+            </div>
+            <h3>ZIP 업로드 분석</h3>
+            <p className="upload-card-desc">
+              ZIP 파일을 올려 일회성으로
+              <br />프로젝트 구조/품질을 확인합니다
+            </p>
+            <ul className="upload-features">
+              <li>
+                <span className="check-icon">✓</span>
+                계정/프로젝트 등록 불필요
+              </li>
+              <li>
+                <span className="check-icon">✓</span>
+                Instant Insight와 같은 일회성 분석
+              </li>
+            </ul>
+          </div>
+
+          <div
+            className="upload-card mode-card"
+            onClick={() => navigate('/code-insight/github')}
           >
             <div className="upload-icon">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="#7492B7">
@@ -58,21 +84,21 @@ function CodeInsight() {
             </div>
             <h3>Project Analysis</h3>
             <p className="upload-card-desc">
-              ZIP 업로드 또는 GitHub 연동으로
-              <br />프로젝트 단위 분석을 진행합니다
+              GitHub 저장소를 연결해
+              <br />프로젝트 단위 분석을 시작합니다
             </p>
             <ul className="upload-features">
               <li>
                 <span className="check-icon">✓</span>
-                기존 업로드/연동 기능 유지
+                연결 즉시 My Projects에 등록
               </li>
               <li>
                 <span className="check-icon">✓</span>
-                대시보드/시각화로 연결
+                빌드마다 품질 대시보드 갱신
               </li>
               <li>
                 <span className="check-icon">✓</span>
-                내부 워크스페이스 톤 통일
+                요구사항-코드 자동 매핑 연동
               </li>
             </ul>
           </div>

@@ -5,7 +5,7 @@ import { astDataService } from '../services/astDataService';
 import { buildSnapshotOverview } from '../utils/buildSnapshotOverview';
 
 /**
- * useDashboardData(/dashboard, 전역 프로젝트 선택기)의 프로젝트 스코프 버전 — ProjectDetail의
+ * 구 /dashboard 전역 대시보드의 프로젝트 스코프 버전(현 워크스페이스 코드 품질 뷰) — ProjectDetail의
  * "코드 품질" 탭용 (jej_23 Phase 12 후속). 전체 스냅샷을 불러온 뒤 클라이언트에서 프로젝트별로
  * 묶는 대신, teamProjectId로 이미 필터링된 가벼운 목록 API를 쓴다.
  */

@@ -11,17 +11,17 @@ export default function GoogleCallback() {
 
     if (error) {
       console.error('Google 로그인 실패:', error);
-      navigate('/login?error=google_auth_failed');
+      navigate('/?error=google_auth_failed');
       return;
     }
 
     if (jwtToken) {
       const token = jwtToken.replace('Bearer ', '');
       localStorage.setItem('accessToken', token);
-      navigate('/dashboard');
+      navigate('/projects');
     } else {
       console.error('JWT 토큰이 없습니다.');
-      navigate('/login?error=no_token');
+      navigate('/?error=no_token');
     }
   }, [navigate, searchParams]);
 

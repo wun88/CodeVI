@@ -16,7 +16,7 @@ export interface Requirement {
   type: RequirementType;
   priority: RequirementPriority;
   status: RequirementStatus;
-  ownerId: number | null;
+  ownerName: string | null;
   dueDate: string | null;
   version: string;
   baseline: string | null;
@@ -35,6 +35,8 @@ export interface CreateRequirementInput {
   description?: string;
   type: RequirementType;
   priority?: RequirementPriority;
+  /** 담당자 이름 — 회원이 아닌 참여 인원도 지정 가능 (자유 문자열) */
+  ownerName?: string;
   dueDate?: string;
   source?: string;
   relatedFeature?: string;

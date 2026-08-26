@@ -28,6 +28,7 @@ export default function NewRequirement() {
   const [description, setDescription] = useState('');
   const [type, setType] = useState<RequirementType>('functional');
   const [priority, setPriority] = useState<RequirementPriority>('medium');
+  const [ownerName, setOwnerName] = useState('');
   const [criteria, setCriteria] = useState('');
   const [directSaving, setDirectSaving] = useState(false);
   const [directError, setDirectError] = useState('');
@@ -52,7 +53,7 @@ export default function NewRequirement() {
 
   // 저장 후 프로젝트 목록이 아니라 방금 추가한 요구사항이 보이는 상세 화면으로 돌아간다 (jej_21 Phase 2)
   const goToProjectDetail = () => {
-    setTimeout(() => navigate(`/projects/${projectId}`), 800);
+    setTimeout(() => navigate(`/dashboard/${projectId}`), 800);
   };
 
   const handleDirectSave = async (e: React.FormEvent) => {
@@ -70,6 +71,7 @@ export default function NewRequirement() {
         description,
         type,
         priority,
+        ownerName: ownerName.trim() || undefined,
         acceptanceCriteria: criteria.split('\n').map((s) => s.trim()).filter(Boolean),
       });
       setSavedMessage('요구사항이 등록되었습니다.');
@@ -165,6 +167,7 @@ export default function NewRequirement() {
           description: row.description,
           type: row.type,
           priority: row.priority,
+          ownerName: row.ownerName || undefined,
           acceptanceCriteria: row.acceptanceCriteria,
           tags: row.tags,
           source: row.source,
@@ -251,6 +254,16 @@ export default function NewRequirement() {
                   </select>
                 </label>
               </div>
+              <label className={styles.label}>
+                담당자
+                <input
+                  className={styles.input}
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  placeholder="이름 입력 — 회원이 아니어도 됩니다"
+                  maxLength={100}
+                />
+              </label>
               <label className={styles.label}>
                 수용 기준
                 <textarea

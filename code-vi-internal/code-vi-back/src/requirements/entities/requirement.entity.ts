@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import { CommonEntity } from '../../common/entities/common.entity';
 import { TeamProject } from '../../team-project/entities/team-project.entity';
-import { User } from '../../users/entities/user.entity';
 import { RequirementType } from './requirement-type.enum';
 import { RequirementPriority } from './requirement-priority.enum';
 import { RequirementStatus } from './requirement-status.enum';
@@ -51,13 +50,12 @@ export class Requirement extends CommonEntity {
   })
   status: RequirementStatus;
 
-  @Index()
-  @Column({ nullable: true })
-  ownerId: number | null;
-
-  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'ownerId' })
-  owner: User | null;
+  /**
+   * 담당자 이름 — 프로젝트 참여 인원이 전부 회원가입돼 있는 게 아니므로(외부 기획자·고객사
+   * 담당 등) User FK 대신 자유 문자열로 받는다. CSV/AI 배치 등록 경로도 이름만 전달한다.
+   */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  ownerName: string | null;
 
   @Column({ type: 'date', nullable: true })
   dueDate: string | null;

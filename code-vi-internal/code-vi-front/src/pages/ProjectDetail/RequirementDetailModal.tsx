@@ -187,7 +187,12 @@ export default function RequirementDetailModal({
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{requirement.title}</h2>
+          <div>
+            <h2 className={styles.title}>{requirement.title}</h2>
+            {requirement.ownerName && (
+              <p className={styles.ownerLine}>담당자 · {requirement.ownerName}</p>
+            )}
+          </div>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="닫기">
             ×
           </button>

@@ -64,7 +64,7 @@ function Header({ onLoginClick, variant = 'default' }: HeaderProps) {
     navigate('/mypage');
   };
 
-  const homePath = isLoggedIn ? '/dashboard' : '/';
+  const homePath = isLoggedIn ? '/projects' : '/';
 
   return (
     <header className={`header header-${variant}`}>
@@ -91,14 +91,6 @@ function Header({ onLoginClick, variant = 'default' }: HeaderProps) {
               <li className="nav-item">
                 <Link to="/projects" className="nav-link" onClick={closeMobileMenu}>
                   My Projects
-                </Link>
-              </li>
-            )}
-
-            {isLoggedIn && (
-              <li className="nav-item">
-                <Link to="/dashboard" className="nav-link" onClick={closeMobileMenu}>
-                  Dashboard
                 </Link>
               </li>
             )}

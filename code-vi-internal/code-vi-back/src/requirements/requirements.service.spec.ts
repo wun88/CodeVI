@@ -175,7 +175,7 @@ describe('RequirementsService', () => {
     expect(created.title).toBe('로그인 기능');
     expect(created.description).toBe('');
     expect(created.priority).toBe('medium');
-    expect(created.ownerId).toBeNull();
+    expect(created.ownerName).toBeNull();
     expect(created.acceptanceCriteria).toEqual([]);
   });
 

@@ -11,17 +11,17 @@ export default function NaverCallback() {
 
         if (error) {
             console.error('Naver 로그인 실패:', error);
-            navigate('/login?error=naver_auth_failed');
+            navigate('/?error=naver_auth_failed');
             return;
         }
 
         if (jwtToken) {
             const token = jwtToken.replace('Bearer ', '');
             localStorage.setItem('accessToken', token);
-            navigate('/dashboard');
+            navigate('/projects');
         } else {
             console.error('JWT 토큰이 없습니다.');
-            navigate('/login?error=no_token');
+            navigate('/?error=no_token');
         }
     }, [navigate, searchParams]);
 

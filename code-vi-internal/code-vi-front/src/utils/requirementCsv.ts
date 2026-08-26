@@ -60,6 +60,7 @@ export interface ParsedRequirementRow {
   description: string;
   type: RequirementType;
   priority: RequirementPriority;
+  ownerName: string;
   dueDate: string;
   acceptanceCriteria: string[];
   tags: string[];
@@ -87,6 +88,8 @@ export function csvRowsToRequirements(rows: string[][]): {
   const descIdx = colIndex('description');
   const typeIdx = colIndex('type');
   const priorityIdx = colIndex('priority');
+  // 담당자는 회원과 무관한 자유 문자열 — 영문(owner/ownername)과 한글(담당자) 헤더 모두 허용
+  const ownerIdx = [colIndex('owner'), colIndex('ownername'), colIndex('담당자')].find((i) => i >= 0) ?? -1;
   const dueDateIdx = colIndex('duedate');
   const criteriaIdx = colIndex('acceptancecriteria');
   const tagsIdx = colIndex('tags');
@@ -111,6 +114,7 @@ export function csvRowsToRequirements(rows: string[][]): {
       description: descIdx >= 0 ? (cells[descIdx] ?? '') : '',
       type: VALID_TYPES.includes(rawType) ? rawType : 'functional',
       priority: VALID_PRIORITIES.includes(rawPriority) ? rawPriority : 'medium',
+      ownerName: ownerIdx >= 0 ? (cells[ownerIdx] ?? '').trim() : '',
       dueDate: dueDateIdx >= 0 ? (cells[dueDateIdx] ?? '') : '',
       acceptanceCriteria:
         criteriaIdx >= 0

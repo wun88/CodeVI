@@ -40,7 +40,7 @@ function ProjectCard({
 
   const goToDetail = () => {
     if (editMode) return; // 편집 중에는 카드 클릭으로 상세 이동하지 않는다 (드래그/삭제 조작 우선)
-    navigate(`/projects/${project.id}`);
+    navigate(`/dashboard/${project.id}`);
   };
 
   return (

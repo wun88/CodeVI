@@ -27,7 +27,10 @@ import AnalysisFindingsPanel from './AnalysisFindingsPanel';
 import FilterDropdown from './FilterDropdown';
 import styles from './ProjectDetail.module.css';
 
-type ProjectTab = 'overview' | 'documents' | 'buildHistory' | 'codeQuality' | 'settings';
+type ProjectTab = 'overview' | 'documents' | 'buildHistory' | 'settings';
+
+/** 워크스페이스 최상위 토글 — 요구사항 관리 ↔ 코드 품질 분석을 한 페이지(SPA)에서 전환 */
+type WorkspaceView = 'requirements' | 'quality';
 
 const PRIORITY_LABEL: Record<string, string> = {
   critical: '치명',
@@ -74,6 +77,7 @@ export default function ProjectDetail() {
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>('all');
   const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
+  const [view, setView] = useState<WorkspaceView>('requirements');
 
   const loadAll = () => {
     return Promise.all([
@@ -113,9 +117,9 @@ export default function ProjectDetail() {
           setDocuments(documentsData);
           setBuilds(buildsData);
           setActivity(activityData);
-          // 코드 분석이 있는 프로젝트는 코드 품질이 주가 되므로 그 탭을 기본으로 연다 —
-          // 요구사항 전용 프로젝트는 코드 품질 탭 자체가 없으니 개요로 연다.
-          setActiveTab(projectData.codeAnalysis ? 'codeQuality' : 'overview');
+          // 코드 분석이 있는 프로젝트는 코드 품질이 주가 되므로 그 뷰를 기본으로 연다 —
+          // 요구사항 전용 프로젝트는 보여줄 코드 데이터가 없으니 요구사항 관리로 연다.
+          setView(projectData.codeAnalysis ? 'quality' : 'requirements');
         },
       )
       .catch(() => {
@@ -232,18 +236,37 @@ export default function ProjectDetail() {
               </div>
             )}
 
+            {/* 최상위 토글 — 요구사항 관리 ↔ 코드 품질 분석. 코드 품질은 분석 데이터가
+                생기기 전까지 비활성(요구사항 전용 프로젝트 안내는 title로 제공). */}
+            <div className={styles.viewToggle} role="tablist">
+              <button
+                type="button"
+                className={`${styles.viewToggleBtn} ${view === 'requirements' ? styles.viewToggleBtnActive : ''}`}
+                onClick={() => setView('requirements')}
+              >
+                요구사항 관리
+              </button>
+              <button
+                type="button"
+                className={`${styles.viewToggleBtn} ${view === 'quality' ? styles.viewToggleBtnActive : ''}`}
+                onClick={() => setView('quality')}
+                disabled={!project.codeAnalysis}
+                title={
+                  project.codeAnalysis
+                    ? undefined
+                    : '코드를 연결하고 첫 빌드가 완료되면 열립니다'
+                }
+              >
+                코드 품질 분석
+              </button>
+            </div>
+
+            {view === 'quality' && project.codeAnalysis && (
+              <CodeQualityTab teamProjectId={projectId} />
+            )}
+
+            {view === 'requirements' && (
             <div className={styles.tabRow}>
-              {/* 코드 분석이 있는 프로젝트는 코드 품질이 주가 되므로 맨 앞에 둔다 — 요구사항
-                  전용 프로젝트는 이 탭 자체가 보여줄 데이터가 없어 아예 렌더링하지 않는다. */}
-              {project.codeAnalysis && (
-                <button
-                  type="button"
-                  className={`${styles.tabBtn} ${activeTab === 'codeQuality' ? styles.tabBtnActive : ''}`}
-                  onClick={() => setActiveTab('codeQuality')}
-                >
-                  코드 품질
-                </button>
-              )}
               <button
                 type="button"
                 className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
@@ -275,24 +298,21 @@ export default function ProjectDetail() {
                 설정
               </button>
             </div>
+            )}
 
-            {activeTab === 'documents' && (
+            {view === 'requirements' && activeTab === 'documents' && (
               <DocumentsTab teamProjectId={projectId} requirements={requirements} />
             )}
 
-            {activeTab === 'buildHistory' && project.codeAnalysis && (
+            {view === 'requirements' && activeTab === 'buildHistory' && project.codeAnalysis && (
               <BuildHistoryTab teamProjectId={projectId} />
             )}
 
-            {activeTab === 'codeQuality' && project.codeAnalysis && (
-              <CodeQualityTab teamProjectId={projectId} />
-            )}
-
-            {activeTab === 'settings' && (
+            {view === 'requirements' && activeTab === 'settings' && (
               <SettingsTab project={project} teamProjectId={projectId} />
             )}
 
-            {activeTab === 'overview' && (
+            {view === 'requirements' && activeTab === 'overview' && (
               <>
             <div className={styles.heroRow}>
               <OverallProgressRing score={overallScore} sourceLabel={overallScoreSource} />

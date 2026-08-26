@@ -40,10 +40,15 @@ export class CreateRequirementDto {
   @IsEnum(RequirementPriority)
   priority?: RequirementPriority;
 
-  @ApiPropertyOptional({ description: '담당자(User) id' })
+  @ApiPropertyOptional({
+    description:
+      '담당자 이름 — 회원이 아닌 프로젝트 참여 인원도 지정할 수 있도록 자유 문자열',
+    example: '김재호',
+  })
   @IsOptional()
-  @IsInt()
-  ownerId?: number;
+  @IsString()
+  @MaxLength(100)
+  ownerName?: string;
 
   @ApiPropertyOptional({ example: '2026-08-31' })
   @IsOptional()

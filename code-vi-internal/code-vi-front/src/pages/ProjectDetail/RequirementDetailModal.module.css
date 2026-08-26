@@ -355,3 +355,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 담당자 — 회원과 무관한 자유 문자열이라 이름만 조용히 표기 */
+.ownerLine {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--internal-text-2);
+}

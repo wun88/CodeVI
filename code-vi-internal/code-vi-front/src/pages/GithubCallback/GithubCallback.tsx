@@ -11,7 +11,7 @@ export default function GithubCallback() {
 
     if (error) {
       console.error('GitHub 로그인 실패:', error);
-      navigate('/login?error=github_auth_failed');
+      navigate('/?error=github_auth_failed');
       return;
     }
 
@@ -19,10 +19,10 @@ export default function GithubCallback() {
       // Bearer 접두사 제거 후 저장
       const token = jwtToken.replace('Bearer ', '');
       localStorage.setItem('accessToken', token);
-      navigate('/dashboard');
+      navigate('/projects');
     } else {
       console.error('JWT 토큰이 없습니다.');
-      navigate('/login?error=no_token');
+      navigate('/?error=no_token');
     }
   }, [navigate, searchParams]);
 

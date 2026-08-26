@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { astDataService } from '../../services/astDataService';
 import type { AstSnapshot } from '../../interface/ast.interface';
 import type { FlowNodeData } from '../../interface/flow.interface';
@@ -8,6 +8,7 @@ import shared from '../DashboardPage/dashboardShared.module.css';
 import styles from './VisualizationPage.module.css';
 
 export default function VisualizationPage() {
+  const navigate = useNavigate();
   const { snapshotId } = useParams<{ snapshotId: string }>();
   const [snapshot, setSnapshot] = useState<AstSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,13 +79,19 @@ export default function VisualizationPage() {
     <div className={styles.shell}>
       <div className={styles.main}>
         <div className={`${styles.toolbar} ${snapshot ? styles.toolbarEmphasis : ''}`}>
-          <Link
-            to="/dashboard"
+          <button
+            type="button"
             className={`${shared.btnSecondary} ${styles.backBtn}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              // 시각화는 워크스페이스의 코드 품질 뷰에서 진입하므로 히스토리로 복귀한다 —
+              // URL 직접 진입 등 히스토리가 없으면 내 프로젝트 목록으로 보낸다.
+              if (window.history.length > 1) navigate(-1);
+              else navigate('/projects');
+            }}
           >
             ← 대시보드
-          </Link>
+          </button>
           <div className={styles.toolbarCenter}>
             <span className={styles.toolbarKicker}>AST 시각화</span>
             <span className={styles.toolbarTitle}>Snapshot #{snapshotId}</span>

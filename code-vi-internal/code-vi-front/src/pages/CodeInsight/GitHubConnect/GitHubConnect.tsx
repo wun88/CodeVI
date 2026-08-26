@@ -133,9 +133,9 @@ function GitHubConnect() {
     const [owner, repo] = selectedRepo.fullName.split('/');
     setRegistering(true);
     setRegisterError(null);
-    // "기존 프로젝트에 코드 연결"(jej_20 Phase 5) 모드면 등록 후 프로젝트 상세로,
-    // 아니면 기존 흐름대로 대시보드로 이동한다.
-    const destination = teamProjectId ? `/projects/${teamProjectId}` : '/code-insight/dashboard';
+    // "기존 프로젝트에 코드 연결" 모드면 등록 후 해당 워크스페이스(/dashboard/:id)로,
+    // 아니면 새 인스턴스가 보이도록 My Projects 목록으로 이동한다.
+    const destination = teamProjectId ? `/dashboard/${teamProjectId}` : '/projects';
     try {
       await githubConnectService.registerProject(owner, repo, teamProjectId);
       navigate(destination);
@@ -145,7 +145,7 @@ function GitHubConnect() {
       // destination이 무관한 대시보드라 사용자가 이유 없이 "연결 없음" 화면으로 돌아가 보인다.
       if (getResponseStatus(err) === 409) {
         const existingTeamProjectId = getConflictTeamProjectId(err);
-        navigate(existingTeamProjectId ? `/projects/${existingTeamProjectId}` : destination);
+        navigate(existingTeamProjectId ? `/dashboard/${existingTeamProjectId}` : destination);
         return;
       }
       setRegisterError(extractErrorMessage(err, '프로젝트 등록에 실패했습니다.'));

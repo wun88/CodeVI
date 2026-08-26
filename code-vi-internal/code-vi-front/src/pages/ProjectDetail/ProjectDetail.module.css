@@ -469,3 +469,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 워크스페이스 최상위 토글 — 요구사항 관리 ↔ 코드 품질 분석 (SPA 전환) */
+.viewToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  border: 1px solid var(--internal-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.viewToggleBtn {
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--internal-text-2);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.viewToggleBtn:hover:not(:disabled) {
+  color: var(--internal-text);
+}
+
+.viewToggleBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.viewToggleBtnActive {
+  background: var(--internal-accent);
+  color: #fff;
+}

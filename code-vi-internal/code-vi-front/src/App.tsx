@@ -1,21 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import './App.css';
 
 import CodeInsight from './pages/CodeInsight';
 import InstantInsight from './pages/CodeInsight/InstantInsight';
-import ProjectAnalysis from './pages/CodeInsight/ProjectAnalysis';
 import ZipUpload from './pages/CodeInsight/ZipUpload';
 import ZipResult from './pages/CodeInsight/ZipResult';
 import GitHubConnect from './pages/CodeInsight/GitHubConnect';
-import Dashboard from './pages/CodeInsight/Dashboard';
 import OnboardingPage from './pages/CodeInsight/Onboarding/OnboardingPage';
 import NewProject from './pages/CodeInsight/NewProject/NewProject';
 import NewRequirement from './pages/CodeInsight/NewRequirement/NewRequirement';
 
 import AuthPanel from './components/AuthPanel/AuthPanel';
 
-import DashboardPage from './pages/DashboardPage/DashboardPage';
 import VisualizationPage from './pages/VisualizationPage/VisualizationPage';
 import MyPage from './pages/MyPage/MyPage';
 import GithubCallback from './pages/GithubCallback/GithubCallback';
@@ -33,18 +37,24 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** 플랫폼 진입점 — 비로그인 시 AuthPanel 자동 오픈, 로그인 시 대시보드로 이동 */
+/** 플랫폼 진입점 — 비로그인 시 AuthPanel 자동 오픈, 로그인 시 내 프로젝트로 이동 */
 function PlatformLanding({ onOpenAuth }: { onOpenAuth: () => void }) {
   const navigate = useNavigate();
 
   useEffect(() => {
     if (localStorage.getItem('accessToken')) {
-      navigate('/dashboard', { replace: true });
+      navigate('/projects', { replace: true });
       return;
     }
   }, [navigate, onOpenAuth]);
 
   return <InternalHome onLoginClick={onOpenAuth} />;
+}
+
+/** 구 경로 호환 — 프로젝트 상세는 /dashboard/:teamProjectId 워크스페이스로 통합됨 */
+function LegacyProjectRedirect() {
+  const { teamProjectId } = useParams<{ teamProjectId: string }>();
+  return <Navigate to={`/dashboard/${teamProjectId}`} replace />;
 }
 
 export default function App() {
@@ -83,12 +93,10 @@ export default function App() {
 
             <Route path="/code-insight" element={<CodeInsight />} />
             <Route path="/code-insight/instant" element={<InstantInsight />} />
-            <Route path="/code-insight/project" element={<ProjectAnalysis />} />
             <Route path="/code-insight/upload" element={<ZipUpload />} />
             <Route path="/code-insight/upload/result" element={<ZipResult />} />
             <Route path="/code-insight/github" element={<GitHubConnect />} />
             <Route path="/code-insight/onboarding" element={<OnboardingPage />} />
-            <Route path="/code-insight/dashboard" element={<Dashboard />} />
             <Route
               path="/code-insight/new"
               element={
@@ -119,14 +127,7 @@ export default function App() {
                 </PrivateRoute>
               }
             />
-            <Route
-              path="/projects/:teamProjectId"
-              element={
-                <PrivateRoute>
-                  <ProjectDetail />
-                </PrivateRoute>
-              }
-            />
+            <Route path="/projects/:teamProjectId" element={<LegacyProjectRedirect />} />
             <Route
               path="/mypage"
               element={
@@ -135,11 +136,12 @@ export default function App() {
                 </PrivateRoute>
               }
             />
+            <Route path="/dashboard" element={<Navigate to="/projects" replace />} />
             <Route
-              path="/dashboard"
+              path="/dashboard/:teamProjectId"
               element={
                 <PrivateRoute>
-                  <DashboardPage />
+                  <ProjectDetail />
                 </PrivateRoute>
               }
             />
