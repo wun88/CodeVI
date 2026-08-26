@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { teamProjectService } from '../../services/teamProjectService';
 import { requirementsService } from '../../services/requirementsService';
+import { githubConnectService } from '../../services/githubConnectService';
 import type { TeamProjectSummary } from '../../interface/teamProject.interface';
 import type {
   BuildHistoryItem,
@@ -78,6 +79,9 @@ export default function ProjectDetail() {
   const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
   const [view, setView] = useState<WorkspaceView>('requirements');
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [reanalyzeNotice, setReanalyzeNotice] = useState('');
+  const [reanalyzeError, setReanalyzeError] = useState('');
 
   const loadAll = () => {
     return Promise.all([
@@ -163,6 +167,24 @@ export default function ProjectDetail() {
     }
   };
 
+  const handleReanalyze = async () => {
+    setReanalyzeNotice('');
+    setReanalyzeError('');
+    setReanalyzing(true);
+    try {
+      await githubConnectService.reanalyzeProject(projectId);
+      setReanalyzeNotice(
+        '분석을 다시 요청했습니다. 빌드가 끝나면 이 화면에 결과가 표시됩니다 (몇 분 소요).',
+      );
+    } catch {
+      setReanalyzeError(
+        '분석 재요청에 실패했습니다. 저장소에 접근 가능한 GitHub 계정으로 연결되어 있는지 확인해주세요.',
+      );
+    } finally {
+      setReanalyzing(false);
+    }
+  };
+
   const handleRequirementUpdated = (updated: Requirement) => {
     setRequirements((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
   };
@@ -213,7 +235,7 @@ export default function ProjectDetail() {
               {project.statusLabel}
             </span>
 
-            {!project.codeAnalysis && (
+            {!project.codeAnalysis && !project.githubRepoFullName && (
               <div className={styles.connectCard}>
                 <p className={styles.connectDesc}>
                   아직 연결된 코드가 없습니다. GitHub 저장소를 연결하면 이후 요구사항과 코드가 자동으로
@@ -226,6 +248,28 @@ export default function ProjectDetail() {
                 >
                   코드 연결
                 </button>
+              </div>
+            )}
+
+            {/* 연결됐지만 첫 분석 결과가 아직 없는 상태 — 빌드 실패로 멈춰 있을 수 있으므로
+                재분석(사용자 토큰으로 Jenkins credential/잡 갱신 후 재빌드) 진입점을 제공한다. */}
+            {!project.codeAnalysis && project.githubRepoFullName && (
+              <div className={styles.connectCard}>
+                <p className={styles.connectDesc}>
+                  {project.githubRepoFullName} 저장소가 연결되었습니다. 첫 분석이 완료되면 결과가
+                  표시됩니다 — 몇 분 정도 걸릴 수 있어요. 오래 진행되지 않으면 분석을 다시
+                  요청해보세요.
+                </p>
+                <button
+                  type="button"
+                  className={styles.connectBtn}
+                  onClick={handleReanalyze}
+                  disabled={reanalyzing}
+                >
+                  {reanalyzing ? '요청 중...' : '분석 다시 시도'}
+                </button>
+                {reanalyzeNotice && <p className={styles.connectDesc}>{reanalyzeNotice}</p>}
+                {reanalyzeError && <p className={styles.error}>{reanalyzeError}</p>}
               </div>
             )}
 

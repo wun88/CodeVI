@@ -250,13 +250,81 @@ export class GithubConnectService {
 
     const repoUrl = `https://github.com/${owner}/${repo}`;
     await this.githubService.injectJenkinsfileWithToken(token, repoUrl);
-    await this.jenkinsService.createPipelineJob(jenkinsJobName, repoUrl);
+    // 공용 관리자 PAT는 다른 사용자의 private 저장소를 클론할 수 없으므로, 연결한 사용자의
+    // OAuth 토큰(repo scope)을 사용자 전용 Jenkins credential로 올려 체크아웃에 쓴다.
+    const credentialId = await this.ensureUserJenkinsCredential(userId, token);
+    await this.jenkinsService.createPipelineJob(
+      jenkinsJobName,
+      repoUrl,
+      credentialId,
+    );
 
     return {
       teamProjectId,
       jenkinsJobName,
       githubRepoFullName,
     };
+  }
+
+  /**
+   * 연결된 코드의 분석을 다시 요청한다 — Jenkins credential을 호출자의 최신 OAuth 토큰으로
+   * 갱신하고, 잡 config를 그 credential로 덮어쓴 뒤 빌드를 트리거한다.
+   * 공용 PAT 시절 만들어져 체크아웃이 실패하던 기존 잡의 복구 경로이기도 하다.
+   */
+  async reanalyzeProject(
+    userId: number,
+    teamProjectId: number,
+  ): Promise<{ teamProjectId: number; jenkinsJobName: string }> {
+    const project = await this.teamProjectRepository.findOne({
+      where: { id: teamProjectId },
+    });
+    if (!project) throw new NotFoundException('프로젝트를 찾을 수 없습니다.');
+    if (!project.githubRepoFullName || !project.JenkinsJobName) {
+      throw new ConflictException('코드가 연결된 프로젝트가 아닙니다.');
+    }
+
+    const token = await this.authService.getDecryptedGithubToken(userId);
+    const [owner, repo] = project.githubRepoFullName.split('/');
+    // 호출자의 토큰으로 저장소에 접근 가능한지 먼저 확인한다 — 접근 불가 토큰으로 credential을
+    // 덮어쓰면 그때부터는 저장소 주인이 눌러도 실패하는 잡이 되기 때문에, 여기서 명확히 거른다.
+    try {
+      await new Octokit({ auth: token }).repos.get({ owner, repo });
+    } catch (rawError: unknown) {
+      const error = asOctokitError(rawError);
+      if (error.status === 404 || error.status === 403) {
+        throw new ForbiddenException(
+          '연결된 저장소에 접근할 수 없습니다. 저장소 소유자 계정으로 시도해주세요.',
+        );
+      }
+      throw new HttpException(
+        'GitHub 저장소 확인에 실패했습니다.',
+        HttpStatus.FAILED_DEPENDENCY,
+      );
+    }
+
+    const credentialId = await this.ensureUserJenkinsCredential(userId, token);
+    await this.jenkinsService.createPipelineJob(
+      project.JenkinsJobName,
+      `https://github.com/${project.githubRepoFullName}`,
+      credentialId,
+    );
+
+    return { teamProjectId, jenkinsJobName: project.JenkinsJobName };
+  }
+
+  /** 호출자의 OAuth 토큰을 사용자 전용 Jenkins credential(github-oauth-u<id>)로 등록/갱신한다. */
+  private async ensureUserJenkinsCredential(
+    userId: number,
+    token: string,
+  ): Promise<string> {
+    const connection = await this.authService.getGithubConnection(userId);
+    const credentialId = `github-oauth-u${userId}`;
+    await this.jenkinsService.ensureUserCredential(
+      credentialId,
+      connection?.githubUsername ?? 'oauth2',
+      token,
+    );
+    return credentialId;
   }
 
   async disconnect(userId: number): Promise<void> {

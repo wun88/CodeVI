@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { GithubConnectService } from './github-connect.service';
@@ -59,9 +63,15 @@ describe('GithubConnectService.registerProject — 기존 프로젝트에 코드
 
     const authService = {
       getDecryptedGithubToken: jest.fn().mockResolvedValue('gh-token'),
+      getGithubConnection: jest
+        .fn()
+        .mockResolvedValue({ githubUsername: 'octo' }),
     };
     const githubService = { injectJenkinsfileWithToken: jest.fn() };
-    const jenkinsService = { createPipelineJob: jest.fn() };
+    const jenkinsService = {
+      createPipelineJob: jest.fn(),
+      ensureUserCredential: jest.fn(),
+    };
     const userRepository = { findOne: jest.fn() } as unknown as Repository<
       import('../users/entities/user.entity').User
     >;
@@ -76,7 +86,7 @@ describe('GithubConnectService.registerProject — 기존 프로젝트에 코드
       userRepository,
     );
 
-    return { service, teamProjectRepository, githubService };
+    return { service, teamProjectRepository, githubService, jenkinsService };
   };
 
   // 멤버십 검증(본인이 속하지 않은 프로젝트 403)은 ProjectMemberGuard(jej_22 인가 가드 통합)로
@@ -120,5 +130,112 @@ describe('GithubConnectService.registerProject — 기존 프로젝트에 코드
         githubDefaultBranch: 'main',
       }),
     );
+  });
+
+  it('사용자 OAuth 토큰을 Jenkins credential로 올리고 그 credential로 잡을 만든다', async () => {
+    const { service, jenkinsService } = makeService(undefined);
+
+    await service.registerProject(user.id, dto);
+
+    expect(jenkinsService.ensureUserCredential).toHaveBeenCalledWith(
+      `github-oauth-u${user.id}`,
+      'octo',
+      'gh-token',
+    );
+    expect(jenkinsService.createPipelineJob).toHaveBeenCalledWith(
+      'octo-demo',
+      'https://github.com/octo/demo',
+      `github-oauth-u${user.id}`,
+    );
+  });
+});
+
+/**
+ * reanalyzeProject — 공용 PAT 시절 만들어진(또는 실패한) 잡을 호출자의 OAuth 토큰 credential로
+ * 갱신하고 빌드를 재트리거하는 복구 경로 검증.
+ */
+describe('GithubConnectService.reanalyzeProject', () => {
+  const user = { id: 7 };
+  const teamProjectId = 42;
+
+  const makeService = (project: Record<string, unknown> | null) => {
+    mockRepoGet.mockResolvedValue({ data: { default_branch: 'main' } });
+
+    const teamProjectRepository = {
+      findOne: jest.fn().mockResolvedValue(project),
+    } as unknown as Repository<TeamProject>;
+    const authService = {
+      getDecryptedGithubToken: jest.fn().mockResolvedValue('gh-token'),
+      getGithubConnection: jest
+        .fn()
+        .mockResolvedValue({ githubUsername: 'octo' }),
+    };
+    const jenkinsService = {
+      createPipelineJob: jest.fn(),
+      ensureUserCredential: jest.fn(),
+    };
+
+    const service = new GithubConnectService(
+      {} as JwtService,
+      authService as any,
+      { injectJenkinsfileWithToken: jest.fn() } as any,
+      jenkinsService as any,
+      {} as DataSource,
+      teamProjectRepository,
+      { findOne: jest.fn() } as unknown as Repository<
+        import('../users/entities/user.entity').User
+      >,
+    );
+
+    return { service, jenkinsService };
+  };
+
+  it('credential 갱신 후 잡 config를 사용자 credential로 덮어쓰고 빌드를 트리거한다', async () => {
+    const { service, jenkinsService } = makeService({
+      id: teamProjectId,
+      JenkinsJobName: 'octo-demo',
+      githubRepoFullName: 'octo/demo',
+    });
+
+    const result = await service.reanalyzeProject(user.id, teamProjectId);
+
+    expect(result).toEqual({ teamProjectId, jenkinsJobName: 'octo-demo' });
+    expect(jenkinsService.ensureUserCredential).toHaveBeenCalledWith(
+      `github-oauth-u${user.id}`,
+      'octo',
+      'gh-token',
+    );
+    expect(jenkinsService.createPipelineJob).toHaveBeenCalledWith(
+      'octo-demo',
+      'https://github.com/octo/demo',
+      `github-oauth-u${user.id}`,
+    );
+  });
+
+  it('코드가 연결되지 않은 프로젝트면 ConflictException을 던진다', async () => {
+    const { service } = makeService({
+      id: teamProjectId,
+      JenkinsJobName: null,
+      githubRepoFullName: null,
+    });
+
+    await expect(
+      service.reanalyzeProject(user.id, teamProjectId),
+    ).rejects.toThrow(ConflictException);
+  });
+
+  it('호출자 토큰으로 저장소 접근이 안 되면 ForbiddenException을 던진다', async () => {
+    const { service, jenkinsService } = makeService({
+      id: teamProjectId,
+      JenkinsJobName: 'octo-demo',
+      githubRepoFullName: 'octo/demo',
+    });
+    mockRepoGet.mockRejectedValue({ status: 403 });
+
+    await expect(
+      service.reanalyzeProject(user.id, teamProjectId),
+    ).rejects.toThrow(ForbiddenException);
+    // 접근 불가 토큰으로 credential을 덮어쓰지 않는다 — 저장소 주인의 정상 credential 보호
+    expect(jenkinsService.ensureUserCredential).not.toHaveBeenCalled();
   });
 });

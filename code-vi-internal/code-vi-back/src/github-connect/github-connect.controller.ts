@@ -5,6 +5,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseIntPipe,
   Post,
   Query,
   Res,
@@ -60,6 +62,18 @@ export class GithubConnectController {
     @Body() dto: RegisterProjectRequestDto,
   ) {
     return this.githubConnectService.registerProject(user.id, dto);
+  }
+
+  /** 연결된 코드의 분석 재요청 — 사용자 토큰으로 Jenkins credential/잡을 갱신하고 빌드를 다시 트리거 */
+  @Post('projects/:teamProjectId/reanalyze')
+  @UseGuards(AuthGuard(), ProjectMemberGuard)
+  @ProjectMember({ source: 'params', field: 'teamProjectId' })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async reanalyzeProject(
+    @GetUser() user: User,
+    @Param('teamProjectId', ParseIntPipe) teamProjectId: number,
+  ) {
+    return this.githubConnectService.reanalyzeProject(user.id, teamProjectId);
   }
 
   @Delete('connection')

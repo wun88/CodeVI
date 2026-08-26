@@ -54,6 +54,14 @@ export const githubConnectService = {
     return res.data?.data ?? res.data;
   },
 
+  /** 연결된 코드의 분석 재요청 — 내 OAuth 토큰으로 Jenkins credential/잡을 갱신하고 빌드 재트리거 */
+  reanalyzeProject: async (
+    teamProjectId: number,
+  ): Promise<{ teamProjectId: number; jenkinsJobName: string }> => {
+    const res = await api.post(`/api/github/projects/${teamProjectId}/reanalyze`);
+    return res.data?.data ?? res.data;
+  },
+
   disconnect: async (): Promise<void> => {
     await api.delete('/api/github/connection');
   },
