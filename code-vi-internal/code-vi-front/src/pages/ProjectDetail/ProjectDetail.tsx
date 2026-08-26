@@ -4,8 +4,30 @@ import Header from '../../components/Header';
 import { teamProjectService } from '../../services/teamProjectService';
 import { requirementsService } from '../../services/requirementsService';
 import type { TeamProjectSummary } from '../../interface/teamProject.interface';
-import type { Requirement, RequirementsSummary } from '../../interface/requirement.interface';
+import type {
+  BuildHistoryItem,
+  GeneratedDocument,
+  MappingStatus,
+  MappingSummary,
+  RecentActivityItem,
+  Requirement,
+  RequirementsSummary,
+} from '../../interface/requirement.interface';
+import RequirementDetailModal from './RequirementDetailModal';
+import DocumentsTab from './DocumentsTab';
+import BuildHistoryTab from './BuildHistoryTab';
+import SettingsTab from './SettingsTab';
+import CodeQualityTab from './CodeQualityTab';
+import LifecycleProgressBar from './LifecycleProgressBar';
+import OverallProgressRing from './OverallProgressRing';
+import StatusDistributionDonut from './StatusDistributionDonut';
+import BuildTimelineChart from './BuildTimelineChart';
+import RecentActivityFeed from './RecentActivityFeed';
+import AnalysisFindingsPanel from './AnalysisFindingsPanel';
+import FilterDropdown from './FilterDropdown';
 import styles from './ProjectDetail.module.css';
+
+type ProjectTab = 'overview' | 'documents' | 'buildHistory' | 'codeQuality' | 'settings';
 
 const PRIORITY_LABEL: Record<string, string> = {
   critical: '치명',
@@ -14,11 +36,21 @@ const PRIORITY_LABEL: Record<string, string> = {
   low: '낮음',
 };
 
-const FINDING_TYPE_LABEL: Record<string, string> = {
-  duplicate: '중복',
-  conflict: '충돌',
-  omission: '누락',
+const MAPPING_STATUS_LABEL: Record<MappingStatus, string> = {
+  implemented: '완료',
+  mostly: '대부분',
+  partial: '일부',
+  unimplemented: '미구현',
 };
+
+type ScoreFilter = 'all' | 'high' | 'mid' | 'low';
+
+function matchesScoreFilter(score: number, filter: ScoreFilter): boolean {
+  if (filter === 'high') return score >= 70;
+  if (filter === 'mid') return score >= 40 && score < 70;
+  if (filter === 'low') return score < 40;
+  return true;
+}
 
 export default function ProjectDetail() {
   const navigate = useNavigate();
@@ -28,16 +60,32 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<TeamProjectSummary | null>(null);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [summary, setSummary] = useState<RequirementsSummary | null>(null);
+  const [mapping, setMapping] = useState<MappingSummary | null>(null);
+  const [documents, setDocuments] = useState<GeneratedDocument[]>([]);
+  const [builds, setBuilds] = useState<BuildHistoryItem[]>([]);
+  const [activity, setActivity] = useState<RecentActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState('');
+  const [revalidating, setRevalidating] = useState(false);
+  const [mappingError, setMappingError] = useState('');
+  const [statusFilter, setStatusFilter] = useState<MappingStatus | 'all'>('all');
+  const [scoreFilter, setScoreFilter] = useState<ScoreFilter>('all');
+  const [selectedRequirementId, setSelectedRequirementId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
 
   const loadAll = () => {
     return Promise.all([
       teamProjectService.getProjectDetail(projectId),
       requirementsService.listByTeamProject(projectId),
       requirementsService.getSummary(projectId),
+      requirementsService.getMappingSummary(projectId),
+      // 대시보드 잔여 위젯(라이프사이클 진척/빌드 타임라인/최근 활동)이 개요 탭에 필요해
+      // 초기 로드에 함께 포함한다 — 문서/빌드 이력 탭 자체의 전체 목록 조회와는 별개다 (jej_23 Phase 12).
+      requirementsService.listDocuments(projectId),
+      requirementsService.getBuildHistory(projectId),
+      requirementsService.getRecentActivity(projectId),
     ]);
   };
 
@@ -47,12 +95,29 @@ export default function ProjectDetail() {
     setError('');
 
     loadAll()
-      .then(([projectData, requirementsData, summaryData]) => {
-        if (cancelled) return;
-        setProject(projectData);
-        setRequirements(requirementsData);
-        setSummary(summaryData);
-      })
+      .then(
+        ([
+          projectData,
+          requirementsData,
+          summaryData,
+          mappingData,
+          documentsData,
+          buildsData,
+          activityData,
+        ]) => {
+          if (cancelled) return;
+          setProject(projectData);
+          setRequirements(requirementsData);
+          setSummary(summaryData);
+          setMapping(mappingData);
+          setDocuments(documentsData);
+          setBuilds(buildsData);
+          setActivity(activityData);
+          // 코드 분석이 있는 프로젝트는 코드 품질이 주가 되므로 그 탭을 기본으로 연다 —
+          // 요구사항 전용 프로젝트는 코드 품질 탭 자체가 없으니 개요로 연다.
+          setActiveTab(projectData.codeAnalysis ? 'codeQuality' : 'overview');
+        },
+      )
       .catch(() => {
         if (!cancelled) setError('프로젝트를 불러오지 못했습니다. 접근 권한이 없거나 존재하지 않는 프로젝트입니다.');
       })
@@ -80,6 +145,48 @@ export default function ProjectDetail() {
     }
   };
 
+  const handleRevalidateMapping = async () => {
+    setMappingError('');
+    setRevalidating(true);
+    try {
+      await requirementsService.recomputeMapping(projectId);
+      const mappingData = await requirementsService.getMappingSummary(projectId);
+      setMapping(mappingData);
+    } catch {
+      setMappingError('재검증에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setRevalidating(false);
+    }
+  };
+
+  const handleRequirementUpdated = (updated: Requirement) => {
+    setRequirements((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  };
+
+  const mappingByRequirementId = new Map((mapping?.requirements ?? []).map((m) => [m.requirementId, m]));
+  const selectedRequirement = requirements.find((r) => r.id === selectedRequirementId) ?? null;
+
+  // 전체 추정 진척률 — 최근 빌드(Phase 10)의 평균 점수가 있으면 그걸 쓰고, 빌드 이력이 아직
+  // 없으면 매핑 요약(Phase 7)에서 직접 평균을 낸다. builds는 최신순(DESC)이라 builds[0]이 최신.
+  const latestBuild = builds[0];
+  const mappingAverage =
+    mapping && mapping.requirements.length > 0
+      ? Math.round(
+          mapping.requirements.reduce((sum, r) => sum + r.implementationScore, 0) /
+            mapping.requirements.length,
+        )
+      : 0;
+  const overallScore = latestBuild?.averageScore ?? mappingAverage;
+  const overallScoreSource = latestBuild
+    ? `최근 빌드 #${latestBuild.buildNumber} 기준`
+    : '요구사항-코드 매핑 기준';
+
+  const filteredRequirements = requirements.filter((req) => {
+    const item = mappingByRequirementId.get(req.id);
+    if (statusFilter !== 'all' && item?.status !== statusFilter) return false;
+    return matchesScoreFilter(item?.implementationScore ?? 0, scoreFilter);
+  });
+
   return (
     <div className={styles.page}>
       <Header variant="internal" />
@@ -94,7 +201,7 @@ export default function ProjectDetail() {
         {loading && <p className={styles.statusText}>불러오는 중...</p>}
         {!loading && error && <p className={styles.statusText}>{error}</p>}
 
-        {!loading && !error && project && summary && (
+        {!loading && !error && project && summary && mapping && (
           <>
             <h1 className={styles.title}>{project.teamName}</h1>
             <span className={`${styles.badge} ${styles[`badge-${project.statusVariant}`]}`}>
@@ -124,6 +231,79 @@ export default function ProjectDetail() {
                 (몇 분 정도 걸릴 수 있어요).
               </div>
             )}
+
+            <div className={styles.tabRow}>
+              {/* 코드 분석이 있는 프로젝트는 코드 품질이 주가 되므로 맨 앞에 둔다 — 요구사항
+                  전용 프로젝트는 이 탭 자체가 보여줄 데이터가 없어 아예 렌더링하지 않는다. */}
+              {project.codeAnalysis && (
+                <button
+                  type="button"
+                  className={`${styles.tabBtn} ${activeTab === 'codeQuality' ? styles.tabBtnActive : ''}`}
+                  onClick={() => setActiveTab('codeQuality')}
+                >
+                  코드 품질
+                </button>
+              )}
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('overview')}
+              >
+                개요
+              </button>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'documents' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('documents')}
+              >
+                문서
+              </button>
+              {project.codeAnalysis && (
+                <button
+                  type="button"
+                  className={`${styles.tabBtn} ${activeTab === 'buildHistory' ? styles.tabBtnActive : ''}`}
+                  onClick={() => setActiveTab('buildHistory')}
+                >
+                  빌드 이력
+                </button>
+              )}
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'settings' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('settings')}
+              >
+                설정
+              </button>
+            </div>
+
+            {activeTab === 'documents' && (
+              <DocumentsTab teamProjectId={projectId} requirements={requirements} />
+            )}
+
+            {activeTab === 'buildHistory' && project.codeAnalysis && (
+              <BuildHistoryTab teamProjectId={projectId} />
+            )}
+
+            {activeTab === 'codeQuality' && project.codeAnalysis && (
+              <CodeQualityTab teamProjectId={projectId} />
+            )}
+
+            {activeTab === 'settings' && (
+              <SettingsTab project={project} teamProjectId={projectId} />
+            )}
+
+            {activeTab === 'overview' && (
+              <>
+            <div className={styles.heroRow}>
+              <OverallProgressRing score={overallScore} sourceLabel={overallScoreSource} />
+              <LifecycleProgressBar
+                hasRequirements={requirements.length > 0}
+                hasDocuments={documents.length > 0}
+                mappingTotal={mapping.total}
+                mappingMapped={mapping.mapped}
+                hasBuilds={builds.length > 0}
+              />
+            </div>
 
             <div className={styles.kpiRow}>
               <div className={styles.kpiCard}>
@@ -157,6 +337,26 @@ export default function ProjectDetail() {
             <div className={styles.dashboardGrid}>
               <section className={styles.card}>
                 <div className={styles.cardHeaderRow}>
+                  <h2 className={styles.sectionTitle}>요구사항-코드 매핑</h2>
+                  <button
+                    type="button"
+                    className={styles.smallBtn}
+                    onClick={handleRevalidateMapping}
+                    disabled={revalidating || requirements.length === 0}
+                  >
+                    {revalidating ? '재검증 중...' : '재검증'}
+                  </button>
+                </div>
+                {mappingError && <p className={styles.statusText}>{mappingError}</p>}
+                <p className={styles.mappingBannerText}>
+                  <span className={styles.mappingBannerStrong}>{mapping.total}</span>개 중{' '}
+                  <span className={styles.mappingBannerStrong}>{mapping.mapped}</span>개 매핑됨
+                  {!project.codeAnalysis && ' — 코드를 연결하면 자동으로 계산됩니다.'}
+                </p>
+              </section>
+
+              <section className={styles.card}>
+                <div className={styles.cardHeaderRow}>
                   <h2 className={styles.sectionTitle}>AI 분석</h2>
                   <button
                     type="button"
@@ -168,24 +368,39 @@ export default function ProjectDetail() {
                   </button>
                 </div>
                 {analysisError && <p className={styles.statusText}>{analysisError}</p>}
-                {summary.analysis.recentFindings.length === 0 ? (
-                  <p className={styles.statusText}>
-                    아직 분석 결과가 없습니다. "AI 분석 실행"을 눌러 중복/충돌/누락 후보를 확인하세요.
-                  </p>
-                ) : (
-                  <ul className={styles.findingList}>
-                    {summary.analysis.recentFindings.map((finding) => (
-                      <li key={finding.id} className={styles.findingItem}>
-                        <span className={styles.findingType}>
-                          {FINDING_TYPE_LABEL[finding.type] ?? finding.type}
-                        </span>
-                        <p className={styles.findingDesc}>{finding.description}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <AnalysisFindingsPanel
+                  teamProjectId={projectId}
+                  recentFindings={summary.analysis.recentFindings}
+                  onNavigateToRequirement={setSelectedRequirementId}
+                />
               </section>
             </div>
+
+            {(mapping.mapped > 0 || builds.length > 0 || activity.length > 0) && (
+              <div className={styles.widgetGrid}>
+                {mapping.mapped > 0 && (
+                  <StatusDistributionDonut requirements={mapping.requirements} />
+                )}
+                {builds.length > 0 && <BuildTimelineChart builds={builds} />}
+                <RecentActivityFeed items={activity} />
+                {mapping.mapped > 0 && (
+                  <section className={styles.card}>
+                    <h3 className={styles.sectionTitle}>구현 커버리지가 낮은 요구사항</h3>
+                    <ul className={styles.findingList}>
+                      {[...mapping.requirements]
+                        .sort((a, b) => a.implementationScore - b.implementationScore)
+                        .slice(0, 5)
+                        .map((item) => (
+                          <li key={item.requirementId} className={styles.findingItem}>
+                            <span className={styles.findingType}>{item.implementationScore}%</span>
+                            <p className={styles.findingDesc}>{item.title}</p>
+                          </li>
+                        ))}
+                    </ul>
+                  </section>
+                )}
+              </div>
+            )}
 
             <div className={styles.cardHeaderRow}>
               <h2 className={styles.sectionTitle}>요구사항 ({requirements.length})</h2>
@@ -197,26 +412,90 @@ export default function ProjectDetail() {
                 요구사항 추가
               </button>
             </div>
+
+            {requirements.length > 0 && (
+              <div className={styles.filterRow}>
+                <FilterDropdown
+                  ariaLabel="상태 필터"
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: 'all', label: '상태: 전체' },
+                    { value: 'implemented', label: '완료' },
+                    { value: 'mostly', label: '대부분' },
+                    { value: 'partial', label: '일부' },
+                    { value: 'unimplemented', label: '미구현' },
+                  ]}
+                />
+                <FilterDropdown
+                  ariaLabel="점수 필터"
+                  value={scoreFilter}
+                  onChange={setScoreFilter}
+                  options={[
+                    { value: 'all', label: '점수: 전체' },
+                    { value: 'high', label: '70% 이상' },
+                    { value: 'mid', label: '40~69%' },
+                    { value: 'low', label: '40% 미만' },
+                  ]}
+                />
+              </div>
+            )}
+
             {requirements.length === 0 ? (
               <p className={styles.statusText}>등록된 요구사항이 없습니다.</p>
+            ) : filteredRequirements.length === 0 ? (
+              <p className={styles.statusText}>필터에 맞는 요구사항이 없습니다.</p>
             ) : (
               <ul className={styles.reqList}>
-                {requirements.map((req) => (
-                  <li key={req.id} className={styles.reqItem}>
-                    <div className={styles.reqHeader}>
-                      <span className={styles.reqTitle}>{req.title}</span>
-                      <span className={styles.reqPriority}>
-                        {PRIORITY_LABEL[req.priority] ?? req.priority}
-                      </span>
-                    </div>
-                    {req.description && <p className={styles.reqDesc}>{req.description}</p>}
-                  </li>
-                ))}
+                {filteredRequirements.map((req) => {
+                  const mappingItem = mappingByRequirementId.get(req.id);
+                  return (
+                    <li
+                      key={req.id}
+                      className={`${styles.reqItem} ${styles.reqItemClickable}`}
+                      onClick={() => setSelectedRequirementId(req.id)}
+                    >
+                      <div className={styles.reqHeader}>
+                        <span className={styles.reqTitle}>{req.title}</span>
+                        <div className={styles.reqBadgeGroup}>
+                          {mappingItem && (
+                            <span
+                              className={`${styles.scoreBadge} ${styles[`scoreBadge-${mappingItem.status}`]}`}
+                            >
+                              {mappingItem.implementationScore}% · {MAPPING_STATUS_LABEL[mappingItem.status]}
+                            </span>
+                          )}
+                          <span className={styles.reqPriority}>
+                            {PRIORITY_LABEL[req.priority] ?? req.priority}
+                          </span>
+                        </div>
+                      </div>
+                      {req.description && <p className={styles.reqDesc}>{req.description}</p>}
+                      {mappingItem && (mappingItem.matchCount > 0 || mappingItem.missingCount > 0) && (
+                        <p className={styles.reqStats}>
+                          유사도 {Math.round(mappingItem.similarityAvg * 100)}% · 매칭{' '}
+                          {mappingItem.matchCount} · 누락 {mappingItem.missingCount}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
+            )}
+              </>
             )}
           </>
         )}
       </main>
+
+      {selectedRequirement && (
+        <RequirementDetailModal
+          requirement={selectedRequirement}
+          allRequirements={requirements}
+          onClose={() => setSelectedRequirementId(null)}
+          onUpdated={handleRequirementUpdated}
+        />
+      )}
     </div>
   );
 }

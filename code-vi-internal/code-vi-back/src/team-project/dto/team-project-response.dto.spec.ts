@@ -9,7 +9,17 @@ describe('TeamProjectResponseDto — 상태 배지', () => {
     teamName: '테스트 프로젝트',
     JenkinsJobName: null,
     users: [{ username: 'jej031020' }],
+    updatedAt: new Date('2026-07-20'),
+    githubRepoFullName: null,
+    githubDefaultBranch: null,
+    sonarProjectKey: null,
   } as unknown as TeamProject;
+
+  it('프로젝트의 updatedAt을 그대로 노출한다 (jej_22 Phase 3)', () => {
+    const dto = new TeamProjectResponseDto(baseProject, 0);
+
+    expect(dto.updatedAt).toEqual(new Date('2026-07-20'));
+  });
 
   it('코드 분석 결과가 있으면 "코드 분석 완료 · N점"으로 표시한다', () => {
     const project = {
@@ -48,5 +58,27 @@ describe('TeamProjectResponseDto — 상태 배지', () => {
 
     expect(dto.statusVariant).toBe('empty');
     expect(dto.statusLabel).toBe('분석 대기 중');
+  });
+
+  it('GitHub/Jenkins/Sonar 연동 필드를 하드코딩 없이 그대로 노출한다(jej_23 Phase 11)', () => {
+    const connectedProject = {
+      ...baseProject,
+      githubRepoFullName: 'org/repo',
+      githubDefaultBranch: 'main',
+      sonarProjectKey: 'org_repo',
+    } as unknown as TeamProject;
+
+    const dto = new TeamProjectResponseDto(connectedProject, 0);
+
+    expect(dto.githubRepoFullName).toBe('org/repo');
+    expect(dto.githubDefaultBranch).toBe('main');
+    expect(dto.sonarProjectKey).toBe('org_repo');
+  });
+
+  it('연동되지 않은 프로젝트는 연동 필드가 null이다', () => {
+    const dto = new TeamProjectResponseDto(baseProject, 0);
+
+    expect(dto.githubRepoFullName).toBeNull();
+    expect(dto.sonarProjectKey).toBeNull();
   });
 });

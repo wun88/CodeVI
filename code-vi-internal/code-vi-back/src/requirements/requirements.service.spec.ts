@@ -1,11 +1,12 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { RequirementsService } from './requirements.service';
 import { CreateRequirementDto } from './dto/create-requirement.dto';
 import { AnalysisFindingType } from './entities/analysis-finding-type.enum';
 import { RequirementStatus } from './entities/requirement-status.enum';
+import { Requirement } from './entities/requirement.entity';
+import { RequirementVersion } from './entities/requirement-version.entity';
 
-type Requirement = import('./entities/requirement.entity').Requirement;
 type AnalysisFinding =
   import('./entities/analysis-finding.entity').AnalysisFinding;
 
@@ -69,9 +70,33 @@ describe('RequirementsService', () => {
           create: jest.fn(
             (_entity: unknown, plain: Record<string, unknown>) => plain,
           ),
-          // createBulk(Requirement)/recomputeFindings(AnalysisFinding)가 같은 manager.save를
-          // 공유하므로, 저장할 필드 모양(requirementIds 유무)으로 대상 배열을 구분한다.
-          save: jest.fn(async (entities: Record<string, unknown>[]) => {
+          // createBulk(Requirement)/recomputeFindings(AnalysisFinding)는 배열 형태로
+          // manager.save(entities[])를 호출하고, update()는 manager.save(EntityClass, entity)
+          // 형태(2-인자)로 호출한다 — 실제 호출 형태와 1:1 대응해 두 모양을 모두 지원한다.
+          save: jest.fn(async (arg1: unknown, arg2?: unknown) => {
+            if (arg2 !== undefined) {
+              if (arg1 === RequirementVersion) {
+                const withId = {
+                  id: savedVersions.length + 1,
+                  // 실제 TypeORM은 @CreateDateColumn으로 자동 채우지만, 이 목은 순수 객체라
+                  // 직접 채워야 getRecentActivity의 최신순 정렬(createdAt DESC)이 검증 가능하다.
+                  createdAt: new Date(Date.now() + savedVersions.length),
+                  ...(arg2 as Partial<RequirementVersion>),
+                };
+                savedVersions.push(withId);
+                return withId;
+              }
+              const entity = arg2 as Partial<Requirement>;
+              if (entity.id) {
+                saved = saved.map((r) => (r.id === entity.id ? entity : r));
+                return entity;
+              }
+              const withId = { id: saved.length + 1, ...entity };
+              saved.push(withId);
+              return withId;
+            }
+
+            const entities = arg1 as Record<string, unknown>[];
             if (entities.length > 0 && 'requirementIds' in entities[0]) {
               const withIds = entities.map((entity, i) => ({
                 id: savedFindings.length + i + 1,
@@ -92,14 +117,46 @@ describe('RequirementsService', () => {
       }),
     } as unknown as DataSource;
 
+    const savedVersions: Partial<RequirementVersion>[] = [];
+    const requirementVersionRepository = {
+      find: jest.fn(
+        async (options: {
+          where: { requirementId: number | { value: number[] } };
+          order?: { createdAt: 'ASC' | 'DESC' };
+          take?: number;
+        }) => {
+          const { requirementId } = options.where;
+          let result =
+            typeof requirementId === 'number'
+              ? savedVersions.filter((v) => v.requirementId === requirementId)
+              : savedVersions.filter((v) =>
+                  requirementId.value.includes(v.requirementId as number),
+                );
+          if (options.order?.createdAt === 'DESC') {
+            result = [...result].sort(
+              (a, b) =>
+                (b.createdAt as unknown as Date).getTime() -
+                (a.createdAt as unknown as Date).getTime(),
+            );
+          }
+          if (options.take != null) {
+            result = result.slice(0, options.take);
+          }
+          return result;
+        },
+      ),
+    } as unknown as Repository<RequirementVersion>;
+
     return {
       service: new RequirementsService(
         dataSource,
         requirementRepository,
         analysisFindingRepository,
+        requirementVersionRepository,
       ),
       requirementRepository,
       analysisFindingRepository,
+      requirementVersionRepository,
       dataSource,
     };
   };
@@ -150,6 +207,10 @@ describe('RequirementsService', () => {
         type: 'functional' as CreateRequirementDto['type'],
       });
 
+      // draft → in_review → approved: 전이 그래프상 유효한 경로를 거쳐야 한다 (jej_23 Phase 8).
+      await service.update(created.id, {
+        status: RequirementStatus.IN_REVIEW,
+      });
       const updated = await service.update(created.id, {
         status: RequirementStatus.APPROVED,
       });
@@ -161,7 +222,7 @@ describe('RequirementsService', () => {
     it('존재하지 않는 id를 수정하려 하면 NotFoundException', async () => {
       const { service } = makeService();
       await expect(
-        service.update(999, { status: RequirementStatus.APPROVED }),
+        service.update(999, { status: RequirementStatus.IN_REVIEW }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -214,6 +275,238 @@ describe('RequirementsService', () => {
       // 남은 요구사항(first)만 언급하는 finding까지 전부 지워지진 않았는지는 요구하지 않는다 —
       // 이번 케이스는 duplicate 쌍이라 둘 다 사라지는 게 맞다.
       void first;
+    });
+  });
+
+  describe('update — status 전이/baseline 검증/자동 버저닝 (jej_23 Phase 8)', () => {
+    it('전이 그래프에 없는 상태 변경(draft→approved)은 BadRequestException', async () => {
+      const { service } = makeService();
+      const created = await service.create({
+        teamProjectId: 1,
+        title: '로그인 기능',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+
+      await expect(
+        service.update(created.id, { status: RequirementStatus.APPROVED }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('승인(approved) 상태가 아닐 때 baseline을 지정하면 BadRequestException', async () => {
+      const { service } = makeService();
+      const created = await service.create({
+        teamProjectId: 1,
+        title: '로그인 기능',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+
+      await expect(
+        service.update(created.id, { baseline: 'v1.0-release' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('같은 요청으로 status를 approved로 바꾸면서 baseline을 지정할 수 있다', async () => {
+      const { service } = makeService();
+      const created = await service.create({
+        teamProjectId: 1,
+        title: '로그인 기능',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      await service.update(created.id, {
+        status: RequirementStatus.IN_REVIEW,
+      });
+
+      const updated = await service.update(created.id, {
+        status: RequirementStatus.APPROVED,
+        baseline: 'v1.0-release',
+      });
+
+      expect(updated.status).toBe(RequirementStatus.APPROVED);
+      expect(updated.baseline).toBe('v1.0-release');
+    });
+
+    it('내용(title 등)이 바뀌면 버전을 올리고 RequirementVersion을 기록한다', async () => {
+      const { service } = makeService();
+      const created = await service.create({
+        teamProjectId: 1,
+        title: '로그인 기능',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      expect(created.version).toBe('1.0');
+
+      const updated = await service.update(created.id, {
+        title: '로그인 기능(수정됨)',
+      });
+
+      expect(updated.version).toBe('1.1');
+      const versions = await service.getVersions(created.id);
+      expect(versions).toHaveLength(1);
+      expect(versions[0].changedById).toBeNull();
+      expect(JSON.parse(versions[0].currentContent).title).toBe(
+        '로그인 기능(수정됨)',
+      );
+    });
+
+    it('status만 바뀌고 내용은 그대로면 버전을 올리지 않는다', async () => {
+      const { service } = makeService();
+      const created = await service.create({
+        teamProjectId: 1,
+        title: '로그인 기능',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+
+      const updated = await service.update(created.id, {
+        status: RequirementStatus.IN_REVIEW,
+      });
+
+      expect(updated.version).toBe('1.0');
+      const versions = await service.getVersions(created.id);
+      expect(versions).toHaveLength(0);
+    });
+
+    it('userId가 주어지면 RequirementVersion.changedById에 기록한다', async () => {
+      const { service } = makeService();
+      const created = await service.create({
+        teamProjectId: 1,
+        title: '로그인 기능',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+
+      await service.update(created.id, { title: '변경된 제목' }, 42);
+
+      const versions = await service.getVersions(created.id);
+      expect(versions[0].changedById).toBe(42);
+    });
+  });
+
+  describe('getBaselineSummary (jej_23 Phase 11)', () => {
+    it('baseline이 지정된 요구사항만 집계하고 개수 내림차순으로 정렬한다', async () => {
+      const { service } = makeService();
+      const a = await service.create({
+        teamProjectId: 1,
+        title: '요구사항 A',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      const b = await service.create({
+        teamProjectId: 1,
+        title: '요구사항 B',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      const c = await service.create({
+        teamProjectId: 1,
+        title: '요구사항 C',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      // baseline은 승인(approved) 상태에서만 지정 가능하다 (jej_23 Phase 8) — 순서대로 전이한다.
+      for (const req of [a, b, c]) {
+        await service.update(req.id, { status: RequirementStatus.IN_REVIEW });
+      }
+      await service.update(a.id, {
+        status: RequirementStatus.APPROVED,
+        baseline: 'v1.0',
+      });
+      await service.update(b.id, {
+        status: RequirementStatus.APPROVED,
+        baseline: 'v1.0',
+      });
+      await service.update(c.id, {
+        status: RequirementStatus.APPROVED,
+        baseline: 'v2.0',
+      });
+
+      const summary = await service.getBaselineSummary(1);
+
+      expect(summary).toEqual([
+        { baseline: 'v1.0', count: 2 },
+        { baseline: 'v2.0', count: 1 },
+      ]);
+    });
+
+    it('baseline이 없는 요구사항만 있으면 빈 배열을 반환한다', async () => {
+      const { service } = makeService();
+      await service.create({
+        teamProjectId: 1,
+        title: '요구사항 A',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+
+      const summary = await service.getBaselineSummary(1);
+
+      expect(summary).toEqual([]);
+    });
+  });
+
+  describe('getRecentActivity (jej_23 Phase 12)', () => {
+    it('요구사항이 없으면 빈 배열을 반환한다', async () => {
+      const { service } = makeService();
+      expect(await service.getRecentActivity(1)).toEqual([]);
+    });
+
+    it('내용이 바뀐 요구사항의 버전 이력을 최신순으로 반환한다', async () => {
+      const { service } = makeService();
+      const a = await service.create({
+        teamProjectId: 1,
+        title: '요구사항 A',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      const b = await service.create({
+        teamProjectId: 1,
+        title: '요구사항 B',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      await service.update(a.id, { title: '요구사항 A(수정)' });
+      await service.update(b.id, { title: '요구사항 B(수정)' });
+
+      const activity = await service.getRecentActivity(1);
+
+      expect(activity).toHaveLength(2);
+      expect(activity.map((a) => a.requirementTitle)).toEqual([
+        '요구사항 B(수정)',
+        '요구사항 A(수정)',
+      ]);
+    });
+
+    it('limit을 넘는 버전은 잘라낸다', async () => {
+      const { service } = makeService();
+      const a = await service.create({
+        teamProjectId: 1,
+        title: '요구사항 A',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      await service.update(a.id, { title: '수정1' });
+      await service.update(a.id, { title: '수정2' });
+      await service.update(a.id, { title: '수정3' });
+
+      const activity = await service.getRecentActivity(1, 2);
+
+      expect(activity).toHaveLength(2);
+    });
+  });
+
+  describe('getAllFindings (jej_23 Phase 12)', () => {
+    it('recomputeFindings 결과 전량을 severity 우선순위로 정렬해 반환한다', async () => {
+      const { service } = makeService();
+      await service.create({
+        teamProjectId: 1,
+        title: '사용자 로그인 기능 구현',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      await service.create({
+        teamProjectId: 1,
+        title: '사용자 로그인 기능 구현',
+        type: 'functional' as CreateRequirementDto['type'],
+      });
+      await service.recomputeFindings(1);
+
+      const findings = await service.getAllFindings(1);
+
+      expect(findings.length).toBeGreaterThan(0);
+      expect(findings.every((f) => f.teamProjectId === 1)).toBe(true);
+    });
+
+    it('findings가 없으면 빈 배열을 반환한다', async () => {
+      const { service } = makeService();
+      expect(await service.getAllFindings(1)).toEqual([]);
     });
   });
 

@@ -1,0 +1,73 @@
+.card {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 20px;
+}
+
+.title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.chart {
+  position: relative;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.centerLabel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.scoreNum {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--internal-text);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.gradeBadge {
+  width: fit-content;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(235, 245, 251, 0.14);
+}
+
+.desc {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--internal-text-2);
+}
+
+.source {
+  margin: 0;
+  font-size: 11px;
+  color: var(--internal-muted);
+}

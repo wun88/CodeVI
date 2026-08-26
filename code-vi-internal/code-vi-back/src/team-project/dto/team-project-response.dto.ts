@@ -49,11 +49,22 @@ export class TeamProjectResponseDto {
   /** 목록 카드 배지 — 코드 분석 존재 여부로 결정 (jej_20 spec 2장 참고) */
   statusVariant: 'code_analyzed' | 'requirements_only' | 'empty';
   statusLabel: string;
+  /** 프로젝트 자체의 마지막 수정일 — 순서 변경(sortOrder)은 부분 업데이트라 영향을 주지 않는다 (jej_22 Phase 3) */
+  updatedAt: Date;
+  /** 실제 GitHub/Jenkins/Sonar 연동 상태 — null이면 미연동. 하드코딩하지 않고 TeamProject 컬럼을
+   *  그대로 노출한다("설정" 탭, jej_23 Phase 11). */
+  githubRepoFullName: string | null;
+  githubDefaultBranch: string | null;
+  sonarProjectKey: string | null;
 
   constructor(project: TeamProject, requirementsCount = 0) {
     this.id = project.id;
     this.teamName = project.teamName;
     this.jenkinsJobName = project.JenkinsJobName;
+    this.updatedAt = project.updatedAt;
+    this.githubRepoFullName = project.githubRepoFullName;
+    this.githubDefaultBranch = project.githubDefaultBranch;
+    this.sonarProjectKey = project.sonarProjectKey;
 
     // ManyToMany 관계의 유저 이름만 추출
     this.members = project.users?.map((user) => user.username) ?? [];

@@ -1,11 +1,20 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
 import { User } from './entities/user.entity';
-import { CreateUserDto, CreateUserWithAstAndBuildDto } from './dto/create-user-request.dto';
+import {
+  CreateUserDto,
+  CreateUserWithAstAndBuildDto,
+} from './dto/create-user-request.dto';
 import { UpdateUserRequestDto } from './dto/update-user-request.dto';
 import { CreateGoogleUserRequestDto } from './dto/create-google-user-request.dto';
 import { CreateGithubUserRequestDto } from './dto/create-github-user-request.dto';
@@ -17,7 +26,9 @@ import { TeamProject } from 'src/team-project/entities/team-project.entity';
 import { AstSnapshot } from 'src/ast-relational/entity/ast-snapshot.entity';
 import { AstRelationalService } from 'src/ast-relational/ast-relational.service';
 import { CodeAnalysis } from 'src/code-analysis/entities/code-analysis.entity';
+import { PyExamineResult } from 'src/code-analysis/interface/pyexamine.interface';
 import { CodeGraphService } from 'src/code-graph/code-graph.service';
+import { CodeMappingService } from 'src/requirements/code-mapping.service';
 
 @Injectable()
 export class UsersService {
@@ -28,8 +39,9 @@ export class UsersService {
     private usersRepository: Repository<User>,
     private readonly astRelationalService: AstRelationalService,
     private readonly codeGraphService: CodeGraphService,
+    private readonly codeMappingService: CodeMappingService,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   // CREATE
   async createUser(createUserRequestDto: CreateUserDto): Promise<void> {
@@ -92,9 +104,12 @@ export class UsersService {
       );
       return savedUser;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Error creating Google user: ${error.message}`,
-        error.stack,
+        `Error creating Google user: ${errorMessage}`,
+        errorStack,
       );
       throw error;
     }
@@ -136,25 +151,21 @@ export class UsersService {
   ): Promise<{ users: User[]; total: number }> {
     this.logger.verbose('Retrieving all Users with pagination');
 
-    try {
-      const [users, total] = await this.usersRepository.findAndCount({
-        relations: [
-          'classRegistrations',
-          'classRegistrations.class',
-          'productions',
-        ],
-        skip: (page - 1) * limit,
-        take: limit,
-        order: { id: 'DESC' },
-      });
+    const [users, total] = await this.usersRepository.findAndCount({
+      relations: [
+        'classRegistrations',
+        'classRegistrations.class',
+        'productions',
+      ],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'DESC' },
+    });
 
-      this.logger.verbose(
-        `All users retrieved successfully: ${JSON.stringify(users)}`,
-      );
-      return { users, total };
-    } catch (error) {
-      throw error;
-    }
+    this.logger.verbose(
+      `All users retrieved successfully: ${JSON.stringify(users)}`,
+    );
+    return { users, total };
   }
 
   // READ - by id
@@ -245,7 +256,8 @@ export class UsersService {
       );
       return savedUser;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
         `Error creating GitHub user: ${errorMessage}`,
@@ -292,7 +304,8 @@ export class UsersService {
       );
       return savedUser;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
         `Error creating Kakao user: ${errorMessage}`,
@@ -301,7 +314,6 @@ export class UsersService {
       throw error;
     }
   }
-
 
   // CREATE - Naver User
   async createUserByNaver(
@@ -341,7 +353,10 @@ export class UsersService {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`Error creating Naver user: ${errorMessage}`, errorStack);
+      this.logger.error(
+        `Error creating Naver user: ${errorMessage}`,
+        errorStack,
+      );
       throw error;
     }
   }
@@ -412,12 +427,29 @@ export class UsersService {
   }
 
   // BUILD REPORT HANDLING
-  async createBuildReport(dto: CreateUserWithAstAndBuildDto): Promise<any> {
+  async createBuildReport(
+    dto: CreateUserWithAstAndBuildDto,
+  ): Promise<{ status: string; snapshotId: number }> {
     const { username, email, role, password, ProjectDto } = dto;
-    const { teamName, jenkinsJobName, analysis, astNodes = [], classMetrics = [], codeGraph } = ProjectDto as any;
-    const { buildNumber, buildUrl, jobName, status, commitHash, pyExamineResult } = analysis as any;
+    const {
+      teamName,
+      jenkinsJobName,
+      analysis,
+      astNodes = [],
+      classMetrics = [],
+      codeGraph,
+    } = ProjectDto;
+    const {
+      buildNumber,
+      buildUrl,
+      jobName,
+      status,
+      commitHash,
+      pyExamineResult,
+    } = analysis;
 
     let savedSnapshotId: number = 0;
+    let savedTeamProjectId: number = 0;
 
     await this.dataSource.transaction(async (manager) => {
       const usernames = Array.isArray(username) ? username : [username];
@@ -425,7 +457,8 @@ export class UsersService {
 
       // 1. Find or Create Users
       for (const uname of usernames) {
-        const userCondition = (email && usernames.length === 1) ? { email } : { username: uname };
+        const userCondition =
+          email && usernames.length === 1 ? { email } : { username: uname };
         let user = await manager.findOne(User, { where: userCondition });
 
         if (!user) {
@@ -435,11 +468,11 @@ export class UsersService {
 
           user = manager.create(User, {
             username: uname,
-            email: (usernames.length === 1) ? (email || undefined) : undefined,
+            email: usernames.length === 1 ? email || undefined : undefined,
             password: hashedPassword || undefined,
-            role: role as UserRole || UserRole.USER,
+            role: (role as UserRole) || UserRole.USER,
             status: password ? UserStatus.ACTIVE : UserStatus.PENDING,
-          } as any);
+          });
           user = await manager.save(user);
         }
         projectUsers.push(user);
@@ -457,12 +490,12 @@ export class UsersService {
           teamName,
           JenkinsJobName: jenkinsJobName,
           users: projectUsers,
-        } as any);
+        });
         project = await manager.save(project);
       } else {
         // 유저가 팀프에 없으면 연결
         for (const pUser of projectUsers) {
-          const isUserInProject = project.users.some(u => u.id === pUser.id);
+          const isUserInProject = project.users.some((u) => u.id === pUser.id);
           if (!isUserInProject) {
             project.users.push(pUser);
           }
@@ -471,13 +504,17 @@ export class UsersService {
         await manager.save(project);
       }
 
+      savedTeamProjectId = project.id;
+
       // 3. Check Snapshot duplication
       const existingSnapshot = await manager.findOne(AstSnapshot, {
         where: { teamProjectId: project.id, buildNumber },
       });
 
       if (existingSnapshot) {
-        this.logger.warn(`Snapshot for build ${buildNumber} already exists. Skipping.`);
+        this.logger.warn(
+          `Snapshot for build ${buildNumber} already exists. Skipping.`,
+        );
         savedSnapshotId = existingSnapshot.id;
         return;
       }
@@ -493,22 +530,33 @@ export class UsersService {
       savedSnapshotId = savedSnapshot.id;
 
       for (const node of astNodes) {
-        await this.astRelationalService.processNode(manager, node, savedSnapshotId, null);
+        await this.astRelationalService.processNode(
+          manager,
+          node,
+          savedSnapshotId,
+          null,
+        );
       }
 
       // 4-b. examine이 계산한 클래스별 CK/OO 메트릭을 AstClass.metrics에 매핑 저장
-      await this.astRelationalService.applyClassMetrics(manager, savedSnapshotId, classMetrics as any);
+      await this.astRelationalService.applyClassMetrics(
+        manager,
+        savedSnapshotId,
+        classMetrics,
+      );
 
       // 4-c. 언어 무관 캐노니컬 코드그래프 병행 적재 (있을 때만) — strangler
       if (codeGraph?.units?.length) {
-        await this.codeGraphService.ingest(manager, savedSnapshotId, codeGraph as any);
+        await this.codeGraphService.ingest(manager, savedSnapshotId, codeGraph);
       }
 
       // 5. CodeAnalysis(빌드/품질) 행 생성 — 빌드 메타 + 스멜.
       //    pyExamineResult가 없으면(캐노니컬 단일 경로) codeGraph.findings에서 파생.
-      let smells: any[] = Array.isArray(pyExamineResult) ? pyExamineResult : [];
+      let smells: PyExamineResult[] = Array.isArray(pyExamineResult)
+        ? pyExamineResult
+        : [];
       if (smells.length === 0 && Array.isArray(codeGraph?.findings)) {
-        smells = (codeGraph!.findings as any[]).map((f) => ({
+        smells = codeGraph.findings.map((f) => ({
           type: f.category,
           name: f.detector,
           description: f.message ?? '',
@@ -527,9 +575,23 @@ export class UsersService {
         code_smells: smells.length,
         pyExamineResult: smells,
         teamProjectId: project.id,
-      } as any);
+      });
       await manager.save(codeAnalysis);
     });
+
+    // 요구사항-코드 매핑 재계산(jej_23 Phase 7/10) — 실제 Jenkins 빌드가 완료될 때마다 실행해야
+    // Phase 10의 빌드 이력/스코어 타임라인이 채워진다. 응답을 기다리게 하지 않기 위해
+    // await하지 않는다(fire-and-forget, ast-relational.service.ts와 동일 패턴).
+    if (savedTeamProjectId) {
+      this.codeMappingService
+        .recomputeForTeamProject(savedTeamProjectId, buildNumber)
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.error(
+            `요구사항-코드 매핑 재계산 실패 (teamProjectId=${savedTeamProjectId}): ${message}`,
+          );
+        });
+    }
 
     return { status: 'success', snapshotId: savedSnapshotId };
   }

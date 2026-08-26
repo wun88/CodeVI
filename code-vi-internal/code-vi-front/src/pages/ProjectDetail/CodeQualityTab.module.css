@@ -1,0 +1,94 @@
+/* DashboardPage.module.css의 .shell 토큰 블록을 그대로 복제한다 — QualitySummaryRow 등
+   재사용 컴포넌트들이 이 --rf-* 커스텀 프로퍼티에 의존한다 (jej_23 Phase 12 후속). */
+.wrapper {
+  --rf-bg: #121619;
+  --rf-surface: #171b1e;
+  --rf-surface-2: #1b2024;
+  --rf-surface-3: #131618;
+  --rf-chip-bg: #14181b;
+  --rf-chip-bg-hover: #171c20;
+  --rf-border: rgba(235, 245, 251, 0.14);
+  --rf-border-strong: rgba(235, 245, 251, 0.22);
+  --rf-radius: 18px;
+  --rf-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --rf-text: var(--internal-text);
+  --rf-muted: rgba(235, 245, 251, 0.62);
+  --rf-muted-2: rgba(235, 245, 251, 0.48);
+  --rf-accent: rgba(159, 231, 240, 0.92);
+  --rf-amber: rgba(251, 191, 36, 0.92);
+  --rf-danger: rgba(248, 113, 113, 0.92);
+  --rf-section-gap: 2rem;
+  --rf-card-pad: 1.35rem 1.5rem;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-section-gap);
+  margin-top: var(--rf-section-gap);
+}
+
+.loadingBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  color: var(--rf-muted);
+  font-size: 0.875rem;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(235, 245, 251, 0.14);
+  border-top-color: rgba(159, 231, 240, 0.8);
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorBanner {
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  background: var(--rf-surface);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  box-shadow: var(--rf-shadow);
+  color: rgba(235, 245, 251, 0.9);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.emptyCard {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--rf-surface);
+  border-radius: var(--rf-radius);
+  box-shadow: var(--rf-shadow);
+  border: 1px solid var(--rf-border);
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.emptyTitle {
+  margin: 0 0 0.35rem;
+  font-weight: 900;
+  color: var(--rf-text);
+}
+
+.emptyHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--rf-muted);
+  font-weight: 500;
+}

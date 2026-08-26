@@ -9,11 +9,14 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Delete,
+  Patch,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TeamProjectService } from './team-project.service';
 import { CreateTeamProjectAnalysisDto } from './dto/create-team-project.dto';
 import { CreateRequirementsOnlyProjectDto } from './dto/create-requirements-only-project.dto';
+import { UpdateTeamProjectsOrderDto } from './dto/update-team-projects-order.dto';
 import { TeamProjectResponseDto } from './dto/team-project-response.dto';
 import { GetUser } from '../auth/custom-guards-decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -64,7 +67,20 @@ export class TeamProjectController {
     return this.teamProjectService.getMyProjects(user.id);
   }
 
-  // 프로젝트 상세 — 정적 경로(/history, /mine, /requirements-only)보다 뒤에 둬야 라우트 충돌이 없다 (jej_20 Phase 5)
+  // "내 프로젝트" 카드 순서 저장 (jej_22 Phase 2) — 정적 경로라 :id보다 앞에 둬야 한다
+  @Patch('/order')
+  @UseGuards(AuthGuard())
+  async updateMyProjectsOrder(
+    @GetUser() user: User,
+    @Body() dto: UpdateTeamProjectsOrderDto,
+  ): Promise<void> {
+    await this.teamProjectService.updateMyProjectsOrder(
+      user.id,
+      dto.orderedIds,
+    );
+  }
+
+  // 프로젝트 상세 — 정적 경로(/history, /mine, /requirements-only, /order)보다 뒤에 둬야 라우트 충돌이 없다 (jej_20 Phase 5)
   @Get(':id')
   @UseGuards(AuthGuard(), ProjectMemberGuard)
   @ProjectMember({ source: 'params', field: 'id' })
@@ -72,5 +88,14 @@ export class TeamProjectController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<TeamProjectResponseDto> {
     return this.teamProjectService.getProjectDetail(id);
+  }
+
+  // 프로젝트 삭제 (jej_22 Phase 1)
+  @Delete(':id')
+  @UseGuards(AuthGuard(), ProjectMemberGuard)
+  @ProjectMember({ source: 'params', field: 'id' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteProject(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.teamProjectService.deleteProject(id);
   }
 }

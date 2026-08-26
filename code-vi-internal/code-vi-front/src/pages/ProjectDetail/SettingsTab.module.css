@@ -1,0 +1,127 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 20px;
+}
+
+.sectionTitle {
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.hintText {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  color: var(--internal-muted);
+}
+
+.errorText {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  color: var(--internal-danger);
+}
+
+.metaList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.metaRow dt {
+  color: var(--internal-text-2);
+  font-weight: 700;
+}
+
+.metaRow dd {
+  margin: 0;
+  color: var(--internal-text);
+  text-align: right;
+}
+
+.integrationList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.integrationItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.integrationName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.badgeConnected,
+.badgeDisconnected {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.badgeConnected {
+  color: var(--internal-success);
+  background: rgba(120, 255, 180, 0.1);
+}
+
+.badgeDisconnected {
+  color: var(--internal-text-2);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.baselineList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.baselineItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--internal-text);
+}
+
+.baselineCount {
+  color: var(--internal-text-2);
+  font-size: 12px;
+}

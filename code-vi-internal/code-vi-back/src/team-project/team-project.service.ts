@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpService } from '@nestjs/axios';
@@ -198,7 +203,11 @@ export class TeamProjectService {
         'analysis',
         'analysis.teamProjectId = project.id AND analysis.id = (SELECT MAX(ca.id) FROM code_analysis ca WHERE ca.teamProjectId = project.id)',
       )
-      .orderBy('project.updatedAt', 'DESC')
+      // sortOrder를 한 번이라도 지정한 프로젝트가 먼저, 그 안에서는 sortOrder 오름차순 —
+      // 아직 순서를 바꾼 적 없는(sortOrder=null) 프로젝트는 기존처럼 updatedAt 최신순 (jej_22 Phase 2).
+      .orderBy('project.sortOrder IS NULL', 'ASC')
+      .addOrderBy('project.sortOrder', 'ASC')
+      .addOrderBy('project.updatedAt', 'DESC')
       .getMany();
 
     const requirementsCounts =
@@ -212,6 +221,44 @@ export class TeamProjectService {
           project,
           requirementsCounts.get(project.id) ?? 0,
         ),
+    );
+  }
+
+  /**
+   * "내 프로젝트" 카드 순서 저장 (jej_22 Phase 2). orderedIds에 포함된 모든 id가 userId의
+   * 프로젝트인지 먼저 전부 검증한 뒤 갱신한다(하나라도 남의 프로젝트면 아무 것도 바꾸지 않음).
+   * save()가 아닌 부분 업데이트(update)를 써서 updatedAt이 갱신되지 않게 한다 — 순서 변경은
+   * "마지막 수정일"에 영향을 주지 않는다는 spec 1장 결정.
+   */
+  async updateMyProjectsOrder(
+    userId: number,
+    orderedIds: number[],
+  ): Promise<void> {
+    if (orderedIds.length === 0) return;
+
+    const owned = await this.teamProjectRepository
+      .createQueryBuilder('project')
+      .innerJoin('project.users', 'membership', 'membership.id = :userId', {
+        userId,
+      })
+      .where('project.id IN (:...orderedIds)', { orderedIds })
+      .getMany();
+
+    if (owned.length !== orderedIds.length) {
+      throw new ForbiddenException(
+        '본인 프로젝트만 순서를 변경할 수 있습니다.',
+      );
+    }
+
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        this.teamProjectRepository
+          .createQueryBuilder()
+          .update(TeamProject)
+          .set({ sortOrder: index })
+          .where('id = :id', { id })
+          .execute(),
+      ),
     );
   }
 
@@ -232,5 +279,18 @@ export class TeamProjectService {
       project,
       requirementsCounts.get(teamProjectId) ?? 0,
     );
+  }
+
+  /**
+   * 프로젝트 삭제 (jej_22 Phase 1). 멤버십 검증은 getProjectDetail과 동일하게
+   * ProjectMemberGuard가 컨트롤러 진입 시점에 이미 수행한다.
+   * OneToMany 관계(codeAnalyses/astSnapshots/apiKeys/metricAnalysisJobs)가 전부
+   * cascade: true라 remove()로 함께 정리된다.
+   */
+  async deleteProject(teamProjectId: number): Promise<void> {
+    const project = await this.getTeamDataWithAstData(teamProjectId);
+    if (!project) throw new NotFoundException('프로젝트를 찾을 수 없습니다.');
+
+    await this.teamProjectRepository.remove(project);
   }
 }

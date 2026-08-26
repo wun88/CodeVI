@@ -10,12 +10,36 @@
   padding: 110px 40px 60px;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
 .title {
   font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  margin: 0 0 28px 0;
+  margin: 0;
   color: var(--internal-text);
+}
+
+.editToggleBtn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--internal-border);
+  background: transparent;
+  color: var(--internal-text-2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.editToggleBtn:hover {
+  border-color: var(--internal-accent);
+  color: var(--internal-accent);
 }
 
 .statusText {
@@ -47,6 +71,20 @@
   transform: translateY(-4px);
   box-shadow: 0 26px 86px rgba(0, 0, 0, 0.34);
   border-color: var(--internal-border-strong);
+}
+
+.card.dragging {
+  opacity: 0.4;
+}
+
+.card.editing {
+  cursor: default;
+}
+
+.card.editing:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--internal-border);
 }
 
 .cardTitle {
@@ -110,6 +148,81 @@
   margin: 0;
   font-size: 12px;
   color: var(--internal-muted);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--internal-border);
+  background: transparent;
+  color: var(--internal-text-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.actionBtn:hover:not(:disabled) {
+  border-color: var(--internal-border-strong);
+  color: var(--internal-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.actionBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--internal-text-2);
+  cursor: grab;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.dragHandle:hover {
+  color: var(--internal-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.deleteBtn {
+  width: auto;
+  padding: 0 14px;
+  margin-left: auto;
+  color: #e5484d;
+  border-color: rgba(229, 72, 77, 0.28);
+}
+
+.deleteBtn:hover:not(:disabled) {
+  border-color: #e5484d;
+  color: #e5484d;
+  background: rgba(229, 72, 77, 0.08);
+}
+
+.cardError {
+  margin: 0;
+  font-size: 12px;
+  color: #e5484d;
 }
 
 .newCard {

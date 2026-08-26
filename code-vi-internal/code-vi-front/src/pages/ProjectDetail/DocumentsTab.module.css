@@ -1,0 +1,250 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hintText {
+  margin: 0;
+  font-size: 12px;
+  color: var(--internal-muted);
+}
+
+.errorText {
+  margin: 0;
+  font-size: 12px;
+  color: var(--internal-danger);
+}
+
+.sectionTitle {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.generateCard {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.generateRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--internal-text-2);
+  cursor: pointer;
+}
+
+.reqCheckboxList {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.primaryBtn {
+  align-self: flex-start;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(235, 245, 251, 0.22);
+  background: var(--internal-accent);
+  color: #0a0e14;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.smallBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(235, 245, 251, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--internal-text);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.smallBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(235, 245, 251, 0.24);
+}
+
+.smallBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.docListPanel {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 16px;
+}
+
+.docList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.docListItem {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 1px solid var(--internal-border);
+  border-radius: 8px;
+  background: none;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--internal-text-2);
+  text-align: left;
+}
+
+.docListItem:hover {
+  border-color: rgba(235, 245, 251, 0.24);
+}
+
+.docListItemActive {
+  border-color: var(--internal-accent);
+  color: var(--internal-text);
+}
+
+.docTypeTag {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--internal-accent);
+}
+
+.docDetail {
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+  background: var(--internal-surface);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.docDetailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.docTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.qualityCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.qualityScore {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--internal-accent);
+}
+
+.sectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sectionBlock {
+  border: 1px solid var(--internal-border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.sectionBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sectionBlockTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--internal-text);
+}
+
+.sectionTextarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  border: 1px solid var(--internal-border);
+  border-radius: 8px;
+  background: var(--internal-bg);
+  color: var(--internal-text);
+  font-size: 12px;
+  font-family: inherit;
+  line-height: 1.5;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+}

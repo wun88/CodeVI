@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
@@ -112,6 +112,7 @@ describe('TeamProjectService.getMyProjects', () => {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       leftJoinAndMapOne: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
       getMany: jest
         .fn()
         .mockResolvedValue([codeProject, requirementsOnlyProject]),
@@ -146,5 +147,104 @@ describe('TeamProjectService.getMyProjects', () => {
     expect(result[0].requirementsCount).toBe(0);
     expect(result[1].requirementsCount).toBe(3);
     expect(result[1].statusVariant).toBe('requirements_only');
+  });
+});
+
+/**
+ * TeamProjectService.deleteProject 단위 테스트 (jej_22 Phase 1).
+ * 멤버십 검증은 ProjectMemberGuard가 컨트롤러 진입 시점에 이미 수행하므로,
+ * 서비스 레벨에서는 존재 여부와 실제 삭제 호출만 검증한다.
+ */
+describe('TeamProjectService.deleteProject', () => {
+  const makeService = (foundProject: Partial<TeamProject> | null) => {
+    const queryBuilder = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndMapOne: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(foundProject),
+    };
+
+    const teamProjectRepository = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+      remove: jest.fn().mockResolvedValue(undefined),
+    } as unknown as Repository<TeamProject>;
+
+    const service = new TeamProjectService(
+      {} as DataSource,
+      teamProjectRepository,
+      {} as Repository<User>,
+      {} as HttpService,
+      {} as ConfigService,
+      {} as RequirementsService,
+    );
+
+    return { service, teamProjectRepository };
+  };
+
+  it('존재하지 않는 프로젝트면 NotFoundException을 던진다', async () => {
+    const { service } = makeService(null);
+    await expect(service.deleteProject(1)).rejects.toThrow(NotFoundException);
+  });
+
+  it('존재하는 프로젝트면 repository.remove를 호출한다', async () => {
+    const project = { id: 1, teamName: '삭제 대상' };
+    const { service, teamProjectRepository } = makeService(project);
+
+    await service.deleteProject(1);
+
+    expect(teamProjectRepository.remove).toHaveBeenCalledWith(project);
+  });
+});
+
+/**
+ * TeamProjectService.updateMyProjectsOrder 단위 테스트 (jej_22 Phase 2).
+ */
+describe('TeamProjectService.updateMyProjectsOrder', () => {
+  const makeService = (ownedProjects: Partial<TeamProject>[]) => {
+    const executeMock = jest.fn().mockResolvedValue(undefined);
+    const queryBuilder = {
+      innerJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue(ownedProjects),
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      execute: executeMock,
+    };
+
+    const teamProjectRepository = {
+      createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
+    } as unknown as Repository<TeamProject>;
+
+    const service = new TeamProjectService(
+      {} as DataSource,
+      teamProjectRepository,
+      {} as Repository<User>,
+      {} as HttpService,
+      {} as ConfigService,
+      {} as RequirementsService,
+    );
+
+    return { service, executeMock };
+  };
+
+  it('본인 프로젝트로만 구성된 orderedIds면 각 id마다 부분 업데이트를 실행한다', async () => {
+    const { service, executeMock } = makeService([
+      { id: 3 },
+      { id: 1 },
+      { id: 2 },
+    ]);
+
+    await service.updateMyProjectsOrder(7, [3, 1, 2]);
+
+    expect(executeMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('본인 프로젝트가 아닌 id가 섞이면 ForbiddenException을 던지고 아무 것도 갱신하지 않는다', async () => {
+    const { service, executeMock } = makeService([{ id: 1 }]);
+
+    await expect(service.updateMyProjectsOrder(7, [1, 2])).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(executeMock).not.toHaveBeenCalled();
   });
 });

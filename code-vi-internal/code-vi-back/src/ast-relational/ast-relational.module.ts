@@ -8,6 +8,7 @@ import { AstFile } from './entity/ast-file.entity';
 import { AstClass } from './entity/ast-class.entity';
 import { AstFunction } from './entity/ast-function.entity';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
+import { RequirementsModule } from '../requirements/requirements.module';
 
 @Module({
   imports: [
@@ -19,6 +20,10 @@ import { TeamProject } from 'src/team-project/entities/team-project.entity';
       AstFunction,
       TeamProject,
     ]),
+    // AST 저장 성공 직후 요구사항-코드 매핑을 fire-and-forget으로 재계산하기 위해
+    // CodeMappingService를 가져온다 (jej_23 Phase 7). RequirementsModule은 다른 모듈을
+    // import하지 않는 leaf 모듈이라 순환 참조가 없다.
+    RequirementsModule,
   ],
   controllers: [AstRelationalController],
   providers: [AstRelationalService],

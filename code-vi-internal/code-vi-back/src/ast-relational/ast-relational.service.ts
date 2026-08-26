@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 
 // Entities
 import { AstSnapshot } from './entity/ast-snapshot.entity';
@@ -10,9 +10,13 @@ import { AstClass } from './entity/ast-class.entity';
 import { AstFunction } from './entity/ast-function.entity';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
 import { CodeAnalysis } from 'src/code-analysis/entities/code-analysis.entity';
+import { CodeMappingService } from '../requirements/code-mapping.service';
 
 // DTOs
-import { CreateRelationalAstDto, AstNodeInputDto } from './dto/create-relational-ast.dto';
+import {
+  CreateRelationalAstDto,
+  AstNodeInputDto,
+} from './dto/create-relational-ast.dto';
 
 @Injectable()
 export class AstRelationalService {
@@ -38,11 +42,12 @@ export class AstRelationalService {
     private readonly teamProjectRepo: Repository<TeamProject>,
 
     private readonly dataSource: DataSource,
-  ) { }
+    private readonly codeMappingService: CodeMappingService,
+  ) {}
 
   private async measure<T>(
     name: string,
-    fn: () => Promise<T>
+    fn: () => Promise<T>,
   ): Promise<{ data: T; latencyMs: number; memKb: number }> {
     if (global.gc) global.gc();
 
@@ -54,8 +59,14 @@ export class AstRelationalService {
     const latency = performance.now() - start;
     const mem = Math.max(0, process.memoryUsage().heapUsed - startMem);
 
-    this.logger.log(`${name} → ${latency.toFixed(2)}ms, ${(mem / 1024).toFixed(1)}KB`);
-    return { data, latencyMs: +latency.toFixed(2), memKb: Math.floor(mem / 1024) };
+    this.logger.log(
+      `${name} → ${latency.toFixed(2)}ms, ${(mem / 1024).toFixed(1)}KB`,
+    );
+    return {
+      data,
+      latencyMs: +latency.toFixed(2),
+      memKb: Math.floor(mem / 1024),
+    };
   }
 
   async saveAstData(dto: CreateRelationalAstDto): Promise<AstSnapshot> {
@@ -69,7 +80,13 @@ export class AstRelationalService {
       throw new NotFoundException(`Project not found: ${jenkinsJobName}`);
     }
 
-    const resultStats = { jsonSaveMs: 0, jsonSaveMem: 0, relationalSaveMs: 0, relationalSaveMem: 0, snapshotId: 0 };
+    const resultStats = {
+      jsonSaveMs: 0,
+      jsonSaveMem: 0,
+      relationalSaveMs: 0,
+      relationalSaveMem: 0,
+      snapshotId: 0,
+    };
     await this.dataSource.transaction(async (manager) => {
       // 1) 스냅샷 생성
       const startJsonMem = process.memoryUsage().heapUsed;
@@ -80,7 +97,10 @@ export class AstRelationalService {
       });
       const savedSnapshot = await manager.save(snapshot);
       resultStats.jsonSaveMs = performance.now() - startJsonSave;
-      resultStats.jsonSaveMem = Math.max(0, process.memoryUsage().heapUsed - startJsonMem);
+      resultStats.jsonSaveMem = Math.max(
+        0,
+        process.memoryUsage().heapUsed - startJsonMem,
+      );
       resultStats.snapshotId = savedSnapshot.id;
 
       // 2) 재귀적으로 노드들을 저장 (초기 호출 시 부모 컨텍스트는 모두 null)
@@ -90,17 +110,34 @@ export class AstRelationalService {
         await this.processNode(manager, node, savedSnapshot.id, null);
       }
       resultStats.relationalSaveMs = performance.now() - startRelationalSave;
-      resultStats.relationalSaveMem = Math.max(0, process.memoryUsage().heapUsed - startRelMem);
+      resultStats.relationalSaveMem = Math.max(
+        0,
+        process.memoryUsage().heapUsed - startRelMem,
+      );
 
-      this.logger.log(`Relational AST saved: snapshotId=${savedSnapshot.id}, project=${jenkinsJobName}`);
+      this.logger.log(
+        `Relational AST saved: snapshotId=${savedSnapshot.id}, project=${jenkinsJobName}`,
+      );
     });
 
     const snapshotResult = await this.getSnapshotById(resultStats.snapshotId);
+
+    // 요구사항-코드 매핑 재계산(jej_23 Phase 7) — AST 저장 응답을 기다리게 하지 않기 위해
+    // await하지 않는다(fire-and-forget). 실패해도 저장 자체는 이미 성공했으므로 로그만 남긴다.
+    this.codeMappingService
+      .recomputeForTeamProject(project.id)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(
+          `Code mapping recompute failed for project ${project.id}: ${message}`,
+        );
+      });
+
     return Object.assign(snapshotResult, {
-      jsonSaveMs: +(resultStats.jsonSaveMs).toFixed(4),
+      jsonSaveMs: +resultStats.jsonSaveMs.toFixed(4),
       jsonSaveMem: resultStats.jsonSaveMem,
-      relationalSaveMs: +(resultStats.relationalSaveMs).toFixed(4),
-      relationalSaveMem: resultStats.relationalSaveMem
+      relationalSaveMs: +resultStats.relationalSaveMs.toFixed(4),
+      relationalSaveMem: resultStats.relationalSaveMem,
     });
   }
 
@@ -108,7 +145,7 @@ export class AstRelationalService {
    * AST 노드를 재귀적으로 탐색하며 중첩 구조에 맞춰 부모 ID를 전달합니다.
    */
   public async processNode(
-    manager: any,
+    manager: EntityManager,
     node: AstNodeInputDto,
     snapshotId: number,
     parentDirectoryId: number | null,
@@ -119,8 +156,14 @@ export class AstRelationalService {
     const nodeType = node.type ? node.type.toUpperCase() : '';
     const nodeName = this.extractNodeName(node);
 
-    if (nodeType.includes('CLASS') || nodeType.includes('FUNC') || nodeType.includes('METHOD')) {
-      this.logger.debug(` Target Found: [${nodeType}] ${nodeName} | classId:${currentClassId}, fnId:${currentFunctionId}`);
+    if (
+      nodeType.includes('CLASS') ||
+      nodeType.includes('FUNC') ||
+      nodeType.includes('METHOD')
+    ) {
+      this.logger.debug(
+        ` Target Found: [${nodeType}] ${nodeName} | classId:${currentClassId}, fnId:${currentFunctionId}`,
+      );
     }
 
     switch (nodeType) {
@@ -142,7 +185,9 @@ export class AstRelationalService {
 
       case 'FILE': {
         if (!parentDirectoryId) {
-          this.logger.warn(`FILE node "${nodeName}" has no parent directory, skipping`);
+          this.logger.warn(
+            `FILE node "${nodeName}" has no parent directory, skipping`,
+          );
           break;
         }
 
@@ -154,7 +199,15 @@ export class AstRelationalService {
 
         if (node.ast) {
           // 파일 내부 진입: classId, functionId 컨텍스트 초기화
-          await this.processNode(manager, node.ast, snapshotId, parentDirectoryId, savedFile.id, null, null);
+          await this.processNode(
+            manager,
+            node.ast,
+            snapshotId,
+            parentDirectoryId,
+            savedFile.id,
+            null,
+            null,
+          );
         }
         break;
       }
@@ -167,7 +220,9 @@ export class AstRelationalService {
           break;
         }
         if (!fileId) {
-          this.logger.warn(`CLASS node "${nodeName}" has no parent file, skipping`);
+          this.logger.warn(
+            `CLASS node "${nodeName}" has no parent file, skipping`,
+          );
           break;
         }
 
@@ -187,7 +242,15 @@ export class AstRelationalService {
         if (node.children) {
           for (const child of node.children) {
             // 클래스 내부 진입: currentClassId 갱신, currentFunctionId 리셋
-            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, savedClass.id, null);
+            await this.processNode(
+              manager,
+              child,
+              snapshotId,
+              parentDirectoryId,
+              fileId,
+              savedClass.id,
+              null,
+            );
           }
         }
         break;
@@ -216,7 +279,15 @@ export class AstRelationalService {
         if (node.children) {
           for (const child of node.children) {
             // 함수 내부 진입: currentFunctionId 갱신 (currentClassId는 유지하여 내부 클래스가 소속 파일을 알 수 있게 함)
-            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, currentClassId, savedFn.id);
+            await this.processNode(
+              manager,
+              child,
+              snapshotId,
+              parentDirectoryId,
+              fileId,
+              currentClassId,
+              savedFn.id,
+            );
           }
         }
         break;
@@ -226,7 +297,15 @@ export class AstRelationalService {
         // 관심 없는 구문(if, for, block 등)이더라도 그 안의 함수/클래스를 찾기 위해 현재 컨텍스트를 그대로 유지하고 하위 탐색
         if (node.children) {
           for (const child of node.children) {
-            await this.processNode(manager, child, snapshotId, parentDirectoryId, fileId, currentClassId, currentFunctionId);
+            await this.processNode(
+              manager,
+              child,
+              snapshotId,
+              parentDirectoryId,
+              fileId,
+              currentClassId,
+              currentFunctionId,
+            );
           }
         }
         break;
@@ -238,15 +317,20 @@ export class AstRelationalService {
    * 매칭 키: (파일 basename, 클래스 이름). 같은 트랜잭션(manager) 안에서 호출.
    */
   async applyClassMetrics(
-    manager: any,
+    manager: EntityManager,
     snapshotId: number,
-    classMetrics: Array<{ file: string; name: string; metrics: Record<string, number> }> = [],
+    classMetrics: Array<{
+      file: string;
+      name: string;
+      metrics: Record<string, number>;
+    }> = [],
   ): Promise<number> {
     if (!classMetrics?.length) return 0;
     const base = (p: string) => (p || '').split(/[\\/]/).pop() ?? '';
     const map = new Map<string, Record<string, number>>();
     for (const cm of classMetrics) {
-      if (cm?.name && cm?.metrics) map.set(`${base(cm.file)}::${cm.name}`, cm.metrics);
+      if (cm?.name && cm?.metrics)
+        map.set(`${base(cm.file)}::${cm.name}`, cm.metrics);
     }
 
     const dirs = await manager.find(AstDirectory, {
@@ -267,7 +351,9 @@ export class AstRelationalService {
         }
       }
     }
-    this.logger.log(`Applied CK metrics to ${applied} classes (snapshot ${snapshotId})`);
+    this.logger.log(
+      `Applied CK metrics to ${applied} classes (snapshot ${snapshotId})`,
+    );
     return applied;
   }
 
@@ -294,13 +380,18 @@ export class AstRelationalService {
     }
 
     // 같은 teamProject + build 의 CodeAnalysis 에서 pyexamine 스멜을 첨부 (시각화에서 노드별 매핑).
-    const analysis = snapshot.buildNumber != null
-      ? await this.dataSource.getRepository(CodeAnalysis).findOne({
-          where: { teamProjectId: snapshot.teamProjectId, buildNumber: snapshot.buildNumber },
-          order: { id: 'DESC' },
-        })
-      : null;
-    (snapshot as any).smells = analysis?.pyExamineResult ?? [];
+    const analysis =
+      snapshot.buildNumber != null
+        ? await this.dataSource.getRepository(CodeAnalysis).findOne({
+            where: {
+              teamProjectId: snapshot.teamProjectId,
+              buildNumber: snapshot.buildNumber,
+            },
+            order: { id: 'DESC' },
+          })
+        : null;
+    (snapshot as unknown as { smells: unknown }).smells =
+      analysis?.pyExamineResult ?? [];
 
     return snapshot;
   }
@@ -308,51 +399,68 @@ export class AstRelationalService {
   /**
    * QueryBuilder를 이용한 Natural Join 방식 조회
    */
-  async getSnapshotByNaturalJoin(snapshotId: number): Promise<AstSnapshot & { latencyMs: number; memKb: number }> {
+  async getSnapshotByNaturalJoin(
+    snapshotId: number,
+  ): Promise<AstSnapshot & { latencyMs: number; memKb: number }> {
     const measured = await this.measure('NaturalJoin', () =>
-      this.snapshotRepo.createQueryBuilder('snapshot')
+      this.snapshotRepo
+        .createQueryBuilder('snapshot')
         .leftJoinAndSelect('snapshot.directories', 'dir')
         .leftJoinAndSelect('dir.files', 'file')
         .leftJoinAndSelect('file.classes', 'cls')
         .leftJoinAndSelect('cls.methods', 'method')
         .leftJoinAndSelect('file.fileFunctions', 'fileFn')
         .where('snapshot.id = :id', { id: snapshotId })
-        .getOne());
+        .getOne(),
+    );
     if (!measured.data) {
       throw new NotFoundException(`Snapshot not found: ${snapshotId}`);
     }
-    return Object.assign(measured.data, { latencyMs: measured.latencyMs, memKb: measured.memKb });
+    return Object.assign(measured.data, {
+      latencyMs: measured.latencyMs,
+      memKb: measured.memKb,
+    });
   }
 
   /**
    * 원본 JSON 데이터만 조회
    */
-  async getSnapshotByWholeJson(snapshotId: number): Promise<AstSnapshot & { latencyMs: number; memKb: number }> {
+  async getSnapshotByWholeJson(
+    snapshotId: number,
+  ): Promise<AstSnapshot & { latencyMs: number; memKb: number }> {
     const measured = await this.measure('WholeJson', () =>
       this.snapshotRepo
         .createQueryBuilder('snapshot')
         .addSelect('snapshot.wholeJson')
         .where('snapshot.id = :id', { id: snapshotId })
-        .getOne());
+        .getOne(),
+    );
 
     if (!measured.data) {
       throw new NotFoundException(`Snapshot not found: ${snapshotId}`);
     }
 
-    return Object.assign(measured.data, { latencyMs: measured.latencyMs, memKb: measured.memKb });
+    return Object.assign(measured.data, {
+      latencyMs: measured.latencyMs,
+      memKb: measured.memKb,
+    });
   }
 
   /**
    * Nested SQL (서브쿼리) 방식 조회 및 애플리케이션 레벨 조립
    */
-  async getSnapshotByNested(snapshotId: number): Promise<AstSnapshot & { latencyMs: number; memKb: number }> {
+  async getSnapshotByNested(
+    snapshotId: number,
+  ): Promise<AstSnapshot & { latencyMs: number; memKb: number }> {
     const measured = await this.measure('Nested', () =>
       this.snapshotRepo
         .createQueryBuilder('snapshot')
         .where('snapshot.id = :id', { id: snapshotId })
-        .getOne());
+        .getOne(),
+    );
 
-    if (!measured.data) throw new NotFoundException(`Snapshot not found: ${snapshotId}`);
+    if (!measured.data)
+      throw new NotFoundException(`Snapshot not found: ${snapshotId}`);
 
     // 1) 디렉토리 조회
     const directories = await this.directoryRepo
@@ -447,8 +555,13 @@ export class AstRelationalService {
       }
     });
 
-    const fileMap = new Map<number, AstFile & { classes: any[]; fileFunctions: AstFunction[] }>();
-    files.forEach((file) => fileMap.set(file.id, { ...file, classes: [], fileFunctions: [] }));
+    const fileMap = new Map<
+      number,
+      AstFile & { classes: any[]; fileFunctions: AstFunction[] }
+    >();
+    files.forEach((file) =>
+      fileMap.set(file.id, { ...file, classes: [], fileFunctions: [] }),
+    );
 
     classMap.forEach((cls) => {
       if (fileMap.has(cls.fileId)) fileMap.get(cls.fileId)!.classes.push(cls);
@@ -460,14 +573,23 @@ export class AstRelationalService {
       }
     });
 
-    const dirMap = new Map<number, AstDirectory & { files: any[]; childDirectories: any[] }>();
-    directories.forEach((dir) => dirMap.set(dir.id, { ...dir, files: [], childDirectories: [] }));
+    const dirMap = new Map<
+      number,
+      AstDirectory & { files: any[]; childDirectories: any[] }
+    >();
+    directories.forEach((dir) =>
+      dirMap.set(dir.id, { ...dir, files: [], childDirectories: [] }),
+    );
 
     fileMap.forEach((file) => {
-      if (dirMap.has(file.directoryId)) dirMap.get(file.directoryId)!.files.push(file);
+      if (dirMap.has(file.directoryId))
+        dirMap.get(file.directoryId)!.files.push(file);
     });
 
-    const rootDirectories: any[] = [];
+    const rootDirectories: (AstDirectory & {
+      files: any[];
+      childDirectories: any[];
+    })[] = [];
     // 디렉토리 계층 구조 복원
     dirMap.forEach((dir) => {
       if (dir.parentDirectoryId && dirMap.has(dir.parentDirectoryId)) {
@@ -479,8 +601,11 @@ export class AstRelationalService {
       }
     });
 
-    measured.data.directories = rootDirectories as any;
-    return Object.assign(measured.data, { latencyMs: measured.latencyMs, memKb: measured.memKb });
+    measured.data.directories = rootDirectories as unknown as AstDirectory[];
+    return Object.assign(measured.data, {
+      latencyMs: measured.latencyMs,
+      memKb: measured.memKb,
+    });
   }
 
   /**
@@ -501,6 +626,26 @@ export class AstRelationalService {
   }
 
   /**
+   * 프로젝트 하나의 스냅샷 요약 목록 — ProjectDetail "코드 품질" 탭용 (jej_23 Phase 12 후속).
+   * getAllSnapshots()는 전체 프로젝트의 전체 관계(디렉토리~함수)를 매번 통째로 로드해 매우
+   * 무거운데, 이 화면은 프로젝트 하나·요약 필드만 필요해 관계 없이 가볍게 조회한다.
+   */
+  async getSnapshotSummariesForProject(
+    teamProjectId: number,
+  ): Promise<
+    Pick<
+      AstSnapshot,
+      'id' | 'buildNumber' | 'buildUrl' | 'createdAt' | 'teamProjectId'
+    >[]
+  > {
+    return this.snapshotRepo.find({
+      where: { teamProjectId },
+      select: ['id', 'buildNumber', 'buildUrl', 'createdAt', 'teamProjectId'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
    * [수정됨] 노드에서 이름을 우아하게 추출하는 헬퍼 메서드
    */
   private extractNodeName(node: AstNodeInputDto): string {
@@ -515,14 +660,20 @@ export class AstRelationalService {
       if (nameNode && nameNode.text) return nameNode.text;
 
       const idNode = node.children.find(
-        (c) => c.type && (c.type.toLowerCase().includes('identifier') || c.type.toLowerCase() === 'name'),
+        (c) =>
+          c.type &&
+          (c.type.toLowerCase().includes('identifier') ||
+            c.type.toLowerCase() === 'name'),
       );
       if (idNode && idNode.text) return idNode.text;
     }
 
     // 3. ⭐️ 이름이 없는 익명 함수/클래스인 경우 (위치 기반 식별자 자동 부여)
     const nodeType = (node.type || 'unknown').toLowerCase();
-    const isTargetNode = nodeType.includes('func') || nodeType.includes('method') || nodeType.includes('class');
+    const isTargetNode =
+      nodeType.includes('func') ||
+      nodeType.includes('method') ||
+      nodeType.includes('class');
 
     if (isTargetNode) {
       const line = node.range?.start?.line ?? '0';
@@ -532,10 +683,13 @@ export class AstRelationalService {
     }
 
     // 4. 일반 무명 노드의 텍스트 폴백 (안전을 위해 최대 50자 제한)
-    const fallbackText = node.text && node.text !== 'undefined' && node.text !== 'null'
-      ? node.text
-      : 'Unknown_Node';
+    const fallbackText =
+      node.text && node.text !== 'undefined' && node.text !== 'null'
+        ? node.text
+        : 'Unknown_Node';
 
-    return fallbackText.length > 50 ? fallbackText.substring(0, 47) + '...' : fallbackText;
+    return fallbackText.length > 50
+      ? fallbackText.substring(0, 47) + '...'
+      : fallbackText;
   }
 }

@@ -28,6 +28,12 @@ export class TeamProject extends CommonEntity {
   @Column({ type: 'varchar', nullable: true, default: 'main' })
   githubDefaultBranch: string | null;
 
+  // "내 프로젝트" 목록의 사용자 지정 순서 (jej_22 Phase 2). null이면 한 번도 순서를 바꾼 적
+  // 없다는 뜻이며, 이 경우 updatedAt DESC로 정렬한다(getMyProjects 참고). 팀(멤버) 전역 값이며
+  // 멤버별 개인 정렬은 이번 범위 밖(spec 1장 결정 사항).
+  @Column({ type: 'int', nullable: true })
+  sortOrder: number | null;
+
   @OneToMany(() => CodeAnalysis, (codeAnalysis) => codeAnalysis.teamProject, {
     cascade: true,
   })

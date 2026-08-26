@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Requirement } from './entities/requirement.entity';
 import { RequirementPriority } from './entities/requirement-priority.enum';
 import { RequirementType } from './entities/requirement-type.enum';
+import { RequirementStatus } from './entities/requirement-status.enum';
+import { RequirementVersion } from './entities/requirement-version.entity';
 import { AnalysisFinding } from './entities/analysis-finding.entity';
 import { AnalysisFindingType } from './entities/analysis-finding-type.enum';
 import { CreateRequirementDto } from './dto/create-requirement.dto';
@@ -17,11 +23,43 @@ import type {
   PriorityDistribution,
   RequirementsSummaryDto,
 } from './dto/requirements-summary.dto';
+import type { BaselineSummaryItemDto } from './dto/baseline-summary.dto';
+import type { RecentActivityItemDto } from './dto/activity.dto';
 import {
   buildAnalysisFindings,
   sortFindingsBySeverity,
 } from './lib/analysis-engine';
 import { getDueDateUrgency, getDueInDays } from './lib/due-date';
+import { isValidStatusTransition } from './lib/status-transitions';
+
+/** 버전 이력에 남길 "내용" 필드만 골라 스냅샷한다 — status/baseline은 별도 워크플로 메타데이터라 제외. */
+const CONTENT_FIELDS = [
+  'title',
+  'description',
+  'type',
+  'priority',
+  'ownerId',
+  'dueDate',
+  'source',
+  'relatedFeature',
+  'acceptanceCriteria',
+  'tags',
+] as const;
+
+function snapshotContent(requirement: Requirement): string {
+  const snapshot = Object.fromEntries(
+    CONTENT_FIELDS.map((field) => [field, requirement[field]]),
+  );
+  return JSON.stringify(snapshot);
+}
+
+/** '1.0' → '1.1', '1.9' → '1.10' — 마이너 버전을 1씩 올린다. */
+function bumpVersion(version: string): string {
+  const [majorStr, minorStr] = version.split('.');
+  const major = Number(majorStr) || 1;
+  const minor = Number(minorStr) || 0;
+  return `${major}.${minor + 1}`;
+}
 
 // 프로젝트 멤버십 검증은 ProjectMemberGuard(jej_22 인가 가드 통합, requirements.controller.ts에서
 // @UseGuards(AuthGuard(), ProjectMemberGuard) + @ProjectMember(...)로 적용)가 컨트롤러 진입 시점에
@@ -34,6 +72,8 @@ export class RequirementsService {
     private readonly requirementRepository: Repository<Requirement>,
     @InjectRepository(AnalysisFinding)
     private readonly analysisFindingRepository: Repository<AnalysisFinding>,
+    @InjectRepository(RequirementVersion)
+    private readonly requirementVersionRepository: Repository<RequirementVersion>,
   ) {}
 
   /** create/createBulk가 공유하는 dto→엔티티 필드 매핑 (기본값 채우기 포함). */
@@ -53,6 +93,11 @@ export class RequirementsService {
       relatedFeature: item.relatedFeature ?? null,
       acceptanceCriteria: item.acceptanceCriteria ?? [],
       tags: item.tags ?? null,
+      // DB 컬럼 default(status='draft', version='1.0')는 재조회 전까지 JS 객체에 반영되지 않으므로
+      // 명시적으로 채운다 — update()의 상태 전이 검증/버전 자동 증가가 findOne으로 다시 읽은 값에
+      // 의존하기 때문 (jej_23 Phase 8).
+      status: RequirementStatus.DRAFT,
+      version: '1.0',
     };
   }
 
@@ -101,8 +146,16 @@ export class RequirementsService {
     });
   }
 
-  /** 요구사항 부분 수정 — status 전이(draft→in_review→approved 등) 포함 (jej_22 PR #61 리뷰 #5) */
-  async update(id: number, dto: UpdateRequirementDto): Promise<Requirement> {
+  /**
+   * 요구사항 부분 수정 — status 전이(draft→in_review→approved 등) 포함 (jej_22 PR #61 리뷰 #5).
+   * jej_23 Phase 8: status 전이 그래프 검증, 승인 상태에서만 baseline 지정 허용, 내용(content)이
+   * 실제로 바뀐 경우 RequirementVersion 스냅샷을 자동 기록한다.
+   */
+  async update(
+    id: number,
+    dto: UpdateRequirementDto,
+    userId: number | null = null,
+  ): Promise<Requirement> {
     const requirement = await this.requirementRepository.findOne({
       where: { id },
     });
@@ -110,8 +163,55 @@ export class RequirementsService {
       throw new NotFoundException('요구사항을 찾을 수 없습니다.');
     }
 
+    if (
+      dto.status &&
+      !isValidStatusTransition(requirement.status, dto.status)
+    ) {
+      throw new BadRequestException(
+        `${requirement.status} 상태에서 ${dto.status} 상태로 바로 전이할 수 없습니다.`,
+      );
+    }
+
+    const effectiveStatus = dto.status ?? requirement.status;
+    if (dto.baseline && effectiveStatus !== RequirementStatus.APPROVED) {
+      throw new BadRequestException(
+        '베이스라인은 승인(approved) 상태에서만 지정할 수 있습니다.',
+      );
+    }
+
+    const previousContent = snapshotContent(requirement);
     Object.assign(requirement, dto);
-    return this.requirementRepository.save(requirement);
+    const currentContent = snapshotContent(requirement);
+
+    if (previousContent !== currentContent) {
+      requirement.version = bumpVersion(requirement.version);
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const saved = await manager.save(Requirement, requirement);
+      if (previousContent !== currentContent) {
+        await manager.save(
+          RequirementVersion,
+          manager.create(RequirementVersion, {
+            requirementId: id,
+            version: saved.version,
+            changedById: userId,
+            changeSummary: '내용 수정',
+            previousContent,
+            currentContent,
+          }),
+        );
+      }
+      return saved;
+    });
+  }
+
+  /** 요구사항 변경 이력 조회, 최신순 (jej_23 Phase 8) */
+  async getVersions(requirementId: number): Promise<RequirementVersion[]> {
+    return this.requirementVersionRepository.find({
+      where: { requirementId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   /**
@@ -253,5 +353,66 @@ export class RequirementsService {
         recentFindings: findings.slice(0, 5),
       },
     };
+  }
+
+  /**
+   * 베이스라인별 요구사항 개수 집계 — "설정" 탭 (jej_23 Phase 11). 개수 내림차순으로 정렬한다.
+   */
+  async getBaselineSummary(
+    teamProjectId: number,
+  ): Promise<BaselineSummaryItemDto[]> {
+    const requirements = await this.findByTeamProject(teamProjectId);
+
+    const counts = new Map<string, number>();
+    for (const requirement of requirements) {
+      if (!requirement.baseline) continue;
+      counts.set(
+        requirement.baseline,
+        (counts.get(requirement.baseline) ?? 0) + 1,
+      );
+    }
+
+    return [...counts.entries()]
+      .map(([baseline, count]) => ({ baseline, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  /**
+   * 최근 활동 피드 — ReqFlow 원본처럼 별도 activity 테이블을 새로 만들지 않고
+   * RequirementVersion(Phase 8, 내용 변경마다 자동 기록됨) 생성 시점을 재사용한다 (jej_23 Phase 12).
+   */
+  async getRecentActivity(
+    teamProjectId: number,
+    limit = 10,
+  ): Promise<RecentActivityItemDto[]> {
+    const requirements = await this.findByTeamProject(teamProjectId);
+    if (requirements.length === 0) return [];
+
+    const titleById = new Map(requirements.map((r) => [r.id, r.title]));
+    const versions = await this.requirementVersionRepository.find({
+      where: { requirementId: In(requirements.map((r) => r.id)) },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+
+    return versions.map((v) => ({
+      requirementId: v.requirementId,
+      requirementTitle: titleById.get(v.requirementId) ?? '',
+      version: v.version,
+      changeSummary: v.changeSummary,
+      createdAt: v.createdAt,
+    }));
+  }
+
+  /**
+   * 전체 findings 조회 — getSummary()의 recentFindings(상위 5건)와 달리 "전체 보기" 토글용으로
+   * 전량을 반환한다(jej_23 Phase 12, Analysis 인라인 확장). 재계산 없이 마지막 recomputeFindings
+   * 결과를 그대로 읽는다.
+   */
+  async getAllFindings(teamProjectId: number): Promise<AnalysisFinding[]> {
+    const findings = await this.analysisFindingRepository.find({
+      where: { teamProjectId },
+    });
+    return sortFindingsBySeverity(findings);
   }
 }

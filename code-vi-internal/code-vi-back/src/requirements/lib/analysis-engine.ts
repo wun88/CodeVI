@@ -16,7 +16,8 @@ import { Requirement } from '../entities/requirement.entity';
 const DUPLICATE_THRESHOLD = 0.55;
 const DUPLICATE_HIGH_SEVERITY_THRESHOLD = 0.8;
 
-function tokenize(value: string): string[] {
+/** code-mapping-engine.ts(jej_23 Phase 7)도 동일한 토큰화 규칙을 재사용한다. */
+export function tokenize(value: string): string[] {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9가-힣\s]/g, ' ')

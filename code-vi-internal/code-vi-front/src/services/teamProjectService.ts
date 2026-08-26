@@ -31,4 +31,14 @@ export const teamProjectService = {
     const res = await api.get(`/api/team-projects/${teamProjectId}`);
     return res.data?.data ?? res.data;
   },
+
+  /** "내 프로젝트" 카드 순서 저장 — 화면에 보이는 카드 전체의 id를 원하는 순서대로 전달 (jej_22 Phase 4) */
+  updateProjectsOrder: async (orderedIds: number[]): Promise<void> => {
+    await api.patch('/api/team-projects/order', { orderedIds });
+  },
+
+  /** 프로젝트 삭제 — 본인이 속한 프로젝트가 아니면 403 (jej_22 Phase 4) */
+  deleteProject: async (teamProjectId: number): Promise<void> => {
+    await api.delete(`/api/team-projects/${teamProjectId}`);
+  },
 };

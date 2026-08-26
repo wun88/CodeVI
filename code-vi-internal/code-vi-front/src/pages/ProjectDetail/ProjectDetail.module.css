@@ -150,6 +150,16 @@
   background: var(--internal-surface);
 }
 
+.reqItemClickable {
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.reqItemClickable:hover {
+  border-color: rgba(235, 245, 251, 0.24);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .reqHeader {
   display: flex;
   align-items: center;
@@ -161,6 +171,13 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--internal-text);
+}
+
+.reqBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .reqPriority {
@@ -178,6 +195,20 @@
   font-size: 12px;
   color: var(--internal-text-2);
   line-height: 1.5;
+}
+
+/* 전체 추정 진척률 + 라이프사이클 진척바 (jej_23 Phase 12 후속) */
+.heroRow {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 2fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 720px) {
+  .heroRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* KPI 카드 로우 (jej_20 Phase 6) */
@@ -220,6 +251,14 @@
   grid-template-columns: 1fr;
   gap: 16px;
   margin-bottom: 32px;
+}
+
+/* 대시보드 잔여 위젯(라이프사이클 진척/상태 분포/빌드 타임라인/최근 활동/커버리지) — jej_23 Phase 12 */
+.widgetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .card {
@@ -332,6 +371,97 @@
 .alertDueSoon {
   color: #e8c07a;
   background: rgba(232, 192, 122, 0.10);
+}
+
+/* 요구사항-코드 매핑 요약 배너 (jej_23 Phase 7) */
+.mappingBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mappingBannerText {
+  font-size: 13px;
+  color: var(--internal-text-2);
+}
+
+.mappingBannerStrong {
+  color: var(--internal-text);
+  font-weight: 800;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px 0;
+  flex-wrap: wrap;
+}
+
+.scoreBadge {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.scoreBadge-implemented {
+  color: var(--internal-success);
+  background: rgba(120, 255, 180, 0.1);
+}
+
+.scoreBadge-mostly {
+  color: var(--internal-accent);
+  background: rgba(159, 231, 240, 0.1);
+}
+
+.scoreBadge-partial {
+  color: #e8c07a;
+  background: rgba(232, 192, 122, 0.1);
+}
+
+.scoreBadge-unimplemented {
+  color: var(--internal-text-2);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.reqStats {
+  margin: 6px 0 0 0;
+  font-size: 11px;
+  color: var(--internal-muted);
+}
+
+/* 개요/문서 탭 전환 (jej_23 Phase 9, 탭 아키텍처 §1.2) */
+.tabRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--internal-border);
+}
+
+.tabBtn {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--internal-text-2);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.tabBtn:hover {
+  color: var(--internal-text);
+}
+
+.tabBtnActive {
+  color: var(--internal-text);
+  border-bottom-color: var(--internal-accent);
 }
 
 @media (max-width: 720px) {
