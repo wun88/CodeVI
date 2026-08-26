@@ -41,6 +41,9 @@ x-common-env: &common-env
   GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
   GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
   GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI}
+  # GitHub repo 연동 access token 암호화 키(base64 32byte) — 없으면 saveGithubConnection이
+  # 예외를 던져 연결 콜백이 github_connect_failed로 실패한다.
+  GITHUB_TOKEN_ENC_KEY: ${GITHUB_TOKEN_ENC_KEY}
   GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
   GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
   GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
