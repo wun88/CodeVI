@@ -77,6 +77,21 @@ export interface AstDirectory {
   files: AstFile[];
 }
 
+/**
+ * 스냅샷에 첨부되는 pyexamine 스멜 (백엔드 PyExamineResult 그대로).
+ * ast-relational이 같은 teamProject+buildNumber의 CodeAnalysis.pyExamineResult를
+ * 스냅샷 응답에 붙여준다 — 시각화 오버레이는 별도 API 없이 이 배열만 쓴다.
+ */
+export interface AstSmell {
+  type: string;
+  name: string;
+  description: string;
+  file: string;
+  'Module/Class': string;
+  lineNumber: number;
+  severity: string;
+}
+
 export interface AstSnapshot {
   id: number;
   createdAt: string;
@@ -84,6 +99,7 @@ export interface AstSnapshot {
   teamProjectId: number;
   directories: AstDirectory[];  // flat 배열
   methodCalls?: AstMethodCall[]; // 메서드 호출 관계
+  smells?: AstSmell[];           // 스멜 없음/미분석 언어면 빈 배열
 }
 
 /** flat 배열 → 트리 변환 후 사용하는 타입 */

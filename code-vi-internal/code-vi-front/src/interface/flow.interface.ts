@@ -18,12 +18,22 @@ export interface FlowNodeData extends Record<string, unknown> {
   label: string;
   nodeType: FlowNodeType;
   metrics?: CkMetrics;
+  /* 펼치기/접기 (AstFlowCanvas에서 주입) */
+  expandable?: boolean;
+  expanded?: boolean;
+  hiddenChildren?: number;
+  onToggle?: (id: string) => void;
+  /* 스멜 오버레이 (AstFlowCanvas에서 주입) — 디렉토리는 하위 롤업 값 */
+  smells?: { high: number; medium: number; total: number; names: string[] };
+  qualityScore?: number;
+  showHeat?: boolean;
   meta?: {
     startLine?: number;
     endLine?: number;
     startCol?: number;
     endCol?: number;
     fileName?: string;
+    fullPath?: string;
     methodCount?: number;
     fileCount?: number;
     childDirCount?: number;

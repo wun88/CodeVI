@@ -1,11 +1,11 @@
 .node {
   position: relative;
-  --node-accent: #7492b7;
-  --node-accent-soft: rgba(116, 146, 183, 0.08);
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-left: 3.5px solid var(--node-accent);
-  border-radius: 14px;
+  --node-accent: #9fe7f0;
+  --node-accent-soft: color-mix(in srgb, var(--node-accent) 10%, transparent);
+  background: linear-gradient(180deg, rgba(30, 36, 41, 0.97), rgba(23, 27, 30, 0.97));
+  border: 1px solid rgba(235, 245, 251, 0.12);
+  border-left: 3px solid var(--node-accent);
+  border-radius: 12px;
   padding: 8px 11px;
   min-width: 140px;
   max-width: 210px;
@@ -16,63 +16,122 @@
     transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 6px 20px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(12px) saturate(1.6);
-  -webkit-backdrop-filter: blur(12px) saturate(1.6);
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 8px 22px rgba(0, 0, 0, 0.35);
 }
 
 .node:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.04),
-    0 12px 28px rgba(0, 0, 0, 0.07);
-  border-color: rgba(255, 255, 255, 0.7);
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 14px 30px rgba(0, 0, 0, 0.45);
+  border-color: rgba(235, 245, 251, 0.24);
 }
 
 .selected {
   box-shadow:
-    0 0 0 2.5px color-mix(in srgb, var(--node-accent) 45%, transparent),
-    0 0 18px color-mix(in srgb, var(--node-accent) 18%, transparent),
-    0 12px 32px rgba(0, 0, 0, 0.08);
-  border-color: color-mix(in srgb, var(--node-accent) 50%, transparent) !important;
+    0 0 0 2.5px color-mix(in srgb, var(--node-accent) 55%, transparent),
+    0 0 20px color-mix(in srgb, var(--node-accent) 25%, transparent),
+    0 12px 32px rgba(0, 0, 0, 0.5);
+  border-color: color-mix(in srgb, var(--node-accent) 60%, transparent) !important;
 }
 
 /* ═══════════════════════ Node Types ═══════════════════════ */
 .directory {
-  --node-accent: #3b82f6;
-  --node-accent-soft: rgba(59, 130, 246, 0.06);
-}
-
-.directory .emoji {
-  color: #2563eb;
+  --node-accent: #60a5fa;
+  --node-accent-soft: rgba(96, 165, 250, 0.1);
 }
 
 .file {
-  --node-accent: #10b981;
-  --node-accent-soft: rgba(16, 185, 129, 0.06);
-}
-
-.file .emoji {
-  color: #059669;
+  --node-accent: #34d399;
+  --node-accent-soft: rgba(52, 211, 153, 0.1);
 }
 
 .class {
-  --node-accent: #f59e0b;
-  --node-accent-soft: rgba(245, 158, 11, 0.06);
-}
-
-.class .emoji {
-  color: #d97706;
+  --node-accent: #fbbf24;
+  --node-accent-soft: rgba(251, 191, 36, 0.1);
 }
 
 .function {
-  --node-accent: #a855f7;
-  --node-accent-soft: rgba(168, 85, 247, 0.06);
+  --node-accent: #c084fc;
+  --node-accent-soft: rgba(192, 132, 252, 0.1);
 }
 
-.function .emoji {
-  color: #9333ea;
+/* ═══════════════════════ Smell Overlay ═══════════════════════ */
+.smellHigh {
+  border-color: rgba(248, 113, 113, 0.55);
+  box-shadow:
+    0 0 0 1.5px rgba(248, 113, 113, 0.35),
+    0 0 14px rgba(248, 113, 113, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.smellMedium {
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow:
+    0 0 0 1.5px rgba(251, 191, 36, 0.26),
+    0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.smellBadge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1.5px 5px;
+  border-radius: 999px;
+  line-height: 1.3;
+}
+
+.smellBadge[data-sev='high'] {
+  background: rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #fca5a5;
+}
+
+.smellBadge[data-sev='medium'] {
+  background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: #fcd34d;
+}
+
+.scoreTag {
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 5px;
+  padding: 1.5px 6px;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreTag[data-grade='good'] {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #6ee7b7;
+}
+
+.scoreTag[data-grade='warn'] {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fcd34d;
+}
+
+.scoreTag[data-grade='bad'] {
+  background: rgba(248, 113, 113, 0.14);
+  border: 1px solid rgba(248, 113, 113, 0.38);
+  color: #fca5a5;
+}
+
+/* 품질 히트맵 모드: 점수 등급별 배경 tint — 축소 시 문제 영역이 색으로 보임 */
+.node[data-heat='good'] {
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.2), rgba(23, 27, 30, 0.97) 80%);
+}
+
+.node[data-heat='warn'] {
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.26), rgba(23, 27, 30, 0.97) 80%);
+}
+
+.node[data-heat='bad'] {
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.34), rgba(23, 27, 30, 0.97) 80%);
 }
 
 /* ═══════════════════════ Header ═══════════════════════ */
@@ -86,18 +145,44 @@
 .emoji {
   font-size: 13px;
   flex-shrink: 0;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.06));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 .label {
   font-size: 12.5px;
   font-weight: 800;
-  color: #0f172a;
+  color: rgba(235, 245, 251, 0.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
   letter-spacing: -0.01em;
+}
+
+/* ═══════════════════════ Expand/Collapse ═══════════════════════ */
+.expandBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--node-accent) 38%, transparent);
+  background: color-mix(in srgb, var(--node-accent) 14%, transparent);
+  color: var(--node-accent);
+  font-size: 9.5px;
+  font-weight: 800;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.expandBtn:hover {
+  background: color-mix(in srgb, var(--node-accent) 28%, transparent);
+  border-color: color-mix(in srgb, var(--node-accent) 55%, transparent);
 }
 
 /* ═══════════════════════ Meta Tags ═══════════════════════ */
@@ -110,9 +195,9 @@
 
 .metaTag {
   font-size: 9.5px;
-  color: rgba(15, 23, 42, 0.5);
+  color: rgba(235, 245, 251, 0.58);
   background: var(--node-accent-soft);
-  border: 1px solid color-mix(in srgb, var(--node-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--node-accent) 16%, transparent);
   border-radius: 5px;
   padding: 1.5px 6px;
   font-weight: 700;
@@ -123,14 +208,14 @@
 .handle {
   width: 8px !important;
   height: 8px !important;
-  background: #e2e8f0 !important;
-  border: 1.5px solid #94a3b8 !important;
+  background: #2a3237 !important;
+  border: 1.5px solid #55616a !important;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .node:hover .handle {
-  background: #cbd5e1 !important;
-  border-color: #64748b !important;
+  background: #39434a !important;
+  border-color: #7b8894 !important;
 }
 
 /* ═══════════════════════ Metrics Popover ═══════════════════════ */
@@ -138,7 +223,7 @@
   display: none;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(116, 146, 183, 0.14);
+  border-top: 1px solid rgba(235, 245, 251, 0.1);
 }
 
 .node:hover .metricsPopover {
@@ -161,20 +246,20 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(241, 245, 249, 0.7);
+  background: rgba(235, 245, 251, 0.05);
   padding: 3px 4px;
   border-radius: 6px;
-  border: 1px solid rgba(226, 232, 240, 0.45);
+  border: 1px solid rgba(235, 245, 251, 0.08);
   transition: background 0.15s ease;
 }
 
 .metricItem:hover {
-  background: rgba(226, 232, 240, 0.55);
+  background: rgba(235, 245, 251, 0.09);
 }
 
 .metricLabel {
   font-size: 7.5px;
-  color: rgba(71, 85, 105, 0.7);
+  color: rgba(235, 245, 251, 0.5);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -182,14 +267,14 @@
 
 .metricValue {
   font-size: 11px;
-  color: #0f172a;
+  color: rgba(235, 245, 251, 0.92);
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
 .warn {
-  color: #dc2626;
+  color: #f87171;
 }
 
 /* ═══════════════════════ Node Type Sizing ═══════════════════════ */

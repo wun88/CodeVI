@@ -12,16 +12,24 @@ const NODE_CONFIG: Record<FlowNodeType, { emoji: string; className: string }> = 
 
 // @xyflow/react v12: NodeProps uses Record<string, unknown> generic
 // We cast data to FlowNodeData after receiving it
-function AstNode({ data: rawData, selected }: NodeProps) {
+function AstNode({ id, data: rawData, selected }: NodeProps) {
   const data = rawData as FlowNodeData;
   const config = NODE_CONFIG[data.nodeType] ?? { emoji: '🔷', className: '' };
-  const { metrics } = data;
+  const { metrics, smells, qualityScore } = data;
+
+  const smellClass = smells?.high ? styles.smellHigh : smells?.medium ? styles.smellMedium : '';
+  const scoreGrade =
+    qualityScore != null ? (qualityScore >= 90 ? 'good' : qualityScore >= 70 ? 'warn' : 'bad') : undefined;
+  const showScore =
+    qualityScore != null && (data.nodeType === 'directory' || data.nodeType === 'file');
+  const heatGrade = data.showHeat && showScore ? scoreGrade : undefined;
 
   return (
     <div
-      className={`${styles.node} ${config.className} ${selected ? styles.selected : ''}`}
+      className={`${styles.node} ${config.className} ${selected ? styles.selected : ''} ${smellClass}`}
       data-node-type={data.nodeType}
       data-selected={selected ? 'true' : 'false'}
+      data-heat={heatGrade}
     >
       <Handle type="target" position={Position.Top} className={styles.handle} />
 
@@ -30,21 +38,49 @@ function AstNode({ data: rawData, selected }: NodeProps) {
         <span className={styles.label} title={data.label}>
           {data.label}
         </span>
+        {smells && smells.total > 0 && (
+          <span
+            className={styles.smellBadge}
+            data-sev={smells.high ? 'high' : 'medium'}
+            title={`smell ${smells.total} — ${smells.names.join(', ')}`}
+          >
+            {smells.total}
+          </span>
+        )}
+        {data.expandable && (
+          <button
+            type="button"
+            className={styles.expandBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onToggle?.(id);
+            }}
+            aria-label={data.expanded ? '하위 접기' : '하위 펼치기'}
+            title={data.expanded ? '하위 접기' : `하위 ${data.hiddenChildren}개 펼치기`}
+          >
+            {data.expanded ? '−' : `+${data.hiddenChildren}`}
+          </button>
+        )}
       </div>
 
-      {data.meta && (
+      {(data.meta || showScore) && (
         <div className={styles.meta}>
-          {data.meta.methodCount != null && (
+          {showScore && (
+            <span className={styles.scoreTag} data-grade={scoreGrade}>
+              {qualityScore}점
+            </span>
+          )}
+          {data.meta?.methodCount != null && (
             <span className={styles.metaTag}>
               {data.meta.methodCount} method{data.meta.methodCount !== 1 ? 's' : ''}
             </span>
           )}
-          {data.meta.fileCount != null && (
+          {data.meta?.fileCount != null && (
             <span className={styles.metaTag}>
               {data.meta.fileCount} file{data.meta.fileCount !== 1 ? 's' : ''}
             </span>
           )}
-          {data.meta.childDirCount != null && data.meta.childDirCount > 0 && (
+          {data.meta?.childDirCount != null && data.meta.childDirCount > 0 && (
             <span className={styles.metaTag}>
               {data.meta.childDirCount} sub
             </span>

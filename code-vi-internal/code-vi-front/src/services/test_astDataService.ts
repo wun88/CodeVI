@@ -2,6 +2,7 @@
 // 실제 훅/페이지는 services/astDataService.ts(실 API)를 사용 중.
 import type { AstSnapshot, AstSnapshotSummary } from '../interface/ast.interface';
 import { dummySnapshots, dummySnapshotDetail } from '../dummy/astDummyData';
+import { dummySnapshotDetailLarge } from '../dummy/astDummyDataLarge';
 
 /**
  * ⚠️ UI 디자인 테스트를 위한 임시 서비스입니다.
@@ -24,8 +25,10 @@ export const astDataService = {
    */
   async getSnapshot(snapshotId: number): Promise<AstSnapshot> {
     console.log(`[TEST_API] Fetching snapshot ID: ${snapshotId}`);
+    // snapshotId=4 → 실제 스냅샷 규모(dirs 140 / files 486)의 대용량 더미 (가독성 테스트용)
+    const detail = snapshotId === 4 ? dummySnapshotDetailLarge : dummySnapshotDetail;
     return new Promise((resolve) => {
-      setTimeout(() => resolve(dummySnapshotDetail), 800);
+      setTimeout(() => resolve(detail), 800);
     });
   },
 

@@ -54,19 +54,21 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
     });
   };
 
-  const processDir = (dir: AstTreeDirectory, parentId?: string) => {
+  const processDir = (dir: AstTreeDirectory, parentId?: string, parentPath = '') => {
     const dirNodeId = `dir-${dir.id}`;
+    const dirPath = parentPath ? `${parentPath}/${dir.name}` : dir.name;
 
     nodes.push({
       id: dirNodeId,
       type: 'astNode',
-      position: { x: 0, y: 0 }, // Dagre가 덮어씀
+      position: { x: 0, y: 0 }, // 레이아웃이 덮어씀
       data: {
         label: dir.name,
         nodeType: 'directory',
         meta: {
           fileCount: dir.files.length,
           childDirCount: dir.treeChildren.length,
+          fullPath: dirPath,
         },
       },
     });
@@ -76,7 +78,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
     }
 
     // 하위 디렉토리 재귀
-    dir.treeChildren.forEach((child) => processDir(child, dirNodeId));
+    dir.treeChildren.forEach((child) => processDir(child, dirNodeId, dirPath));
 
     // 파일 처리
     dir.files.forEach((file) => {
@@ -92,6 +94,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
           nodeType: 'file',
           meta: {
             fileName: file.name,
+            fullPath: `${dirPath}/${file.name}`,
           },
         },
       });

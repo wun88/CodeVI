@@ -36,3 +36,5 @@
 
 ## 6. 기록
 - [2026-06-04_metrics_api_mvp_progress.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/history/byoon/06(agent)/2026-06-04_metrics_api_mvp_progress.md)
+- [2026-08-30_visualization_quality_overlay_plan.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/history/byoon/06(agent)/2026-08-30_visualization_quality_overlay_plan.md)
+- [2026-08-30_visualization_readability_dark_redesign.md](/Users/jeonbyeong-yoon/Desktop/무제 폴더/종합설계 관련/종합설계 프로젝트/CodeVi/docs/history/byoon/06(agent)/2026-08-30_visualization_readability_dark_redesign.md)
