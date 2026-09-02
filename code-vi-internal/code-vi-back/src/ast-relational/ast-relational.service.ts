@@ -11,12 +11,19 @@ import { AstFunction } from './entity/ast-function.entity';
 import { TeamProject } from 'src/team-project/entities/team-project.entity';
 import { CodeAnalysis } from 'src/code-analysis/entities/code-analysis.entity';
 import { CodeMappingService } from '../requirements/code-mapping.service';
+import { NvidiaLlmService } from '../llm/nvidia-llm.service';
+import { LlmGenerationError } from '../llm/llm.errors';
 
 // DTOs
 import {
   CreateRelationalAstDto,
   AstNodeInputDto,
 } from './dto/create-relational-ast.dto';
+import {
+  AiRefactoringSuggestDto,
+  AiRefactoringSuggestionDto,
+  AiRefactoringSuggestionText,
+} from './dto/ai-refactoring-suggest.dto';
 
 @Injectable()
 export class AstRelationalService {
@@ -43,6 +50,7 @@ export class AstRelationalService {
 
     private readonly dataSource: DataSource,
     private readonly codeMappingService: CodeMappingService,
+    private readonly nvidiaLlmService: NvidiaLlmService,
   ) {}
 
   private async measure<T>(
@@ -236,6 +244,9 @@ export class AstRelationalService {
           // 현재 위치가 함수 안이라면 parentFunctionId, 기존 클래스 안이라면 parentClassId
           parentClassId: currentFunctionId ? null : currentClassId,
           parentFunctionId: currentFunctionId,
+          // 파서가 노드 원문(text)을 보내주면 그대로 저장 — 리팩토링 인사이트의 BEFORE 코드/AI
+          // 프롬프트에 실제 소스를 쓸 수 있게 한다(jej_31, 2026-09-01). 안 보내면 null.
+          sourceCode: node.text ?? null,
         });
         const savedClass = await manager.save(cls);
 
@@ -394,6 +405,182 @@ export class AstRelationalService {
       analysis?.pyExamineResult ?? [];
 
     return snapshot;
+  }
+
+  /**
+   * "리팩토링 인사이트" 섹션의 후보 클래스(classIds, 프론트가 이미 CK 임계값으로 골라 화면에
+   * 표시 중인 목록)에 대해 NVIDIA LLM으로 개선 방향 텍스트를 생성한다.
+   * 대상 선정·메트릭·메서드 이름은 결정론적으로 계산하고, LLM은 그 사실을 근거로 한 설명 문장만
+   * 생성한다 — LLM이 숫자나 대상을 만들어내지 않도록 하기 위함. AI 호출이 실패하거나 특정 클래스
+   * 항목만 파싱에 실패해도 해당 항목은 기존 정적 템플릿 문구로 폴백한다(전체 요청은 실패시키지 않음).
+   */
+  async generateAiRefactoringSuggestions(
+    teamProjectId: number,
+    dto: AiRefactoringSuggestDto,
+  ): Promise<AiRefactoringSuggestionDto[]> {
+    const snapshot = await this.getSnapshotById(dto.snapshotId);
+    if (snapshot.teamProjectId !== teamProjectId) {
+      throw new NotFoundException(`Snapshot not found: ${dto.snapshotId}`);
+    }
+
+    // buildSnapshotOverview.ts(프론트)와 동일하게 최상위 directories의 files만 순회한다 —
+    // 프론트가 후보를 고른 것과 같은 트리를 봐야 classIds가 항상 해석 가능하다.
+    const allClasses = (snapshot.directories ?? []).flatMap((d) =>
+      (d.files ?? []).flatMap((f) => f.classes ?? []),
+    );
+    const targetClasses = dto.classIds
+      .map((id) => allClasses.find((c) => c.id === id))
+      .filter((c): c is AstClass => !!c);
+
+    if (targetClasses.length === 0) {
+      return [];
+    }
+
+    const deterministic = targetClasses.map((cls) =>
+      this.buildDeterministicRefactoringSuggestion(cls),
+    );
+
+    let aiTexts: Map<number, AiRefactoringSuggestionText>;
+    try {
+      aiTexts = await this.requestAiRefactoringTexts(targetClasses);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `AI refactoring suggestion generation failed, using fallback text: ${message}`,
+      );
+      aiTexts = new Map();
+    }
+
+    return deterministic.map((item) => {
+      const ai = aiTexts.get(item.classId);
+      return ai ? { ...item, ...ai } : item;
+    });
+  }
+
+  /** LCOM/CBO/WMC 값만으로 결정론적으로 구성하는 기본 제안 — AI 미가용 시 폴백으로도 쓰인다. */
+  private buildDeterministicRefactoringSuggestion(
+    cls: AstClass,
+  ): AiRefactoringSuggestionDto {
+    const metrics = cls.metrics ?? {};
+    const lcom = metrics.lcom ?? 0;
+    const cbo = metrics.cbo ?? 0;
+    const wmc = metrics.wmc ?? 0;
+
+    const detailExplanation =
+      lcom > 50
+        ? 'LCOM이 높아 클래스 내 메서드가 서로 다른 데이터를 다루는 경향이 있습니다. 응집도를 높이기 위해 역할을 분리하세요.'
+        : cbo > 6
+          ? '다른 클래스와의 결합(CBO)이 높습니다. 의존 방향을 줄이거나 중재 레이어를 도입하는 것을 검토하세요.'
+          : '메서드 수·복잡도(WMC)가 큽니다. 긴 메서드 분할과 단일 책임 원칙 적용을 권장합니다.';
+    const problemSummary =
+      lcom > 50
+        ? `응집도 저하: ${cls.name}에서 LCOM이 높습니다.`
+        : cbo > 6
+          ? `결합 과다: ${cls.name}의 CBO가 높습니다.`
+          : `복잡도 과다: ${cls.name}의 WMC가 큽니다.`;
+    const effectSummary =
+      lcom > 50
+        ? '역할 분리 시 변경 범위 축소·테스트 용이성 향상을 기대할 수 있습니다.'
+        : cbo > 6
+          ? '의존 축소 시 리그레션 범위와 배포 리스크를 줄일 수 있습니다.'
+          : '메서드 분할 시 가독성과 단위 테스트 작성이 쉬워집니다.';
+    const severity: 'risk' | 'improve' =
+      wmc > 16 || cbo > 9 || lcom > 70 ? 'risk' : 'improve';
+    const effectHighlights = effectSummary
+      .split('·')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 2);
+
+    return {
+      classId: cls.id,
+      targetLabel: cls.name,
+      problemCode: cls.sourceCode
+        ? this.excerptSource(cls.sourceCode)
+        : `// ${cls.name}: LCOM ${lcom}, CBO ${cbo}, WMC ${wmc}\n// 높은 결합·응집도 저하 가능성`,
+      problemSummary,
+      improvedCode:
+        '// 책임 분리 또는 서비스 추출로 메서드 그룹을 나눕니다.\n// private 헬퍼 추출, 인터페이스 도입 검토',
+      effectSummary,
+      detailExplanation,
+      severity,
+      effectHighlights,
+      metrics: { cbo, wmc, lcom },
+    };
+  }
+
+  /**
+   * 원본 소스가 너무 길면(전체 파일 등) UI/프롬프트에 그대로 쓰기엔 과하므로 앞부분만 잘라
+   * 보여준다 — "문제 코드"는 대표성만 있으면 충분하고, 전체 파일 스크롤은 UX상 부담스럽다.
+   */
+  private excerptSource(source: string, maxLines = 60): string {
+    const lines = source.split('\n');
+    if (lines.length <= maxLines) return source;
+    return (
+      lines.slice(0, maxLines).join('\n') +
+      `\n// ... (총 ${lines.length}줄 중 ${maxLines}줄만 표시)`
+    );
+  }
+
+  /** 대상 클래스들의 실제 메트릭·메서드 이름(+가능하면 실제 소스 발췌)을 근거로 NVIDIA LLM에 개선 설명 문장 생성을 요청한다. */
+  private async requestAiRefactoringTexts(
+    classes: AstClass[],
+  ): Promise<Map<number, AiRefactoringSuggestionText>> {
+    const systemPrompt =
+      '당신은 시니어 소프트웨어 엔지니어입니다. 주어진 클래스의 실제 메트릭·메서드 목록·(있다면) 실제 ' +
+      '소스 코드 발췌만 근거로 리팩토링 방향을 한국어로 제안하세요. sourceCode가 주어진 클래스는 그 코드에 ' +
+      '실제로 등장하는 이름·구조를 근거로 구체적인 개선 코드를 improvedCode에 작성하고, sourceCode가 없는 ' +
+      '클래스는 실행 가능한 코드가 아니라 의사코드 수준의 리팩토링 방향(주석 형태)을 작성하세요. 다른 설명 ' +
+      '없이 JSON 배열만 출력하세요.';
+
+    const userPrompt = JSON.stringify({
+      instruction:
+        '아래 classes 배열의 각 클래스에 대해 정확히 하나씩, ' +
+        '{ "classId": number, "improvedCode": string, "effectSummary": string, ' +
+        '"detailExplanation": string, "effectHighlights": string[] } 형태의 객체로 이루어진 ' +
+        'JSON 배열을 반환하세요. effectHighlights는 effectSummary 안에서 강조할 핵심 어구 1~2개입니다.',
+      classes: classes.map((cls) => ({
+        classId: cls.id,
+        className: cls.name,
+        metrics: cls.metrics ?? {},
+        methods: (cls.methods ?? []).map((m) => m.name).slice(0, 30),
+        sourceCode: cls.sourceCode
+          ? this.excerptSource(cls.sourceCode, 120)
+          : undefined,
+      })),
+    });
+
+    const result = await this.nvidiaLlmService.generateJson(
+      systemPrompt,
+      userPrompt,
+    );
+    if (!Array.isArray(result)) {
+      throw new LlmGenerationError('NVIDIA response was not a JSON array');
+    }
+
+    const map = new Map<number, AiRefactoringSuggestionText>();
+    for (const item of result as unknown[]) {
+      if (!item || typeof item !== 'object') continue;
+      const record = item as Record<string, unknown>;
+      if (
+        typeof record.classId === 'number' &&
+        typeof record.improvedCode === 'string' &&
+        typeof record.effectSummary === 'string' &&
+        typeof record.detailExplanation === 'string'
+      ) {
+        map.set(record.classId, {
+          improvedCode: record.improvedCode,
+          effectSummary: record.effectSummary,
+          detailExplanation: record.detailExplanation,
+          effectHighlights: Array.isArray(record.effectHighlights)
+            ? record.effectHighlights.filter(
+                (h): h is string => typeof h === 'string',
+              )
+            : [],
+        });
+      }
+    }
+    return map;
   }
 
   /**

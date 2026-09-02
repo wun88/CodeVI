@@ -17,6 +17,8 @@ export function useProjectCodeQuality(teamProjectId: number) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [listError, setListError] = useState('');
   const [detailError, setDetailError] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +71,40 @@ export function useProjectCodeQuality(teamProjectId: number) {
     };
   }, [selectedId]);
 
+  const generateAiRefactoring = async () => {
+    if (selectedId == null || !overview) return;
+    const classIds = overview.refactorings
+      .map((item) => item.classId)
+      .filter((id): id is number => typeof id === 'number');
+    if (classIds.length === 0) return;
+
+    setAiError('');
+    setAiLoading(true);
+    try {
+      const aiSuggestions = await astDataService.generateAiRefactoring(
+        teamProjectId,
+        selectedId,
+        classIds,
+      );
+      const byClassId = new Map(aiSuggestions.map((s) => [s.classId, s]));
+      setOverview((prev) =>
+        prev
+          ? {
+              ...prev,
+              refactorings: prev.refactorings.map((item) => {
+                const ai = item.classId != null ? byClassId.get(item.classId) : undefined;
+                return ai ? { ...item, ...ai, id: item.id } : item;
+              }),
+            }
+          : prev,
+      );
+    } catch {
+      setAiError('AI 리팩토링 제안 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return {
     snapshots,
     selectedId,
@@ -77,5 +113,8 @@ export function useProjectCodeQuality(teamProjectId: number) {
     listLoading,
     detailLoading,
     error: listError || detailError,
+    aiLoading,
+    aiError,
+    generateAiRefactoring,
   };
 }

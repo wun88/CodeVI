@@ -80,6 +80,13 @@ function qualityHintFromScore(score: number): string {
   return '품질 지표가 다소 낮습니다. 결합도·복잡도 중심으로 점검이 필요합니다.';
 }
 
+/** 백엔드 excerptSource와 동일한 규칙 — 전체 파일을 그대로 보여주기엔 과하므로 대표 구간만 자른다. */
+function excerptSource(source: string, maxLines = 60): string {
+  const lines = source.split('\n');
+  if (lines.length <= maxLines) return source;
+  return lines.slice(0, maxLines).join('\n') + `\n// ... (총 ${lines.length}줄 중 ${maxLines}줄만 표시)`;
+}
+
 function buildRefactorings(classes: AstClass[]): RefactoringSuggestion[] {
   const items: RefactoringSuggestion[] = [];
   let idx = 0;
@@ -114,12 +121,16 @@ function buildRefactorings(classes: AstClass[]): RefactoringSuggestion[] {
       .slice(0, 2);
     items.push({
       id: `rf-${cls.id}-${idx}`,
+      classId: cls.id,
       targetLabel: cls.name,
       problemSummary: summary,
-      problemCode: `// ${cls.name}: LCOM ${m.lcom}, CBO ${m.cbo}, WMC ${m.wmc}\n// 높은 결합·응집도 저하 가능성`,
+      problemCode: cls.sourceCode
+        ? excerptSource(cls.sourceCode)
+        : `// ${cls.name}: LCOM ${m.lcom}, CBO ${m.cbo}, WMC ${m.wmc}\n// 높은 결합·응집도 저하 가능성`,
       improvedCode: `// 책임 분리 또는 서비스 추출로 메서드 그룹을 나눕니다.\n// private 헬퍼 추출, 인터페이스 도입 검토`,
       effectSummary: effect,
       detailExplanation: detail,
+      metrics: { cbo: m.cbo, wmc: m.wmc, lcom: m.lcom },
       severity,
       effectHighlights,
     });

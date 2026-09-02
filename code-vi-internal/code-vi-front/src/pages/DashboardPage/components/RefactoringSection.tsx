@@ -1,9 +1,13 @@
 import type { RefactoringSeverity, RefactoringSuggestion } from '../../../interface/dashboardOverview.interface';
+import DiffHunkReview from './DiffHunkReview';
 import shared from '../dashboardShared.module.css';
 import styles from './RefactoringSection.module.css';
 
 type Props = {
   items: RefactoringSuggestion[];
+  aiLoading?: boolean;
+  aiError?: string;
+  onGenerateAi?: () => void;
 };
 
 function severityLabel(s: RefactoringSeverity): string {
@@ -37,18 +41,35 @@ function renderEffectHighlighted(text: string, highlights: string[]) {
   );
 }
 
-export default function RefactoringSection({ items }: Props) {
+export default function RefactoringSection({ items, aiLoading, aiError, onGenerateAi }: Props) {
+  const hasAiCandidates = items.some((item) => item.classId != null);
+
   return (
     <section className={shared.card}>
-      <h2 className={shared.sectionTitle}>
-        <span className={shared.sectionIcon} aria-hidden>
-          ✨
-        </span>
-        리팩토링 인사이트
-      </h2>
-      <p className={shared.muted} style={{ marginBottom: '1rem' }}>
-        CK 메트릭 기반 자동 분석 제안입니다. 적용 전 코드 리뷰와 테스트를 권장합니다.
-      </p>
+      <div className={styles.sectionHead}>
+        <div>
+          <h2 className={shared.sectionTitle}>
+            <span className={shared.sectionIcon} aria-hidden>
+              ✨
+            </span>
+            리팩토링 인사이트
+          </h2>
+          <p className={shared.muted}>
+            CK 메트릭 기반 자동 분석 제안입니다. 적용 전 코드 리뷰와 테스트를 권장합니다.
+          </p>
+        </div>
+        {onGenerateAi && (
+          <button
+            type="button"
+            className={shared.btnPrimary}
+            disabled={!hasAiCandidates || aiLoading}
+            onClick={onGenerateAi}
+          >
+            {aiLoading ? 'AI 제안 생성 중...' : 'AI 상세 제안 생성'}
+          </button>
+        )}
+      </div>
+      {aiError && <p className={styles.aiError}>{aiError}</p>}
       <ul className={styles.list}>
         {items.map((item) => (
           <li
@@ -66,33 +87,37 @@ export default function RefactoringSection({ items }: Props) {
             <section className={styles.block}>
               <div className={styles.blockHead}>문제 요약</div>
               <p className={styles.oneLiner}>{item.problemSummary}</p>
-              <div className={styles.metricChips} aria-label="핵심 메트릭">
-                {(() => {
-                  const m = item.problemCode.match(/LCOM\s+(\d+),\s*CBO\s+(\d+),\s*WMC\s+(\d+)/);
-                  if (!m) return null;
-                  return (
-                    <>
-                      <span className={styles.chip} title="Lack of Cohesion in Methods">LCOM {m[1]}</span>
-                      <span className={styles.chip} title="Coupling Between Objects">CBO {m[2]}</span>
-                      <span className={styles.chip} title="Weighted Methods per Class">WMC {m[3]}</span>
-                    </>
-                  );
-                })()}
-              </div>
+              {item.metrics && (
+                <div className={styles.metricChips} aria-label="핵심 메트릭">
+                  <span className={styles.chip} title="Lack of Cohesion in Methods">
+                    LCOM {item.metrics.lcom}
+                  </span>
+                  <span className={styles.chip} title="Coupling Between Objects">
+                    CBO {item.metrics.cbo}
+                  </span>
+                  <span className={styles.chip} title="Weighted Methods per Class">
+                    WMC {item.metrics.wmc}
+                  </span>
+                </div>
+              )}
             </section>
 
             <section className={styles.block}>
-              <div className={styles.blockHead}>Before / After 비교</div>
-              <div className={styles.codePair}>
-              <div className={styles.codeCol}>
-                <div className={styles.codeHead}>BEFORE</div>
-                <pre className={`${styles.code} ${styles.codeBefore}`}>{item.problemCode}</pre>
-              </div>
-              <div className={styles.codeCol}>
-                <div className={`${styles.codeHead} ${styles.codeHeadAfter}`}>AFTER</div>
-                <pre className={`${styles.code} ${styles.codeAfter}`}>{item.improvedCode}</pre>
-              </div>
-              </div>
+              <div className={styles.blockHead}>왜 이렇게 바뀌는지</div>
+              <p className={styles.detailText}>{item.detailExplanation}</p>
+            </section>
+
+            <section className={styles.block}>
+              <div className={styles.blockHead}>변경 사항 검토</div>
+              <p className={styles.diffHint}>
+                변경마다 적용 여부를 골라보세요. 기본은 전부 적용이고, 원하지 않는 부분만
+                "원본 유지"로 끄면 최종 코드에서 빠집니다.
+              </p>
+              <DiffHunkReview
+                key={`${item.id}:${item.improvedCode}`}
+                before={item.problemCode}
+                after={item.improvedCode}
+              />
             </section>
 
             <section className={styles.effect}>
@@ -101,11 +126,6 @@ export default function RefactoringSection({ items }: Props) {
                 {renderEffectHighlighted(item.effectSummary, item.effectHighlights)}
               </p>
             </section>
-
-            <details className={styles.detail}>
-              <summary className={styles.detailSummary}>추가 설명 보기</summary>
-              <p className={styles.detailText}>{item.detailExplanation}</p>
-            </details>
           </li>
         ))}
       </ul>

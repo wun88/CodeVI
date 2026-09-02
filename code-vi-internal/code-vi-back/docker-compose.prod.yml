@@ -65,6 +65,11 @@ x-common-env: &common-env
   EXAMINE_TS_URL: ${EXAMINE_TS_URL:-http://codevi-tsexamine:3006}
   EXAMINE_LANGUAGES: ${EXAMINE_LANGUAGES:-python}
   EXAMINE_TIMEOUT_MS: ${EXAMINE_TIMEOUT_MS:-20000}
+  # 리팩토링 인사이트 AI 제안(NVIDIA NIM, OpenAI 호환) — 없으면 AI 제안 생성 실패,
+  # 화면은 기존 정적 템플릿 문구로 폴백된다.
+  NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+  NVIDIA_API_BASE_URL: ${NVIDIA_API_BASE_URL:-https://integrate.api.nvidia.com/v1}
+  NVIDIA_MODEL: ${NVIDIA_MODEL:-nvidia/nemotron-3-super-120b-a12b}
 
 services:
   # 통합 백엔드 (포트 13000) - Relational AST (Directory→File→Class→Function) 저장

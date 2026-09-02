@@ -11,6 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AstRelationalService } from './ast-relational.service';
 import { CreateRelationalAstDto } from './dto/create-relational-ast.dto';
+import { AiRefactoringSuggestDto } from './dto/ai-refactoring-suggest.dto';
 import { ProjectMember } from '../auth/custom-guards-decorators/project-member.decorator';
 import { ProjectMemberGuard } from '../auth/custom-guards-decorators/project-member.guard';
 
@@ -58,6 +59,23 @@ export class AstRelationalController {
   @ApiOperation({ summary: '특정 AST 스냅샷 조회' })
   async getSnapshot(@Param('snapshotId', ParseIntPipe) snapshotId: number) {
     return await this.astRelationalService.getSnapshotById(snapshotId);
+  }
+
+  // "리팩토링 인사이트" 섹션에서 화면에 표시 중인 후보 클래스에 대해 AI(NVIDIA) 개선 제안을 생성한다.
+  @Post('project/:teamProjectId/refactoring/ai-suggest')
+  @UseGuards(AuthGuard(), ProjectMemberGuard)
+  @ProjectMember({ source: 'params', field: 'teamProjectId' })
+  @ApiOperation({
+    summary: 'CK 메트릭 이상 클래스에 대한 AI 리팩토링 제안 생성',
+  })
+  async generateAiRefactoringSuggestions(
+    @Param('teamProjectId', ParseIntPipe) teamProjectId: number,
+    @Body() dto: AiRefactoringSuggestDto,
+  ) {
+    return await this.astRelationalService.generateAiRefactoringSuggestions(
+      teamProjectId,
+      dto,
+    );
   }
 
   // DEAD CODE (2026-07-11): 아래 benchmark 3종 엔드포인트는 성능 실험용으로,

@@ -52,6 +52,7 @@ export interface AstClass {
   parentClassId: number | null;
   parentFunctionId: number | null;
   metrics?: AstClassMetrics;
+  sourceCode?: string | null;   // tree-sitter 노드 원문. 파서가 안 보냈거나 구버전 스냅샷이면 없음
 }
 
 /** 디렉토리 내 파일 */

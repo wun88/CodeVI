@@ -1,3 +1,29 @@
+.sectionHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.sectionHead button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sectionHead button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.aiError {
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: rgba(248, 113, 113, 0.92);
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -152,37 +178,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.codePair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-@media (max-width: 720px) {
-  .codePair {
-    grid-template-columns: 1fr;
-  }
-}
-
-.codeCol {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  min-width: 0;
-}
-
-.codeHead {
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(248, 113, 113, 0.92);
-}
-
-.codeHeadAfter {
-  color: rgba(110, 231, 183, 0.92);
-}
-
 .code {
   margin: 0;
   font-size: 0.68rem;
@@ -193,18 +188,118 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.codeBefore {
-  background: rgba(248, 113, 113, 0.08);
-  color: rgba(235, 245, 251, 0.88);
-  border: 1px solid rgba(248, 113, 113, 0.24);
-  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.08);
-}
-
 .codeAfter {
   background: rgba(110, 231, 183, 0.08);
   color: rgba(235, 245, 251, 0.88);
   border: 1px solid rgba(110, 231, 183, 0.22);
   box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.08);
+}
+
+.diffHint {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(235, 245, 251, 0.5);
+}
+
+.diffReview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.diffHunks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.diffContext {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  padding: 0.4rem 0.8rem;
+  color: rgba(235, 245, 251, 0.42);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: pre-wrap;
+}
+
+.diffHunk {
+  border-radius: 12px;
+  border: 1px solid rgba(159, 231, 240, 0.22);
+  background: rgba(159, 231, 240, 0.04);
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.diffHunkHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.diffHunkLabel {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(159, 231, 240, 0.75);
+}
+
+.diffToggle {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid rgba(235, 245, 251, 0.14);
+  overflow: hidden;
+}
+
+.diffToggleBtn {
+  border: none;
+  background: transparent;
+  color: rgba(235, 245, 251, 0.5);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.22rem 0.6rem;
+  cursor: pointer;
+}
+
+.diffToggleActive {
+  background: rgba(159, 231, 240, 0.16);
+  color: rgba(235, 245, 251, 0.95);
+}
+
+.diffLine {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.diffRemoved {
+  background: rgba(248, 113, 113, 0.1);
+  color: rgba(248, 113, 113, 0.92);
+}
+
+.diffAdded {
+  background: rgba(110, 231, 183, 0.1);
+  color: rgba(110, 231, 183, 0.92);
+}
+
+.diffMuted {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.diffFinal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .effect {
@@ -226,36 +321,6 @@
 .effectKw {
   font-weight: 900;
   color: rgba(159, 231, 240, 0.88);
-}
-
-.detail {
-  padding: 0.75rem 0.95rem;
-  border-radius: 14px;
-  border: 1px solid rgba(235, 245, 251, 0.12);
-  background: rgba(19, 22, 24, 0.9);
-}
-
-.detailSummary {
-  cursor: pointer;
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: rgba(235, 245, 251, 0.62);
-  list-style: none;
-  outline: none;
-}
-
-.detailSummary::-webkit-details-marker {
-  display: none;
-}
-
-.detailSummary::after {
-  content: '▾';
-  float: right;
-  color: rgba(235, 245, 251, 0.48);
-}
-
-.detail[open] .detailSummary::after {
-  content: '▴';
 }
 
 .detailText {

@@ -27,6 +27,9 @@ export default function CodeQualityTab({ teamProjectId }: CodeQualityTabProps) {
     listLoading,
     detailLoading,
     error,
+    aiLoading,
+    aiError,
+    generateAiRefactoring,
   } = useProjectCodeQuality(teamProjectId);
 
   if (listLoading) {
@@ -93,7 +96,12 @@ export default function CodeQualityTab({ teamProjectId }: CodeQualityTabProps) {
             snapshotId={selectedId}
             onDetailedView={() => navigate(`/visualization/${selectedId}`)}
           />
-          <RefactoringSection items={overview.refactorings} />
+          <RefactoringSection
+            items={overview.refactorings}
+            aiLoading={aiLoading}
+            aiError={aiError}
+            onGenerateAi={generateAiRefactoring}
+          />
         </div>
       )}
     </div>
