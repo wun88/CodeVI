@@ -12,6 +12,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AstRelationalService } from './ast-relational.service';
 import { CreateRelationalAstDto } from './dto/create-relational-ast.dto';
 import { AiRefactoringSuggestDto } from './dto/ai-refactoring-suggest.dto';
+import { NodeFeedbackRequestDto } from './dto/node-feedback.dto';
 import { ProjectMember } from '../auth/custom-guards-decorators/project-member.decorator';
 import { ProjectMemberGuard } from '../auth/custom-guards-decorators/project-member.guard';
 
@@ -73,6 +74,23 @@ export class AstRelationalController {
     @Body() dto: AiRefactoringSuggestDto,
   ) {
     return await this.astRelationalService.generateAiRefactoringSuggestions(
+      teamProjectId,
+      dto,
+    );
+  }
+
+  // 시각화 화면에서 노드(디렉토리/파일/클래스/함수)를 클릭했을 때 그 노드에 대한 AI 코멘트를 생성한다.
+  @Post('project/:teamProjectId/node-feedback')
+  @UseGuards(AuthGuard(), ProjectMemberGuard)
+  @ProjectMember({ source: 'params', field: 'teamProjectId' })
+  @ApiOperation({
+    summary: '시각화 노드(디렉토리/파일/클래스/함수)에 대한 AI 코멘트 생성',
+  })
+  async generateNodeFeedback(
+    @Param('teamProjectId', ParseIntPipe) teamProjectId: number,
+    @Body() dto: NodeFeedbackRequestDto,
+  ) {
+    return await this.astRelationalService.generateNodeFeedback(
       teamProjectId,
       dto,
     );

@@ -65,6 +65,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
       data: {
         label: dir.name,
         nodeType: 'directory',
+        entityId: dir.id,
         meta: {
           fileCount: dir.files.length,
           childDirCount: dir.treeChildren.length,
@@ -92,6 +93,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
         data: {
           label: file.name,
           nodeType: 'file',
+          entityId: file.id,
           meta: {
             fileName: file.name,
             fullPath: `${dirPath}/${file.name}`,
@@ -111,6 +113,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
           data: {
             label: cls.name,
             nodeType: 'class',
+            entityId: cls.id,
             metrics: cls.metrics,
             meta: {
               startLine: cls.startLine,
@@ -131,6 +134,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
             data: {
               label: method.name,
               nodeType: 'function',
+              entityId: method.id,
               meta: {
                 startLine: method.startLine,
                 endLine: method.endLine,
@@ -153,6 +157,7 @@ export function astSnapshotToFlow(snapshot: AstSnapshot): FlowResult {
             data: {
               label: fn.name,
               nodeType: 'function',
+              entityId: fn.id,
               meta: {
                 startLine: fn.startLine,
                 endLine: fn.endLine,

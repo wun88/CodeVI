@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useProjectCodeQuality } from '../../hooks/useProjectCodeQuality';
-import DiagramPreviewSection from '../DashboardPage/components/DiagramPreviewSection';
 import MetricsRadarSection from '../DashboardPage/components/MetricsRadarSection';
 import QualityMetricCards from '../DashboardPage/components/QualityMetricCards';
 import QualitySummaryRow from '../DashboardPage/components/QualitySummaryRow';
@@ -92,10 +91,6 @@ export default function CodeQualityTab({ teamProjectId }: CodeQualityTabProps) {
           />
           <QualityMetricCards items={overview.metricCards} />
           <MetricsRadarSection axes={overview.radarAxes} />
-          <DiagramPreviewSection
-            snapshotId={selectedId}
-            onDetailedView={() => navigate(`/visualization/${selectedId}`)}
-          />
           <RefactoringSection
             items={overview.refactorings}
             aiLoading={aiLoading}

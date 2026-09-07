@@ -24,6 +24,35 @@ import {
   AiRefactoringSuggestionDto,
   AiRefactoringSuggestionText,
 } from './dto/ai-refactoring-suggest.dto';
+import {
+  AstNodeFeedbackType,
+  NodeFeedbackRequestDto,
+  NodeFeedbackResponseDto,
+} from './dto/node-feedback.dto';
+
+/** code_analysis.pyExamineResult에 실려 오는 PyExamine finding 원본 형태. */
+interface PyExamineSmell {
+  type?: string; // 예: 'Architecture Smell' | 'Structural Smell' | 'Code Smell'
+  name?: string;
+  description?: string;
+  file?: string;
+  'Module/Class'?: string;
+  lineNumber?: number;
+  severity?: string;
+}
+
+/** PyExamine 3단 분류(총 49개 룰) — finding.type 문자열을 정규화한 레벨. */
+type SmellLevel = 'architecture' | 'structure' | 'code';
+
+interface DispatchedSmell {
+  name: string;
+  severity: string;
+  message?: string;
+  entity?: string;
+  lineNumber?: number;
+}
+
+type DispatchedSmells = Record<SmellLevel, DispatchedSmell[]>;
 
 @Injectable()
 export class AstRelationalService {
@@ -284,6 +313,8 @@ export class AstRelationalService {
           fileId: isTopLevel ? fileId : null,
           classId: isMethod ? currentClassId : null,
           parentFunctionId: currentFunctionId,
+          // 클래스와 동일하게 노드 원문을 저장 — 노드 상세 AI 피드백에 실제 코드를 근거로 쓰기 위함.
+          sourceCode: node.text ?? null,
         });
         const savedFn = await manager.save(fn);
 
@@ -455,6 +486,355 @@ export class AstRelationalService {
       const ai = aiTexts.get(item.classId);
       return ai ? { ...item, ...ai } : item;
     });
+  }
+
+  /**
+   * 시각화 화면에서 노드(디렉토리/파일/클래스/함수)를 클릭했을 때, 그 노드의 정보만 NVIDIA LLM에
+   * 보내 코드 스멜·문제점·개선 방향을 항목별 리스트로 받는다(서술형 문단이 아니라 짧은 항목
+   * 여러 개 — 코드 재작성은 하지 않음). 리팩토링 인사이트와 달리 결정론적 폴백이 없다 — 실패하면
+   * 그대로 예외를 던져 컨트롤러가 5xx로 응답하고, 프론트가 에러 상태를 보여준다.
+   */
+  async generateNodeFeedback(
+    teamProjectId: number,
+    dto: NodeFeedbackRequestDto,
+  ): Promise<NodeFeedbackResponseDto> {
+    const snapshot = await this.getSnapshotById(dto.snapshotId);
+    if (snapshot.teamProjectId !== teamProjectId) {
+      throw new NotFoundException(`Snapshot not found: ${dto.snapshotId}`);
+    }
+
+    const directories = snapshot.directories ?? [];
+    // getSnapshotById가 같은 빌드의 code_analysis.pyExamineResult를 smells로 첨부해 둔다.
+    const buildSmells =
+      (snapshot as unknown as { smells?: PyExamineSmell[] }).smells ?? [];
+    const payload = this.buildNodeFeedbackPayload(
+      directories,
+      dto.nodeType,
+      dto.nodeId,
+      buildSmells,
+    );
+    if (!payload) {
+      throw new NotFoundException(
+        `${dto.nodeType} node not found: ${dto.nodeId}`,
+      );
+    }
+
+    const systemPrompt =
+      '당신은 시니어 소프트웨어 엔지니어입니다. 주어진 코드 구조 정보(JSON)만 근거로 ' +
+      '코드 스멜·문제점·개선 제안을 한국어로 정리하세요. 서술형 문단이 아니라, 각 항목을 ' +
+      '한 문장 이내의 짧고 명확한 텍스트로 작성하세요(불릿 기호나 번호는 붙이지 않습니다). ' +
+      '코드를 새로 작성하거나 고쳐 쓰지 마세요. detectedSmells는 정적 분석기(PyExamine)가 이 ' +
+      '노드에서 실제로 검출한 스멜을 architecture/structure/code 레벨로 분류한 것입니다 — ' +
+      '이를 사실로 간주해 smells 항목에 레벨과 함께 반영하고, problems/suggestions도 여기에 ' +
+      '근거를 두세요. sourceCode가 있는 함수/클래스는 그 코드를 실제로 근거로 삼아 구체적으로 ' +
+      '작성하고, 이름·개수만 있고 소스가 전혀 없는 노드만 판단 가능한 범위 내에서 작성하며 ' +
+      '근거가 정말 부족한 항목만 빈 배열로 두세요. ' +
+      '다른 설명 없이 {"smells": string[], "problems": string[], "suggestions": string[]} ' +
+      '형태의 JSON 객체만 출력하세요.';
+    const userPrompt = JSON.stringify({ node: payload });
+
+    let result: unknown;
+    try {
+      result = await this.nvidiaLlmService.generateJson(
+        systemPrompt,
+        userPrompt,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Node feedback generation failed: ${message}`);
+      throw new LlmGenerationError(
+        `Node feedback generation failed: ${message}`,
+        error,
+      );
+    }
+
+    const record =
+      result && typeof result === 'object'
+        ? (result as Record<string, unknown>)
+        : {};
+    const toStringList = (v: unknown): string[] =>
+      Array.isArray(v)
+        ? v.filter((s): s is string => typeof s === 'string')
+        : [];
+    // 디렉토리/파일처럼 근거(소스)가 부족한 노드는 프롬프트 지시대로 세 배열 모두 빈 채로
+    // 응답하는 게 정상이다(판단 근거 없음) — 실패가 아니므로 여기서 던지지 않는다.
+    return {
+      smells: toStringList(record.smells),
+      problems: toStringList(record.problems),
+      suggestions: toStringList(record.suggestions),
+    };
+  }
+
+  private findDirectory(
+    directories: AstDirectory[],
+    id: number,
+  ): AstDirectory | undefined {
+    return directories.find((d) => d.id === id);
+  }
+
+  private findFile(
+    directories: AstDirectory[],
+    id: number,
+  ): AstFile | undefined {
+    for (const d of directories) {
+      const found = (d.files ?? []).find((f) => f.id === id);
+      if (found) return found;
+    }
+    return undefined;
+  }
+
+  private findClass(
+    directories: AstDirectory[],
+    id: number,
+  ): AstClass | undefined {
+    for (const d of directories) {
+      for (const f of d.files ?? []) {
+        const found = (f.classes ?? []).find((c) => c.id === id);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+
+  /** 메서드/파일-레벨 함수/중첩 함수를 모두 뒤져 id로 찾는다. 클래스 소속이면 클래스명도 같이 반환. */
+  private findFunction(
+    directories: AstDirectory[],
+    id: number,
+  ): { fn: AstFunction; className?: string } | undefined {
+    const flattenFns = (fns: AstFunction[]): AstFunction[] =>
+      fns.flatMap((fn) => [fn, ...flattenFns(fn.childFunctions ?? [])]);
+
+    for (const d of directories) {
+      for (const f of d.files ?? []) {
+        for (const cls of f.classes ?? []) {
+          const found = flattenFns(cls.methods ?? []).find(
+            (fn) => fn.id === id,
+          );
+          if (found) return { fn: found, className: cls.name };
+        }
+        const found = flattenFns(f.fileFunctions ?? []).find(
+          (fn) => fn.id === id,
+        );
+        if (found) return { fn: found };
+      }
+    }
+    return undefined;
+  }
+
+  /** finding.type 문자열을 architecture/structure/code 3단 레벨로 정규화한다. */
+  private normalizeSmellLevel(type?: string): SmellLevel {
+    const t = (type ?? '').toLowerCase();
+    if (t.includes('archit')) return 'architecture';
+    if (t.includes('struct') || t.includes('design')) return 'structure';
+    return 'code';
+  }
+
+  /** 디렉토리 id → 루트부터의 전체 경로("src/llm" 등). 파일 경로 매칭의 기준이 된다. */
+  private buildDirPathMap(directories: AstDirectory[]): Map<number, string> {
+    const byId = new Map(directories.map((d) => [d.id, d]));
+    const paths = new Map<number, string>();
+    const pathOf = (d: AstDirectory): string => {
+      const cached = paths.get(d.id);
+      if (cached) return cached;
+      const parent =
+        d.parentDirectoryId != null ? byId.get(d.parentDirectoryId) : undefined;
+      const p = parent ? `${pathOf(parent)}/${d.name}` : d.name;
+      paths.set(d.id, p);
+      return p;
+    };
+    directories.forEach((d) => pathOf(d));
+    return paths;
+  }
+
+  /**
+   * 빌드 단위로 저장된 PyExamine finding들을 클릭된 노드에 매핑(dispatch)한다.
+   * - 경로: finding.file(./ 접두 제거)과 노드 소속 파일의 전체 경로 비교, 디렉토리는 prefix 롤업
+   * - 라인: 노드/finding 양쪽에 라인 정보가 있을 때만 겹침 검사(0은 정보 없음으로 취급, 관대한 매칭)
+   * - 엔티티: finding['Module/Class']와 노드 이름 비교
+   * 매칭된 finding은 type 기준 3단 레벨(architecture/structure/code)로 분류해 반환한다.
+   */
+  private dispatchSmellsForNode(
+    directories: AstDirectory[],
+    smells: PyExamineSmell[],
+    nodeType: AstNodeFeedbackType,
+    nodeId: number,
+  ): DispatchedSmells | undefined {
+    if (!smells || smells.length === 0) return undefined;
+
+    const dirPaths = this.buildDirPathMap(directories);
+    const norm = (p?: string) => (p ?? '').replace(/^\.\//, '');
+
+    const lineMatches = (
+      start: number | undefined,
+      end: number | undefined,
+      line: number | undefined,
+    ): boolean => {
+      // 라인 0/미지정은 "정보 없음" — 라인으로 거르지 않는다(관대한 매칭).
+      if (!line || !start || start <= 0) return true;
+      return line >= start && line <= (end && end > 0 ? end : start);
+    };
+
+    let matches: PyExamineSmell[] = [];
+    if (nodeType === 'directory') {
+      const dirPath = dirPaths.get(nodeId);
+      if (dirPath == null) return undefined;
+      matches = smells.filter((s) => norm(s.file).startsWith(`${dirPath}/`));
+    } else if (nodeType === 'file') {
+      for (const d of directories) {
+        const file = (d.files ?? []).find((f) => f.id === nodeId);
+        if (file) {
+          const filePath = `${dirPaths.get(d.id)}/${file.name}`;
+          matches = smells.filter((s) => norm(s.file) === filePath);
+          break;
+        }
+      }
+    } else if (nodeType === 'class') {
+      for (const d of directories) {
+        for (const f of d.files ?? []) {
+          const cls = (f.classes ?? []).find((c) => c.id === nodeId);
+          if (!cls) continue;
+          const filePath = `${dirPaths.get(d.id)}/${f.name}`;
+          const memberNames = new Set([
+            cls.name,
+            ...(cls.methods ?? []).map((m) => m.name),
+          ]);
+          matches = smells.filter(
+            (s) =>
+              norm(s.file) === filePath &&
+              (memberNames.has(s['Module/Class'] ?? '') ||
+                lineMatches(cls.startLine, cls.endLine, s.lineNumber)),
+          );
+        }
+      }
+    } else {
+      const found = this.findFunction(directories, nodeId);
+      if (!found) return undefined;
+      for (const d of directories) {
+        for (const f of d.files ?? []) {
+          const owns =
+            (f.fileFunctions ?? []).some((fn) => fn.id === nodeId) ||
+            (f.classes ?? []).some((c) =>
+              (c.methods ?? []).some((m) => m.id === nodeId),
+            );
+          if (!owns) continue;
+          const filePath = `${dirPaths.get(d.id)}/${f.name}`;
+          matches = smells.filter(
+            (s) =>
+              norm(s.file) === filePath &&
+              (s['Module/Class'] === found.fn.name ||
+                lineMatches(
+                  found.fn.startLine,
+                  found.fn.endLine,
+                  s.lineNumber,
+                )),
+          );
+        }
+      }
+    }
+
+    if (matches.length === 0) return undefined;
+
+    const grouped: DispatchedSmells = {
+      architecture: [],
+      structure: [],
+      code: [],
+    };
+    const MAX_PER_LEVEL = 15;
+    for (const s of matches) {
+      const level = this.normalizeSmellLevel(s.type);
+      if (grouped[level].length >= MAX_PER_LEVEL) continue;
+      grouped[level].push({
+        name: s.name ?? 'unknown',
+        severity: (s.severity ?? 'medium').toLowerCase(),
+        message: s.description,
+        entity: s['Module/Class'] || undefined,
+        lineNumber: s.lineNumber && s.lineNumber > 0 ? s.lineNumber : undefined,
+      });
+    }
+    return grouped;
+  }
+
+  private buildNodeFeedbackPayload(
+    directories: AstDirectory[],
+    nodeType: AstNodeFeedbackType,
+    nodeId: number,
+    smells: PyExamineSmell[],
+  ): Record<string, unknown> | null {
+    // 빌드 단위(code_analysis.pyExamineResult)로 저장된 정적 분석 스멜을 이 노드로 dispatch —
+    // LLM이 임계값을 다시 추측하는 대신 분석기가 이미 찾은 스멜을 근거로 쓰게 한다.
+    const detectedSmells = this.dispatchSmellsForNode(
+      directories,
+      smells,
+      nodeType,
+      nodeId,
+    );
+
+    if (nodeType === 'directory') {
+      const dir = this.findDirectory(directories, nodeId);
+      if (!dir) return null;
+      return {
+        type: 'directory',
+        name: dir.name,
+        childDirectoryCount: directories.filter(
+          (d) => d.parentDirectoryId === dir.id,
+        ).length,
+        fileCount: (dir.files ?? []).length,
+        classCount: (dir.files ?? []).flatMap((f) => f.classes ?? []).length,
+        detectedSmells,
+        note: '디렉토리는 소스 코드가 없는 구조적 단위이며, 이름과 하위 구성 개수만 제공됩니다.',
+      };
+    }
+    if (nodeType === 'file') {
+      const file = this.findFile(directories, nodeId);
+      if (!file) return null;
+      // 클래스는 이름·메트릭·메서드 수만(전체 소스는 클래스 노드에서 따로 받게 함), 파일 직속
+      // 함수는 짧으니 실제 소스를 통째로 줘서 "파일에 섞인 유틸 함수" 같은 파일 레벨 스멜을
+      // 판단할 근거를 충분히 준다.
+      const classes = (file.classes ?? []).map((c) => ({
+        name: c.name,
+        metrics: c.metrics ?? undefined,
+        methodCount: (c.methods ?? []).length,
+      }));
+      const functions = (file.fileFunctions ?? []).map((fn) => ({
+        name: fn.name,
+        sourceCode: fn.sourceCode
+          ? this.excerptSource(fn.sourceCode, 40)
+          : undefined,
+      }));
+      return {
+        type: 'file',
+        name: file.name,
+        classes,
+        functions,
+        detectedSmells,
+      };
+    }
+    if (nodeType === 'class') {
+      const cls = this.findClass(directories, nodeId);
+      if (!cls) return null;
+      return {
+        type: 'class',
+        name: cls.name,
+        metrics: cls.metrics ?? {},
+        methods: (cls.methods ?? []).map((m) => m.name).slice(0, 30),
+        sourceCode: cls.sourceCode
+          ? this.excerptSource(cls.sourceCode, 120)
+          : undefined,
+        detectedSmells,
+      };
+    }
+    const found = this.findFunction(directories, nodeId);
+    if (!found) return null;
+    return {
+      type: 'function',
+      name: found.fn.name,
+      className: found.className,
+      lineCount: Math.max(0, found.fn.endLine - found.fn.startLine + 1),
+      sourceCode: found.fn.sourceCode
+        ? this.excerptSource(found.fn.sourceCode, 80)
+        : undefined,
+      detectedSmells,
+    };
   }
 
   /** LCOM/CBO/WMC 값만으로 결정론적으로 구성하는 기본 제안 — AI 미가용 시 폴백으로도 쓰인다. */

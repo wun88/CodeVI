@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { RefactoringSeverity, RefactoringSuggestion } from '../../../interface/dashboardOverview.interface';
 import DiffHunkReview from './DiffHunkReview';
 import shared from '../dashboardShared.module.css';
@@ -44,6 +45,12 @@ function renderEffectHighlighted(text: string, highlights: string[]) {
 export default function RefactoringSection({ items, aiLoading, aiError, onGenerateAi }: Props) {
   const hasAiCandidates = items.some((item) => item.classId != null);
 
+  // 분석 대상이 여럿일 때 카드가 세로로 길게 쌓이지 않도록, 드롭다운으로 하나만 골라 본다.
+  // AI 생성은 기존처럼 전체 후보에 대해 한 번에 수행되고 이 선택은 보기 필터일 뿐이다.
+  const [selectedId, setSelectedId] = useState('');
+  const activeItem = items.find((i) => i.id === selectedId) ?? items[0];
+  const visibleItems = activeItem ? [activeItem] : [];
+
   return (
     <section className={shared.card}>
       <div className={styles.sectionHead}>
@@ -70,8 +77,24 @@ export default function RefactoringSection({ items, aiLoading, aiError, onGenera
         )}
       </div>
       {aiError && <p className={styles.aiError}>{aiError}</p>}
+      {items.length > 1 && (
+        <label className={styles.targetSelectRow}>
+          <span className={styles.targetSelectLabel}>분석 대상</span>
+          <select
+            className={styles.targetSelect}
+            value={activeItem?.id ?? ''}
+            onChange={(e) => setSelectedId(e.target.value)}
+          >
+            {items.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.targetLabel} ({severityLabel(item.severity)})
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <ul className={styles.list}>
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <li
             key={item.id}
             className={`${styles.insightCard} ${styles[`sev_${item.severity}`]}`}

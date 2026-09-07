@@ -1,5 +1,6 @@
 import api from './api';
 import type { AstSnapshot, AstSnapshotSummary } from '../interface/ast.interface';
+import type { FlowNodeType, NodeFeedback } from '../interface/flow.interface';
 import type { RefactoringSuggestion } from '../interface/dashboardOverview.interface';
 
 export const astDataService = {
@@ -36,6 +37,24 @@ export const astDataService = {
     const res = await api.post(
       `/api/ast-data/relational/project/${teamProjectId}/refactoring/ai-suggest`,
       { snapshotId, classIds },
+      { timeout: 65000 },
+    );
+    return res.data?.data ?? res.data;
+  },
+
+  /**
+   * 시각화 화면에서 클릭한 노드(디렉토리/파일/클래스/함수)에 대한 AI 코멘트를 생성한다.
+   * NVIDIA 응답 편차 때문에 이 요청만 넉넉한 타임아웃을 쓴다(리팩토링 제안과 동일한 이유).
+   */
+  generateNodeFeedback: async (
+    teamProjectId: number,
+    snapshotId: number,
+    nodeType: FlowNodeType,
+    nodeId: number,
+  ): Promise<NodeFeedback> => {
+    const res = await api.post(
+      `/api/ast-data/relational/project/${teamProjectId}/node-feedback`,
+      { snapshotId, nodeType, nodeId },
       { timeout: 65000 },
     );
     return res.data?.data ?? res.data;

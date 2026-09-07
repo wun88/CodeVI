@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { astDataService } from '../../services/astDataService';
 import { toSmellFindings, type SmellFinding } from '../../utils/smellOverlay';
 import type { AstSnapshot } from '../../interface/ast.interface';
-import type { FlowNodeData } from '../../interface/flow.interface';
+import type { FlowNodeData, NodeFeedback } from '../../interface/flow.interface';
 import AstFlowCanvas, { type SearchAction, type SearchActionType, type SearchStatus } from '../../components/flow/AstFlowCanvas';
 import shared from '../DashboardPage/dashboardShared.module.css';
 import styles from './VisualizationPage.module.css';
@@ -34,6 +34,9 @@ export default function VisualizationPage() {
   const [error, setError] = useState('');
   const [selectedNode, setSelectedNode] = useState<FlowNodeData | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [feedback, setFeedback] = useState<NodeFeedback | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState('');
   const [isLegendOpen, setIsLegendOpen] = useState(true);
   const [nodeCount, setNodeCount] = useState(0);
   const [totalNodeCount, setTotalNodeCount] = useState(0);
@@ -108,7 +111,29 @@ export default function VisualizationPage() {
      canvas 내부 effect가 매 렌더마다 재발화하며 무한 갱신 루프가 생긴다 */
   const handleCanvasNodeSelect = useCallback((data: FlowNodeData | null) => {
     setSelectedNode(data);
+    // 다른 노드를 고르면 이전 노드의 AI 코멘트는 더 이상 유효하지 않다.
+    setFeedback(null);
+    setFeedbackError('');
   }, []);
+
+  const handleGenerateNodeFeedback = async () => {
+    if (!snapshot || !selectedNode) return;
+    setFeedbackError('');
+    setFeedbackLoading(true);
+    try {
+      const result = await astDataService.generateNodeFeedback(
+        snapshot.teamProjectId,
+        snapshot.id,
+        selectedNode.nodeType,
+        selectedNode.entityId,
+      );
+      setFeedback(result);
+    } catch {
+      setFeedbackError('AI 코멘트 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
 
   const handleSearchStatusChange = useCallback((s: SearchStatus) => {
     setSearchStatus(s);
@@ -376,6 +401,50 @@ export default function VisualizationPage() {
                       </div>
                     </div>
                   )}
+
+                  <div className={styles.metricsDetail}>
+                    <div className={styles.metricsSectionTitle}>AI 코멘트</div>
+                    <button
+                      type="button"
+                      className={shared.btnPrimary}
+                      onClick={handleGenerateNodeFeedback}
+                      disabled={feedbackLoading}
+                    >
+                      {feedbackLoading ? '코멘트 생성 중...' : 'AI 코멘트 받기'}
+                    </button>
+                    {feedbackError && <p className={styles.feedbackError}>{feedbackError}</p>}
+                    {feedback &&
+                      (feedback.smells.length + feedback.problems.length + feedback.suggestions.length ===
+                      0 ? (
+                        <p className={styles.feedbackText}>
+                          이 노드는 이름·구조 정보만으로는 판단할 근거가 부족하다고 AI가 판단했습니다.
+                        </p>
+                      ) : (
+                        <div className={styles.feedbackGroups}>
+                          {(
+                            [
+                              ['스멜', feedback.smells],
+                              ['문제점', feedback.problems],
+                              ['개선 제안', feedback.suggestions],
+                            ] as const
+                          ).map(
+                            ([label, items]) =>
+                              items.length > 0 && (
+                                <div key={label} className={styles.feedbackGroup}>
+                                  <div className={styles.feedbackGroupTitle}>{label}</div>
+                                  <ul className={styles.feedbackList}>
+                                    {items.map((item, i) => (
+                                      <li key={i} className={styles.feedbackItem}>
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ),
+                          )}
+                        </div>
+                      ))}
+                  </div>
                 </div>
               ) : (
                 <div className={styles.panelEmpty}>

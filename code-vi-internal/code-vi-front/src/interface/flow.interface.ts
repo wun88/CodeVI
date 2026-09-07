@@ -17,6 +17,8 @@ export type FlowNodeType = 'directory' | 'file' | 'class' | 'function';
 export interface FlowNodeData extends Record<string, unknown> {
   label: string;
   nodeType: FlowNodeType;
+  /* 실제 엔티티 id(Directory/File/Class/Function) — AI 노드 피드백 요청 시 사용 */
+  entityId: number;
   metrics?: CkMetrics;
   /* 펼치기/접기 (AstFlowCanvas에서 주입) */
   expandable?: boolean;
@@ -38,6 +40,13 @@ export interface FlowNodeData extends Record<string, unknown> {
     fileCount?: number;
     childDirCount?: number;
   };
+}
+
+/** 노드 클릭 시 AI 코멘트(스멜/문제점/개선 제안) — 서술형 문단이 아니라 항목별 리스트 */
+export interface NodeFeedback {
+  smells: string[];
+  problems: string[];
+  suggestions: string[];
 }
 
 export type AstFlowNode = Node<FlowNodeData>;

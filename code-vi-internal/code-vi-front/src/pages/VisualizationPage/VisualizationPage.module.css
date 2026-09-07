@@ -260,7 +260,8 @@
 }
 
 .panelShellOpen {
-  width: 320px;
+  /* AI 코멘트 리스트가 읽기 편하도록 확장 — 좁은 화면에선 캔버스를 위해 뷰포트 비율로 제한 */
+  width: min(440px, 36vw);
   opacity: 1;
   transform: translateX(0);
   pointer-events: auto;
@@ -440,6 +441,55 @@
 .warn {
   color: #f87171 !important;
   font-weight: 800;
+}
+
+.feedbackError {
+  margin: 0.6rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(248, 113, 113, 0.92);
+}
+
+.feedbackText {
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(235, 245, 251, 0.55);
+}
+
+.feedbackGroups {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.feedbackGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.feedbackGroupTitle {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(235, 245, 251, 0.5);
+}
+
+.feedbackList {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.feedbackItem {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(235, 245, 251, 0.85);
 }
 
 .center {

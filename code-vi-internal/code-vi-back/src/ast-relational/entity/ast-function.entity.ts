@@ -20,11 +20,18 @@ export class AstFunction extends CommonEntity {
   @Column({ type: 'int' })
   endCol: number;
 
+  // tree-sitter 노드의 원문 텍스트(AstNodeInputDto.text). 파서가 안 보냈거나 구버전 스냅샷이면 null.
+  @Column({ type: 'longtext', nullable: true })
+  sourceCode: string | null;
+
   // 파일 레벨 함수인 경우 (클래스에 속하지 않는 함수)
   @Column({ nullable: true })
   fileId: number | null;
 
-  @ManyToOne(() => AstFile, (file) => file.fileFunctions, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => AstFile, (file) => file.fileFunctions, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'fileId' })
   file: AstFile | null;
 
@@ -32,14 +39,20 @@ export class AstFunction extends CommonEntity {
   @Column({ nullable: true })
   classId: number | null;
 
-  @ManyToOne(() => AstClass, (cls) => cls.methods, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => AstClass, (cls) => cls.methods, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'classId' })
   ownerClass: AstClass | null;
 
   @Column({ nullable: true })
   parentFunctionId: number | null;
 
-  @ManyToOne(() => AstFunction, (fn) => fn.childFunctions, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => AstFunction, (fn) => fn.childFunctions, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'parentFunctionId' })
   parentFunction: AstFunction | null;
 

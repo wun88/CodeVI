@@ -24,6 +24,36 @@
   color: rgba(248, 113, 113, 0.92);
 }
 
+.targetSelectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.targetSelectLabel {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(235, 245, 251, 0.5);
+  white-space: nowrap;
+}
+
+.targetSelect {
+  min-width: 0;
+  max-width: 360px;
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(235, 245, 251, 0.14);
+  background: var(--rf-chip-bg, #14181b);
+  color: rgba(235, 245, 251, 0.92);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .list {
   list-style: none;
   margin: 0;
