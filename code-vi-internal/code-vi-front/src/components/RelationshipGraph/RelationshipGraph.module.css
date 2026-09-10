@@ -1,0 +1,158 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/*
+ * 캔버스 바탕. 인터널 카드가 반투명(--internal-surface)이고 모달은 그보다 더 비쳐서,
+ * 불투명 바닥(--internal-bg) 위에 카드와 같은 밝기의 흰색 레이어를 얹는다 —
+ * 뒤 페이지가 선·라벨에 비치지 않으면서 주변 카드와 같은 톤으로 보인다.
+ */
+.canvas {
+  width: 100%;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04)),
+    var(--internal-bg);
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+}
+
+.empty {
+  margin: 0;
+  padding: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--internal-text-2);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--internal-border);
+  border-radius: 14px;
+}
+
+/* ---- 요구사항 노드 ---- */
+.reqNode {
+  fill: rgba(159, 231, 240, 0.09);
+  stroke: rgba(159, 231, 240, 0.45);
+  stroke-width: 1;
+}
+
+.reqId {
+  font-size: 11px;
+  font-weight: 800;
+  fill: var(--internal-accent);
+  letter-spacing: 0.04em;
+}
+
+.reqTitle {
+  /* RelationshipGraph.tsx의 REQ_TITLE_FONT와 값이 같아야 폭 계산이 맞는다. */
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--internal-text);
+}
+
+.reqMeta {
+  font-size: 10px;
+  fill: var(--internal-muted);
+}
+
+/* ---- 코드 파일 노드 ---- */
+.fileGroup {
+  cursor: pointer;
+}
+
+.fileGroup:focus {
+  outline: none;
+}
+
+.fileGroup:focus-visible .fileNode {
+  stroke: var(--internal-accent);
+  stroke-width: 1.5;
+}
+
+.fileNode {
+  fill: var(--internal-surface-elevated);
+  stroke: var(--internal-border);
+  stroke-width: 1;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.fileGroup:hover .fileNode {
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: var(--internal-border-strong);
+}
+
+.fileNodeSelected {
+  fill: rgba(159, 231, 240, 0.1);
+  stroke: rgba(159, 231, 240, 0.55);
+  stroke-width: 1.5;
+}
+
+.fileName {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--internal-text);
+}
+
+.filePath {
+  font-size: 10px;
+  fill: var(--internal-muted);
+}
+
+.fileScore {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---- 함수 서브노드 ---- */
+.fnLabel {
+  font-size: 9px;
+  fill: var(--internal-text-2);
+}
+
+/* ---- 연결선 라벨 ---- */
+.edgeLabelBg {
+  fill: var(--internal-bg);
+  opacity: 0.9;
+}
+
+.edgeLabel {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ---- 범례 — StatusDistributionDonut의 범례 타이포/구조를 따른다 ---- */
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legendSwatch {
+  width: 18px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.legendSwatchDashed {
+  height: 2px;
+}
+
+.legendLabel {
+  color: var(--internal-text-2);
+}
+
+.legendValue {
+  color: var(--internal-text);
+  font-weight: 700;
+}

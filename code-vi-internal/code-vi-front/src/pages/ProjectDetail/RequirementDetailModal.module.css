@@ -1,7 +1,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5, 8, 12, 0.6);
+  background: rgba(5, 8, 12, 0.72);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -13,7 +14,14 @@
 .modal {
   width: 100%;
   max-width: 680px;
-  background: var(--internal-surface);
+  /*
+   * --internal-surface는 rgba(255,255,255,0.03)이라 사실상 투명하다 — 그대로 두면 모달 뒤의
+   * 대시보드 글자가 모달 본문 글자와 겹쳐 읽힌다. 불투명한 --internal-bg 위에 같은 밝기의
+   * 흰색 레이어를 얹어, 페이지 위 카드와 같은 톤을 유지하면서 바닥은 막는다.
+   */
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)),
+    var(--internal-bg);
   border: 1px solid var(--internal-border);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
@@ -185,6 +193,20 @@
   border: 1px solid var(--internal-border);
   border-radius: 8px;
   padding: 6px 10px;
+}
+
+/* 관계 그래프에서 선택된 코드 파일과 같은 경로의 항목을 강조한다.
+   그래프의 선택 노드와 같은 accent 톤을 쓴다. */
+.matchItemSelected {
+  border-color: rgba(159, 231, 240, 0.5);
+  background: rgba(159, 231, 240, 0.08);
+}
+
+.graphBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 .matchType {

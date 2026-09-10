@@ -10,6 +10,8 @@ import type {
   RequirementVersion,
 } from '../../interface/requirement.interface';
 import FilterDropdown from './FilterDropdown';
+import RelationshipGraph from '../../components/RelationshipGraph/RelationshipGraph';
+import { buildCodeMatchDetails } from '../../utils/relationshipGraph';
 import styles from './RequirementDetailModal.module.css';
 
 const STATUS_LABEL: Record<RequirementStatus, string> = {
@@ -83,6 +85,8 @@ export default function RequirementDetailModal({
   const [impact, setImpact] = useState<ImpactAnalysis | null>(null);
   const [matchDetail, setMatchDetail] = useState<MatchDetailItem[] | null>(null);
   const [detailError, setDetailError] = useState('');
+  /** 관계 그래프에서 선택한 코드 파일(codeFileId=경로) — 매칭 목록 강조와 연동된다. */
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const [depTargetId, setDepTargetId] = useState('');
   const [depType, setDepType] = useState<DependencyType>('depends_on');
@@ -96,6 +100,7 @@ export default function RequirementDetailModal({
   useEffect(() => {
     let cancelled = false;
     setDetailError('');
+    setSelectedFile(null);
     Promise.all([
       requirementsService.getVersions(requirement.id),
       requirementsService.getDependencies(requirement.id),
@@ -181,6 +186,8 @@ export default function RequirementDetailModal({
   };
 
   const dependencyCandidates = allRequirements.filter((r) => r.id !== requirement.id);
+  // 평면 매칭 목록(파일/클래스/함수 혼재)을 파일 단위 중첩 구조로 접어 그래프에 넘긴다.
+  const codeMatches = matchDetail ? buildCodeMatchDetails(matchDetail) : [];
   const nextStatuses = STATUS_TRANSITIONS[requirement.status];
 
   return (
@@ -284,11 +291,30 @@ export default function RequirementDetailModal({
             )}
 
             {matchDetail && matchDetail.length > 0 && (
+              <div className={styles.graphBlock}>
+                <p className={styles.impactLabel}>요구사항-코드 관계 그래프</p>
+                <RelationshipGraph
+                  requirement={requirement}
+                  matches={codeMatches}
+                  selectedFile={selectedFile}
+                  onSelectFile={(codeFileId) =>
+                    setSelectedFile((current) => (current === codeFileId ? null : codeFileId))
+                  }
+                />
+              </div>
+            )}
+
+            {matchDetail && matchDetail.length > 0 && (
               <div className={styles.matchList}>
                 <p className={styles.impactLabel}>매칭된 코드 요소 (상위 {matchDetail.length}개)</p>
                 <ul className={styles.matchItems}>
                   {matchDetail.map((m, index) => (
-                    <li key={`${m.path}-${m.name}-${index}`} className={styles.matchItem}>
+                    <li
+                      key={`${m.path}-${m.name}-${index}`}
+                      className={`${styles.matchItem} ${
+                        selectedFile === m.path ? styles.matchItemSelected : ''
+                      }`}
+                    >
                       <span className={styles.matchType}>{m.type}</span>
                       <div className={styles.matchInfo}>
                         <span className={styles.matchName}>{m.name}</span>

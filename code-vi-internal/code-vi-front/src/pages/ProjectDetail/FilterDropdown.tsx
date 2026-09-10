@@ -44,6 +44,8 @@ export default function FilterDropdown<T extends string>({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
+        // 폭이 좁아 라벨이 말줄임될 때 전문을 볼 수 있게 한다.
+        title={selected?.label ?? value}
       >
         <span className={styles.dot} aria-hidden />
         <span className={styles.value}>{selected?.label ?? value}</span>

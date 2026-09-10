@@ -19,6 +19,7 @@ import DocumentsTab from './DocumentsTab';
 import BuildHistoryTab from './BuildHistoryTab';
 import SettingsTab from './SettingsTab';
 import CodeQualityTab from './CodeQualityTab';
+import MappingGraphSection from './MappingGraphSection';
 import LifecycleProgressBar from './LifecycleProgressBar';
 import OverallProgressRing from './OverallProgressRing';
 import StatusDistributionDonut from './StatusDistributionDonut';
@@ -417,6 +418,7 @@ export default function ProjectDetail() {
                   <span className={styles.mappingBannerStrong}>{mapping.mapped}</span>개 매핑됨
                   {!project.codeAnalysis && ' — 코드를 연결하면 자동으로 계산됩니다.'}
                 </p>
+                <MappingGraphSection requirements={requirements} mapping={mapping} />
               </section>
 
               <section className={styles.card}>
